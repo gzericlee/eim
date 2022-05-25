@@ -24,7 +24,7 @@ var seqSvr *seq.RpcClient
 
 type server struct {
 	ports           []string
-	clientManager   *manager
+	sessionManager  *manager
 	receivedTotal   *atomic.Int64
 	sentTotal       *atomic.Int64
 	invalidMsgTotal *atomic.Int64
@@ -63,7 +63,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 		defer func() {
 			gatewaySvr.clientTotal.Add(-1)
-			gatewaySvr.clientManager.Remove(sess.device.DeviceId)
+			gatewaySvr.sessionManager.Remove(sess.device.DeviceId)
 			global.Logger.Debugf("Device disconnected: %s %v", sess.device.DeviceId, err)
 		}()
 
@@ -110,10 +110,10 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	wsConn.SetSession(sess)
 
-	sessions := gatewaySvr.clientManager.GetByUserId(sess.device.UserId)
+	sessions := gatewaySvr.sessionManager.GetByUserId(sess.device.UserId)
 	sessions = append(sessions, sess)
 
-	gatewaySvr.clientManager.Save(sess.device.UserId, sessions)
+	gatewaySvr.sessionManager.Save(sess.device.UserId, sessions)
 
 	gatewaySvr.workerPool.Go(func(device *model.Device) func() {
 		return func() {
@@ -154,7 +154,7 @@ func InitGatewayServer(ip string, ports []string) error {
 		heartbeatTotal:  &atomic.Int64{},
 		invalidMsgTotal: &atomic.Int64{},
 		clientTotal:     &atomic.Int64{},
-		clientManager:   new(manager),
+		sessionManager:  new(manager),
 		keepaliveTime:   time.Minute * 5,
 	}
 

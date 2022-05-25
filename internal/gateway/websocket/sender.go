@@ -32,8 +32,8 @@ func (its *SendHandler) HandleMessage(m *nsq.Message) error {
 			switch msg.ToType {
 			case model.ToUser:
 				{
-					fromSess := gatewaySvr.clientManager.GetByUserId(msg.FromId)
-					toSess := gatewaySvr.clientManager.GetByUserId(msg.ToId)
+					fromSess := gatewaySvr.sessionManager.GetByUserId(msg.FromId)
+					toSess := gatewaySvr.sessionManager.GetByUserId(msg.ToId)
 
 					allSess := append([]*session{}, fromSess...)
 					allSess = append([]*session{}, toSess...)
