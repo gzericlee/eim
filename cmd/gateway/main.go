@@ -19,11 +19,11 @@ import (
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-gateway"
-	app.Usage = "EIM消息总线-网关服务"
+	app.Usage = "EIM-网关服务"
 	app.Authors = []*cli.Author{
 		{
-			Name:  "LiRui",
-			Email: "lirui@gz-mstc.com",
+			Name:  "EricLee",
+			Email: "80889048@qq.com",
 		},
 	}
 	ParseFlags(app)
