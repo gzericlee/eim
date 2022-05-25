@@ -1,0 +1,9 @@
+FROM alpine:3.11.5
+
+WORKDIR /opt/
+
+COPY ./eim_seq .
+
+EXPOSE 10000
+
+CMD ["./eim_seq"]

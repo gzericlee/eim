@@ -1,0 +1,9 @@
+FROM alpine:3.11.5
+
+WORKDIR /opt/
+
+COPY ./eim_mock .
+
+RUN echo 'net.ipv4.ip_local_port_range = 1024 65535' >> /etc/sysctl.conf
+
+CMD ["./eim_mock"]

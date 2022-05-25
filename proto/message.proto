@@ -1,0 +1,19 @@
+syntax = "proto3";
+package pb;
+option go_package = "/pb";
+
+message Message {
+  string msgId = 1;
+  int64 seqId = 2;
+  int64 msgType = 3;
+  string content = 4;
+  int64 fromType = 5;
+  string fromId = 6;
+  string fromName = 7;
+  string fromDevice = 8;
+  int64 toType = 9;
+  string toId = 10;
+  string toName = 11;
+  string toDevice = 12;
+  int64 sendTime = 13;
+}

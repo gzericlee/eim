@@ -1,0 +1,107 @@
+version: "3.8"
+
+services:
+  redis-cluster:
+    image: redis:6
+    networks:
+      redis:
+        ipv4_address: 172.19.0.2
+    command: redis-cli --cluster create -a "pass@word1" 172.19.0.11:7001 172.19.0.12:7002 172.19.0.13:7003 172.19.0.14:7004 172.19.0.15:7005 172.19.0.16:7006 --cluster-replicas 1  --cluster-yes
+    depends_on:
+      - redis-1
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+      - redis-6
+
+  redis-1:
+    image: redis:6
+    restart: always
+    networks:
+      redis:
+        ipv4_address: 172.19.0.11
+    ports:
+      - "7001:7001"
+      - "17001:17001"
+    volumes:
+      - ./config/redis/redis-1/redis.conf:/etc/redis/redis.conf
+      - ./data/redis/redis-1:/data
+    command: redis-server /etc/redis/redis.conf
+
+  redis-2:
+    image: redis:6
+    restart: always
+    networks:
+      redis:
+        ipv4_address: 172.19.0.12
+    ports:
+      - "7002:7002"
+      - "17002:17002"
+    volumes:
+      - ./config/redis/redis-2/redis.conf:/etc/redis/redis.conf
+      - ./data/redis/redis-2:/data
+    command: redis-server /etc/redis/redis.conf
+
+  redis-3:
+    image: redis:6
+    restart: always
+    networks:
+      redis:
+        ipv4_address: 172.19.0.13
+    ports:
+      - "7003:7003"
+      - "17003:17003"
+    volumes:
+      - ./config/redis/redis-3/redis.conf:/etc/redis/redis.conf
+      - ./data/redis/redis-3:/data
+    command: redis-server /etc/redis/redis.conf
+
+  redis-4:
+    image: redis:6
+    restart: always
+    networks:
+      redis:
+        ipv4_address: 172.19.0.14
+    ports:
+      - "7004:7004"
+      - "17004:17004"
+    volumes:
+      - ./config/redis/redis-4/redis.conf:/etc/redis/redis.conf
+      - ./data/redis/redis-4:/data
+    command: redis-server /etc/redis/redis.conf
+
+  redis-5:
+    image: redis:6
+    restart: always
+    networks:
+      redis:
+        ipv4_address: 172.19.0.15
+    ports:
+      - "7005:7005"
+      - "17005:17005"
+    volumes:
+      - ./config/redis/redis-5/redis.conf:/etc/redis/redis.conf
+      - ./data/redis/redis-5:/data
+    command: redis-server /etc/redis/redis.conf
+
+  redis-6:
+    image: redis:6
+    restart: always
+    networks:
+      redis:
+        ipv4_address: 172.19.0.16
+    ports:
+      - "7006:7006"
+      - "17006:17006"
+    volumes:
+      - ./config/redis/redis-6/redis.conf:/etc/redis/redis.conf
+      - ./data/redis/redis-6:/data
+    command: redis-server /etc/redis/redis.conf
+    
+networks:
+  redis:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16

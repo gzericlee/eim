@@ -1,0 +1,10 @@
+.idea
+.vs
+/vendor
+/go.sum
+/scripts/deploy/eim-docker-compose/data
+/scripts/deploy/eim-docker-compose/config
+
+/scripts/deploy/tidb-docker-compose/data
+
+*.log
