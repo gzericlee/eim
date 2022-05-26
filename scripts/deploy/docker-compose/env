@@ -1,3 +1,7 @@
+# global
+export EIM_DATA_DIR=${PWD}/../data
+export EIM_CONFIG_DIR=${PWD}/../config
+
 # service
 export MOCK_REPLICAS=10
 export GATEWAY_REPLICAS=1

@@ -18,7 +18,7 @@ services:
       nsq:
         ipv4_address: 172.20.0.11
     volumes:
-      - "./data/nsq/nsqd-1:/usr/local/nsq/bin/data"
+      - ${EIM_DATA_DIR}/nsq/nsqd-1:/usr/local/nsq/bin/data
     ports:
       - "4150:4150"
       - "4151:4151"
@@ -31,7 +31,7 @@ services:
       nsq:
         ipv4_address: 172.20.0.12
     volumes:
-      - "./data/nsq/nsqd-2:/usr/local/nsq/bin/data"
+      - ${EIM_DATA_DIR}/nsq/nsqd-2:/usr/local/nsq/bin/data
     ports:
       - "4250:4250"
       - "4251:4251"
@@ -44,7 +44,7 @@ services:
       nsq:
         ipv4_address: 172.20.0.13
     volumes:
-      - "./data/nsq/nsqd-3:/usr/local/nsq/bin/data"
+      - ${EIM_DATA_DIR}/nsq/nsqd-3:/usr/local/nsq/bin/data
     ports:
       - "4350:4350"
       - "4351:4351"
