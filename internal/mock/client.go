@@ -3,7 +3,6 @@ package mock
 import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 
-	"eim/global"
 	"eim/internal/protocol"
 )
 
@@ -27,20 +26,16 @@ func newUpgrader() *websocket.Upgrader {
 		case protocol.Ack:
 			{
 				ackCount.Add(1)
-				//global.Logger.Debugf("Ack: %v", string(data))
 			}
 		case protocol.Message:
 			{
 				msgCount.Add(1)
-				//global.Logger.Debugf("Message: %v", string(data))
 			}
 		}
 	})
 
 	u.OnClose(func(conn *websocket.Conn, err error) {
 		connectedCount.Add(-1)
-		client := conn.Session().(*client)
-		global.Logger.Debugf("Device closed: %v - %v，%v", client.userId, client.deviceId, err)
 	})
 
 	return u

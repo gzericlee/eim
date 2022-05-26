@@ -14,5 +14,5 @@ type systemPool struct {
 
 func init() {
 	SystemPool = &systemPool{}
-	SystemPool.FixedNoOrderPool = taskpool.NewFixedNoOrderPool(runtime.NumCPU()*5, 1024)
+	SystemPool.FixedNoOrderPool = taskpool.NewFixedNoOrderPool(runtime.NumCPU(), 1024)
 }

@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"eim/global"
 	"eim/internal/redis"
 )
@@ -48,7 +50,6 @@ func (its *Id) generate() {
 			_ = its.reload()
 		}
 		its.min++
-		//global.Logger.Debugf("Cache seq id: %v ~ %v", its.min, its.max)
 		its.ch <- its.min
 	}
 }
@@ -59,13 +60,13 @@ func (its *Id) reload() error {
 	for {
 		seq, err := redis.GetSegmentSeq(its.userId)
 		if err != nil {
-			global.Logger.Warnf("Error geting Seq %v : %v", its.userId, err)
+			global.Logger.Error("Error getting Seq", zap.String("userId", its.userId), zap.Error(err))
 			time.Sleep(time.Second)
 			continue
 		}
 		its.min = seq.MaxId
 		its.max = seq.MaxId + int64(seq.Step)
-		global.Logger.Infof("Reload new seq segment: %v - %v ~ %v", its.userId, its.min, its.max)
+		global.Logger.Info("Reload new seq segment", zap.String("userId", its.userId), zap.Int64("min", its.min), zap.Int64("max", its.max))
 		return nil
 	}
 }

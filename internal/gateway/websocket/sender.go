@@ -3,6 +3,7 @@ package websocket
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nsqio/go-nsq"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/protocol"
@@ -24,7 +25,7 @@ func (its *SendHandler) HandleMessage(m *nsq.Message) error {
 			msg := &pb.Message{}
 			err := proto.Unmarshal(m.Body, msg)
 			if err != nil {
-				global.Logger.Warnf("Error deserializeing message: %v", err)
+				global.Logger.Error("Error deserializing message", zap.Error(err))
 				m.Finish()
 				return
 			}

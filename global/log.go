@@ -15,7 +15,7 @@ func InitLogger() {
 		ConsoleEnabled: true,
 		ConsoleLevel:   SystemConfig.LogLevel,
 		ConsoleJson:    false,
-		FileEnabled:    true,
+		FileEnabled:    false,
 		FileLevel:      "DEBUG",
 		FileJson:       false,
 		Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",

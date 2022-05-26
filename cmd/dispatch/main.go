@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"eim/build"
 	"eim/global"
@@ -38,13 +39,13 @@ func newCliApp() *cli.App {
 		for {
 			err := producer.InitProducers(global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Errorf("Error createing Nsq %v producers: %v", global.SystemConfig.Nsq.Endpoints.Value(), err)
+				global.Logger.Error("Error creating Nsq producers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Created Nsq producers successful")
+		global.Logger.Info("Created Nsq producers successful")
 
 		//初始化Nsq消费者
 		for {
@@ -52,15 +53,15 @@ func newCliApp() *cli.App {
 				model.MessageDispatchTopic: []string{model.MessageDispatchChannel},
 			}, global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Errorf("Error createing Nsq consumers %v", err)
+				global.Logger.Error("Error creating Nsq consumers", zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Created Nsq consumers successful")
+		global.Logger.Info("Created Nsq consumers successful")
 
-		global.Logger.Infof("%v service started successful", build.ServiceName)
+		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		select {}
 

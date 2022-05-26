@@ -6,18 +6,19 @@ import (
 	"net/url"
 	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/lesismal/nbio/extension/tls"
 	"github.com/lesismal/nbio/logging"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"github.com/lesismal/nbio/taskpool"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/protocol"
@@ -71,11 +72,11 @@ func Do() {
 					t.Render()
 
 					if sentCount.Load() == msgCount.Load() && msgCount.Load() != 0 {
-						global.Logger.Infof("Mock is over，Connection %v : %v，Send %v : %v",
+						global.Logger.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
 							global.SystemConfig.Mock.ClientCount,
 							connectedConsume,
 							global.SystemConfig.Mock.ClientCount*global.SystemConfig.Mock.MessageCount,
-							time.Since(sendStart))
+							time.Since(sendStart)))
 						return
 					}
 				}
@@ -91,7 +92,7 @@ func Do() {
 	}
 
 	wg := sync.WaitGroup{}
-	pool := taskpool.New(runtime.NumCPU()*5, time.Minute)
+	pool := taskpool.New(runtime.NumCPU(), time.Minute)
 
 	connectionStart = time.Now()
 
@@ -100,19 +101,22 @@ func Do() {
 		pool.Go(func(i int) func() {
 			return func() {
 				defer wg.Done()
-				id := strconv.Itoa(i)
+				id := uuid.New().String()
 				u := url.URL{Scheme: "ws", Host: global.SystemConfig.Mock.EimEndpoints.Value()[i%len(global.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
 				var userId, deviceId, deviceName, deviceVersion, deviceType string
 
-				userId = "user_" + id + "_" + global.SystemConfig.LocalIp
-				deviceId = "device_" + id + "_" + global.SystemConfig.LocalIp
-				deviceName = "linux_" + id + "_" + global.SystemConfig.LocalIp
+				userId = "user_" + id
+				deviceId = "device_" + id
+				deviceName = "linux_" + id
 				deviceVersion = "1.0.0"
 				deviceType = model.LinuxDevice
 
 				dialer := &websocket.Dialer{
 					Engine:   engine,
 					Upgrader: newUpgrader(),
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true,
+					},
 				}
 
 				var conn *websocket.Conn
@@ -125,7 +129,7 @@ func Do() {
 						"DeviceType":    []string{deviceType},
 					})
 					if err != nil {
-						global.Logger.Errorf("Error connecting remote server: %v，%v", u.String(), err)
+						global.Logger.Error("Error connecting remote server", zap.String("endpoint", u.String()), zap.Error(err))
 						time.Sleep(time.Second)
 						continue
 					}
@@ -179,7 +183,7 @@ func Do() {
 						body, _ := proto.Marshal(msg)
 						err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))
 						if err != nil {
-							global.Logger.Warnf("Error sending message: %s，%s", cli.conn.LocalAddr(), err)
+							global.Logger.Warn("Error sending message", zap.Error(err))
 							return
 						}
 						sentCount.Add(1)

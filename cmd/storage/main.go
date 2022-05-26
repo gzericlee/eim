@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"eim/build"
 	"eim/global"
@@ -39,25 +40,25 @@ func newCliApp() *cli.App {
 		for {
 			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
 			if err != nil {
-				global.Logger.Errorf("Error connecting to Redis cluster %v : %v", global.SystemConfig.Redis.Endpoints.Value(), err)
+				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Connected Redis cluster successful")
+		global.Logger.Info("Connected Redis cluster successful")
 
 		//初始化Tidb
 		for {
 			err := maindb.InitDBEngine(global.SystemConfig.MainDB.Driver, global.SystemConfig.MainDB.Connection)
 			if err != nil {
-				global.Logger.Errorf("Error connecting to Tidb %v : %v", global.SystemConfig.MainDB.Connection, err)
+				global.Logger.Error("Error connecting to Tidb", zap.String("endpoint", global.SystemConfig.MainDB.Connection), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Connected Tidb successful")
+		global.Logger.Info("Connected Tidb successful")
 
 		//初始化Nsq消费者
 		for {
@@ -66,15 +67,15 @@ func newCliApp() *cli.App {
 				model.MessageStoreTopic: []string{model.MessageStoreChannel},
 			}, global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Errorf("Error createing Nsq %v consumers: %v", global.SystemConfig.Nsq.Endpoints.Value(), err)
+				global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Created Nsq consumers successful")
+		global.Logger.Info("Created Nsq consumers successful")
 
-		global.Logger.Infof("%v service started successful", build.ServiceName)
+		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		select {}
 

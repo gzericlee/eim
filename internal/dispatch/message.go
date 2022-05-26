@@ -3,6 +3,7 @@ package dispatch
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nsqio/go-nsq"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/nsq/producer"
@@ -23,7 +24,7 @@ func (its *MessageHandler) HandleMessage(m *nsq.Message) error {
 			msg := &pb.Message{}
 			err := proto.Unmarshal(m.Body, msg)
 			if err != nil {
-				global.Logger.Warnf("Error deserializeing message: %v", err)
+				global.Logger.Error("Error deserializing message", zap.Error(err))
 				m.Finish()
 				return
 			}
@@ -32,14 +33,14 @@ func (its *MessageHandler) HandleMessage(m *nsq.Message) error {
 
 			err = producer.PublishAsync(model.MessageStoreTopic, m.Body)
 			if err != nil {
-				global.Logger.Warnf("Error publishing message: %v", err)
+				global.Logger.Error("Error publishing message", zap.Error(err))
 				m.Requeue(-1)
 				return
 			}
 
 			err = producer.PublishAsync(model.MessageSendTopic, m.Body)
 			if err != nil {
-				global.Logger.Warnf("Error publishing message: %v", err)
+				global.Logger.Error("Error publishing message", zap.Error(err))
 				m.Requeue(-1)
 				return
 			}

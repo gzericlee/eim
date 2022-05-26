@@ -3,9 +3,9 @@ package consumer
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/nsqio/go-nsq"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/dispatch"
@@ -26,7 +26,7 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 	for _, endpoint := range endpoints {
 		nodes, err = api.GetNodes(endpoint)
 		if err != nil {
-			global.Logger.Warnf("Error geting Nsq %v nodes: %v", endpoint, err)
+			global.Logger.Warn("Error getting Nsq nodes", zap.String("endpoint", endpoint), zap.Error(err))
 			continue
 		}
 		break
@@ -42,7 +42,7 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 			if err != nil {
 				return err
 			}
-			global.Logger.Infof("Created Nsq %v topic %v", httpAddr, topic)
+			global.Logger.Info("Created Nsq topic", zap.String("endpoint", httpAddr), zap.String("topic", topic))
 		}
 		for _, channel := range channels {
 			for _, node := range nodes {
@@ -51,12 +51,12 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 				if err != nil {
 					return err
 				}
-				global.Logger.Infof("Created Nsq %v channel %v - %v", httpAddr, topic, channel)
+				global.Logger.Info("Created Nsq channel", zap.String("endpoint", httpAddr), zap.String("topic", topic), zap.String("channel", channel))
 			}
 
 			consumer, err := nsq.NewConsumer(topic, channel, config)
 			if err != nil {
-				global.Logger.Errorf("Error createing Nsq consumer %v - %v: %s", topic, channel, err)
+				global.Logger.Error("Error creating Nsq consumer", zap.String("topic", topic), zap.String("channel", channel), zap.Error(err))
 				return err
 			}
 			consumer.SetLogger(nil, 0)
@@ -82,8 +82,7 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 
 			err = consumer.ConnectToNSQLookupds(endpoints)
 			if err != nil {
-				global.Logger.Errorf("Error connecting to Nsq %v : %s", endpoints, err)
-				time.Sleep(time.Second)
+				return err
 			}
 
 			consumers.Store(fmt.Sprintf("%v - %v", topic, channel), consumer)

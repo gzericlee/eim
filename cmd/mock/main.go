@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"sort"
 	"syscall"
+
+	"go.uber.org/zap"
 
 	"eim/build"
 	"eim/global"
@@ -32,16 +36,20 @@ func newCliApp() *cli.App {
 		//初始化日志
 		global.InitLogger()
 
-		global.Logger.Infof("Mock service endpoints: %v", global.SystemConfig.Mock.EimEndpoints.Value())
-		global.Logger.Infof("Mock client count: %v", global.SystemConfig.Mock.ClientCount)
-		global.Logger.Infof("Mock one client sent message count: %v", global.SystemConfig.Mock.MessageCount)
+		global.Logger.Info("EIM Gateway", zap.Strings("endpoints", global.SystemConfig.Mock.EimEndpoints.Value()))
+		global.Logger.Info("Mock info", zap.Int("client_number", global.SystemConfig.Mock.ClientCount), zap.Int("send_number", global.SystemConfig.Mock.MessageCount))
 
-		global.Logger.Infof("%v service started successful", build.ServiceName)
+		l, err := net.Listen("tcp", ":0")
+		if err != nil {
+			return err
+		}
+		global.Logger.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
+
+		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		mock.Do()
 
-		select {}
-
+		return http.Serve(l, nil)
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
 	return app

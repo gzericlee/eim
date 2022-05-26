@@ -12,6 +12,7 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"github.com/lesismal/nbio/taskpool"
 	"go.uber.org/atomic"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/nsq/producer"
@@ -64,7 +65,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			gatewaySvr.clientTotal.Add(-1)
 			gatewaySvr.sessionManager.Remove(sess.device.DeviceId)
-			global.Logger.Debugf("Device disconnected: %s %v", sess.device.DeviceId, err)
+			global.Logger.Debug("Device disconnected", zap.String("deviceId", sess.device.DeviceId), zap.Error(err))
 		}()
 
 		if !sess.verified {
@@ -80,7 +81,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 				body, _ := device.Serialize()
 				err = producer.PublishAsync(model.DeviceStoreTopic, body)
 				if err != nil {
-					global.Logger.Warnf("Error publishing message: %v", err)
+					global.Logger.Error("Error publishing message", zap.Error(err))
 					return
 				}
 			}
@@ -89,7 +90,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := u.Upgrade(w, r, nil)
 	if err != nil {
-		global.Logger.Errorf("Error upgrading websocket protocol: %s", err.Error())
+		global.Logger.Error("Error upgrading websocket protocol", zap.Error(err))
 		return
 	}
 	wsConn := conn.(*websocket.Conn)
@@ -120,7 +121,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 			body, _ := device.Serialize()
 			err = producer.PublishAsync(model.DeviceStoreTopic, body)
 			if err != nil {
-				global.Logger.Warnf("Error publishing message: %v", err)
+				global.Logger.Warn("Error publishing message", zap.Error(err))
 				_ = wsConn.Close()
 				return
 			}
@@ -129,7 +130,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	gatewaySvr.clientTotal.Add(1)
 
-	global.Logger.Debugf("Device login successful: %s，%s，%s", sess.device.UserId, sess.device.DeviceId, sess.device.DeviceVersion)
+	global.Logger.Debug("Device login successful", zap.String("userId", sess.device.UserId), zap.String("deviceId", sess.device.DeviceId), zap.String("version", sess.device.DeviceVersion))
 }
 
 func InitGatewayServer(ip string, ports []string) error {
@@ -141,10 +142,7 @@ func InitGatewayServer(ip string, ports []string) error {
 		return err
 	}
 
-	pool := taskpool.NewFixedPool(runtime.NumCPU()*5, 1024)
-	//pool, err := ants.NewPool(runtime.NumCPU()*1000, ants.WithNonblocking(true), ants.WithPreAlloc(true), ants.WithPanicHandler(func(i interface{}) {
-	//	global.Logger.Errorf("Panic with worker pool: %v", i)
-	//}))
+	pool := taskpool.NewFixedPool(runtime.NumCPU(), 1024)
 
 	gatewaySvr = &server{
 		ports:           ports,
@@ -182,7 +180,7 @@ func InitGatewayServer(ip string, ports []string) error {
 
 	printWebSocketServiceDetail()
 
-	global.Logger.Infof("Listening Websocket from %v : %v", ip, ports)
+	global.Logger.Info("Listening websocket connect", zap.String("ip", ip), zap.Strings("ports", ports))
 
 	return nil
 }

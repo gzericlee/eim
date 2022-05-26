@@ -5,7 +5,7 @@ NOW=$(date '+%Y-%m-%dT%H:%M:%S')
 
 go build -o dist/eim_gateway -tags netgo -ldflags \
 "-s -w
--X eim/build.ServiceName=EMB-Gateway
+-X eim/build.ServiceName=EIM-Gateway
 -X eim/build.Branch=${BRANCH:-master}
 -X eim/build.Commit=${COMMIT:-dev}
 -X eim/build.Date=${NOW}" \
@@ -13,7 +13,7 @@ go build -o dist/eim_gateway -tags netgo -ldflags \
 
 go build -o dist/eim_storage -tags netgo -ldflags \
 "-s -w
--X eim/build.ServiceName=EMB-Storage
+-X eim/build.ServiceName=EIM-Storage
 -X eim/build.Branch=${BRANCH:-master}
 -X eim/build.Commit=${COMMIT:-dev}
 -X eim/build.Date=${NOW}" \
@@ -21,7 +21,7 @@ go build -o dist/eim_storage -tags netgo -ldflags \
 
 go build -o dist/eim_dispatch -tags netgo -ldflags \
 "-s -w
--X eim/build.ServiceName=EMB-Dispatch
+-X eim/build.ServiceName=EIM-Dispatch
 -X eim/build.Branch=${BRANCH:-master}
 -X eim/build.Commit=${COMMIT:-dev}
 -X eim/build.Date=${NOW}" \
@@ -29,7 +29,7 @@ go build -o dist/eim_dispatch -tags netgo -ldflags \
 
 go build -o dist/eim_seq -tags netgo -ldflags \
 "-s -w
--X eim/build.ServiceName=EMB-Seq
+-X eim/build.ServiceName=EIM-Seq
 -X eim/build.Branch=${BRANCH:-master}
 -X eim/build.Commit=${COMMIT:-dev}
 -X eim/build.Date=${NOW}" \
@@ -37,7 +37,7 @@ go build -o dist/eim_seq -tags netgo -ldflags \
 
 go build -o dist/eim_mock -tags netgo -ldflags \
 "-s -w
--X eim/build.ServiceName=EMB-Mock
+-X eim/build.ServiceName=EIM-Mock
 -X eim/build.Branch=${BRANCH:-master}
 -X eim/build.Commit=${COMMIT:-dev}
 -X eim/build.Date=${NOW}" \

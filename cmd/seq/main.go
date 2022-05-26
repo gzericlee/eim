@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"eim/build"
 	"eim/global"
@@ -38,23 +39,23 @@ func newCliApp() *cli.App {
 		for {
 			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
 			if err != nil {
-				global.Logger.Errorf("Error connecting to Redis cluster %v : %v", global.SystemConfig.Redis.Endpoints.Value(), err)
+				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Connected Redis cluster successful")
+		global.Logger.Info("Connected Redis cluster successful")
 
 		//开启Rpc服务
 		go func() {
-			err := seq.InitSeqServer(global.SystemConfig.LocalIp, global.SystemConfig.SeqSvr.RpcPort)
+			err := seq.InitSeqServer("0.0.0.0", global.SystemConfig.SeqSvr.RpcPort)
 			if err != nil {
-				global.Logger.Errorf("Seq server startup error: %s", err)
+				global.Logger.Error("Error starting Seq server", zap.Int("port", global.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
 			}
 		}()
 
-		global.Logger.Infof("%v service started successful", build.ServiceName)
+		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		select {}
 

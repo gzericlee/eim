@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nsqio/go-nsq"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/redis"
@@ -28,19 +29,19 @@ func (its *DeviceHandler) HandleMessage(m *nsq.Message) error {
 
 			err = mainDb.SaveDevice(device)
 			if err != nil {
-				global.Logger.Warnf("Error inserting into Tidb: %v", err)
+				global.Logger.Error("Error inserting into Tidb", zap.Error(err))
 				m.Requeue(-1)
 				return
 			}
 
 			err = redis.Set(fmt.Sprintf("%v:device:%v", device.UserId, device.DeviceId), m.Body)
 			if err != nil {
-				global.Logger.Warnf("Error saving into Redis cluster: %v", err)
+				global.Logger.Error("Error saving into Redis cluster", zap.Error(err))
 				m.Requeue(-1)
 				return
 			}
 
-			global.Logger.Infof("Store device: %v - %v", device.UserId, device.DeviceId)
+			global.Logger.Info("Store device", zap.String("userId", device.UserId), zap.String("deviceId", device.DeviceId))
 
 			m.Finish()
 		}

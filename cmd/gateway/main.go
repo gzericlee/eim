@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"sort"
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"eim/build"
 	"eim/global"
@@ -36,22 +40,22 @@ func newCliApp() *cli.App {
 		global.InitLogger()
 
 		//开启WS服务
-		err := websocket.InitGatewayServer(global.SystemConfig.LocalIp, global.SystemConfig.Gateway.WebSocketPorts.Value())
+		err := websocket.InitGatewayServer("0.0.0.0", global.SystemConfig.Gateway.WebSocketPorts.Value())
 		if err != nil {
-			global.Logger.Errorf("Gateway server startup error: %s", err)
+			global.Logger.Error("Gateway server startup error", zap.Error(err))
 		}
 
 		//初始化Nsq生产者
 		for {
 			err := producer.InitProducers(global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Errorf("Error createing Nsq %v producers: %v", global.SystemConfig.Nsq.Endpoints.Value(), err)
+				global.Logger.Error("Error creating Nsq %v producers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Created Nsq producers successful")
+		global.Logger.Info("Created Nsq producers successful")
 
 		//初始化Nsq消费者
 		for {
@@ -59,17 +63,23 @@ func newCliApp() *cli.App {
 				model.MessageSendTopic: []string{global.SystemConfig.LocalIp},
 			}, global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Errorf("Error createing Nsq %v consumers: %v", global.SystemConfig.Nsq.Endpoints.Value(), err)
+				global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Infof("Created Nsq consumers successful")
+		global.Logger.Info("Created Nsq consumers successful")
 
-		global.Logger.Infof("%v service started successful", build.ServiceName)
+		l, err := net.Listen("tcp", ":0")
+		if err != nil {
+			return err
+		}
+		global.Logger.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
 
-		select {}
+		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+
+		return http.Serve(l, nil)
 
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))

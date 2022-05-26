@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/lesismal/nbio/nbhttp/websocket"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/nsq/producer"
@@ -27,7 +28,7 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 			pbMsg := &pb.Message{}
 			err := proto.Unmarshal(frame, pbMsg)
 			if err != nil {
-				global.Logger.Errorf("Illegal message: %v，%v", frame, err)
+				global.Logger.Error("Illegal message", zap.ByteString("body", frame), zap.Error(err))
 				return
 			}
 
@@ -39,7 +40,7 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 			}
 			pbMsg.SeqId, err = seqSvr.ID(uId)
 			if err != nil {
-				global.Logger.Errorf("Error geting seq id: %v，%v", pbMsg.FromId, err)
+				global.Logger.Error("Error getting seq id: %v，%v", zap.String("userId", pbMsg.FromId), zap.Error(err))
 				return
 			}
 
@@ -49,12 +50,12 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 				return func() {
 					frame, err := proto.Marshal(pbMsg)
 					if err != nil {
-						global.Logger.Warnf("Error serializing message: %v", err)
+						global.Logger.Error("Error serializing message", zap.Error(err))
 						return
 					}
 					err = producer.PublishAsync(model.MessageDispatchTopic, frame)
 					if err != nil {
-						global.Logger.Warnf("Error publishing message: %v", err)
+						global.Logger.Error("Error publishing message", zap.Error(err))
 						return
 					}
 					sess.send(protocol.Ack, []byte(pbMsg.MsgId))
@@ -63,7 +64,7 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 
 			gatewaySvr.receivedTotal.Add(1)
 
-			global.Logger.Debugf("Time consuming to process messages: %v", time.Since(start))
+			global.Logger.Debug("Time consuming to process messages", zap.Duration("duration", time.Since(start)))
 		}
 	}
 }

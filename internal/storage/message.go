@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nsqio/go-nsq"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/model"
@@ -43,12 +44,12 @@ func (its *MessageHandler) HandleMessage(m *nsq.Message) error {
 
 			err = mainDb.SaveMessage(dbMsg)
 			if err != nil {
-				global.Logger.Warnf("Error inserting into Tidb: %v", err)
+				global.Logger.Error("Error inserting into Tidb", zap.Error(err))
 				m.Requeue(-1)
 				return
 			}
 
-			global.Logger.Infof("Store message: %v - %v - %v", msg.FromId, msg.MsgId, msg.SeqId)
+			global.Logger.Info("Store message", zap.String("msgId", msg.MsgId), zap.String("fromId", msg.FromId), zap.Int64("seqId", msg.SeqId))
 
 			m.Finish()
 		}

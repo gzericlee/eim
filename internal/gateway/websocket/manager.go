@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/lesismal/nbio/nbhttp/websocket"
+	"go.uber.org/zap"
 
 	"eim/global"
 	"eim/internal/protocol"
@@ -19,10 +20,10 @@ type session struct {
 func (its *session) send(cmd int, body []byte) {
 	err := its.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(cmd, body))
 	if err != nil {
-		global.Logger.Warnf("Error sending message: %s，%s，%s", its.device.UserId, its.device.DeviceId, err)
+		global.Logger.Error("Error sending message", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId), zap.Error(err))
 		return
 	}
-	global.Logger.Debugf("Sent message to %v - %v successful", its.device.UserId, its.device.DeviceId)
+	global.Logger.Debug("Sent message successful", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId))
 }
 
 type manager struct {
