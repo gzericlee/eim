@@ -118,12 +118,16 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	gatewaySvr.sessionManager.Save(sess.device.UserId, sessions)
 
-	err = storageRpc.SaveDevice(sess.device)
-	if err != nil {
-		global.Logger.Warn("Error saving device", zap.Error(err))
-		_ = wsConn.Close()
-		return
-	}
+	gatewaySvr.workerPool.Go(func(device *model.Device) func() {
+		return func() {
+			err = storageRpc.SaveDevice(device)
+			if err != nil {
+				global.Logger.Warn("Error saving device", zap.Error(err))
+				_ = wsConn.Close()
+				return
+			}
+		}
+	}(sess.device))
 
 	gatewaySvr.clientTotal.Add(1)
 
