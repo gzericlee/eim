@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"runtime"
 
 	etcd_client "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
@@ -27,8 +28,8 @@ func NewRpcClient(etcdEndpoints []string) (*RpcClient, error) {
 	}
 
 	return &RpcClient{
-		devicePool:  client.NewXClientPool(1000, "Device", client.Failover, client.RoundRobin, d1, client.DefaultOption),
-		messagePool: client.NewXClientPool(1000, "Message", client.Failover, client.RoundRobin, d2, client.DefaultOption),
+		devicePool:  client.NewXClientPool(runtime.NumCPU(), "Device", client.Failover, client.RoundRobin, d1, client.DefaultOption),
+		messagePool: client.NewXClientPool(runtime.NumCPU(), "Message", client.Failover, client.RoundRobin, d2, client.DefaultOption),
 	}, nil
 }
 

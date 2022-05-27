@@ -2,6 +2,7 @@ package seq
 
 import (
 	"context"
+	"runtime"
 
 	etcd_client "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
@@ -16,7 +17,7 @@ func NewRpcClient(etcdEndpoints []string) (*RpcClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	pool := client.NewXClientPool(1000, "Id", client.Failover, client.RoundRobin, d, client.DefaultOption)
+	pool := client.NewXClientPool(runtime.NumCPU(), "Id", client.Failover, client.RoundRobin, d, client.DefaultOption)
 	return &RpcClient{pool: pool}, nil
 }
 
