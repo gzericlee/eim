@@ -40,7 +40,7 @@ func newCliApp() *cli.App {
 		global.InitLogger()
 
 		//开启WS服务
-		err := websocket.InitGatewayServer("0.0.0.0", global.SystemConfig.Gateway.WebSocketPorts.Value())
+		err := websocket.InitGatewayServer(global.SystemConfig.LocalIp, global.SystemConfig.Gateway.WebSocketPorts.Value())
 		if err != nil {
 			global.Logger.Error("Gateway server startup error", zap.Error(err))
 		}

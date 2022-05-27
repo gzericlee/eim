@@ -1,7 +1,6 @@
-package seq
+package storage
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -12,28 +11,13 @@ import (
 	"eim/global"
 )
 
-type Request struct {
-	UserId string
-}
-
-type Reply struct {
-	Id int64
-}
-
-type Seq int
-
-func (its *Seq) Id(ctx context.Context, req *Request, reply *Reply) error {
-	reply.Id = newId(req.UserId).Get()
-	return nil
-}
-
-func InitSeqServer(ip string, port int, etcdEndpoints []string) error {
+func InitStorageServer(ip string, port int, etcdEndpoints []string) error {
 	svr := server.NewServer()
 
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
 		ServiceAddress: fmt.Sprintf("tcp@%v:%v", ip, port),
 		EtcdServers:    etcdEndpoints,
-		BasePath:       "/eim_seq",
+		BasePath:       "/eim_storage",
 		UpdateInterval: time.Minute,
 	}
 	err := plugin.Start()
@@ -43,7 +27,12 @@ func InitSeqServer(ip string, port int, etcdEndpoints []string) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	err = svr.RegisterName("Id", new(Seq), "")
+	err = svr.RegisterName("Device", new(Device), "")
+	if err != nil {
+		return err
+	}
+
+	err = svr.RegisterName("Message", new(Message), "")
 	if err != nil {
 		return err
 	}

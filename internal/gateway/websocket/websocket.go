@@ -17,11 +17,13 @@ import (
 	"eim/global"
 	"eim/internal/nsq/producer"
 	"eim/internal/seq"
+	"eim/internal/storage"
 	"eim/model"
 )
 
 var gatewaySvr *server
-var seqSvr *seq.RpcClient
+var seqRpc *seq.RpcClient
+var storageRpc *storage.RpcClient
 
 type server struct {
 	ports           []string
@@ -116,17 +118,12 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	gatewaySvr.sessionManager.Save(sess.device.UserId, sessions)
 
-	gatewaySvr.workerPool.Go(func(device *model.Device) func() {
-		return func() {
-			body, _ := device.Serialize()
-			err = producer.PublishAsync(model.DeviceStoreTopic, body)
-			if err != nil {
-				global.Logger.Warn("Error publishing message", zap.Error(err))
-				_ = wsConn.Close()
-				return
-			}
-		}
-	}(sess.device))
+	err = storageRpc.SaveDevice(sess.device)
+	if err != nil {
+		global.Logger.Warn("Error saving device", zap.Error(err))
+		_ = wsConn.Close()
+		return
+	}
 
 	gatewaySvr.clientTotal.Add(1)
 
@@ -137,7 +134,12 @@ func InitGatewayServer(ip string, ports []string) error {
 	logging.SetLevel(logging.LevelNone)
 
 	var err error
-	seqSvr, err = seq.NewRpcClient(global.SystemConfig.SeqSvr.Endpoint)
+	seqRpc, err = seq.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
+	if err != nil {
+		return err
+	}
+
+	storageRpc, err = storage.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
 	if err != nil {
 		return err
 	}

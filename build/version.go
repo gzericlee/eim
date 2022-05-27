@@ -17,7 +17,7 @@ var (
 
 func Printf() {
 	if ServiceName == "" {
-		ServiceName = "EIM-Gateway"
+		ServiceName = "EIM-?"
 	}
 	if Branch == "" {
 		Branch = "master"

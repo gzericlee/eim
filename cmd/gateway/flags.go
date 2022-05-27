@@ -12,7 +12,7 @@ const (
 
 	NsqEndpoints = "NSQ_ENDPOINTS"
 
-	SeqEndpoint = "SEQ_ENDPOINT"
+	EtcdEndpoints = "ETCD_ENDPOINTS"
 
 	LogLevel = "LOG_LEVEL"
 )
@@ -40,12 +40,12 @@ func ParseFlags(app *cli.App) {
 			EnvVars:     []string{NsqEndpoints},
 			Destination: &global.SystemConfig.Nsq.Endpoints,
 		},
-		&cli.StringFlag{
-			Name:        "seq-endpoint",
-			Value:       "10.8.12.23:10000",
-			Usage:       "Seq server endpoint",
-			EnvVars:     []string{SeqEndpoint},
-			Destination: &global.SystemConfig.SeqSvr.Endpoint,
+		&cli.StringSliceFlag{
+			Name:        "etcd-endpoint",
+			Value:       cli.NewStringSlice("10.8.12.23:2379", "10.8.12.23:2479", "10.8.12.23:2579"),
+			Usage:       "Redis cluster endpoints",
+			EnvVars:     []string{EtcdEndpoints},
+			Destination: &global.SystemConfig.Etcd.Endpoints,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",

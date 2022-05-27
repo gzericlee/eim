@@ -23,6 +23,9 @@ type systemConfig struct {
 		Endpoints cli.StringSlice
 		Password  string
 	}
+	Etcd struct {
+		Endpoints cli.StringSlice
+	}
 	Gateway struct {
 		HttpPort       int
 		WebSocketPorts cli.StringSlice
@@ -40,7 +43,9 @@ type systemConfig struct {
 		Endpoints cli.StringSlice
 	}
 	SeqSvr struct {
-		RpcPort  int
-		Endpoint string
+		RpcPort int
+	}
+	StorageSvr struct {
+		RpcPort int
 	}
 }

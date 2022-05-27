@@ -7,11 +7,13 @@ import (
 
 	"eim/global"
 	"eim/internal/nsq/producer"
+	"eim/internal/storage"
 	"eim/model"
 	"eim/proto/pb"
 )
 
 type MessageHandler struct {
+	StorageRpc *storage.RpcClient
 }
 
 func (its *MessageHandler) HandleMessage(m *nsq.Message) error {
@@ -31,9 +33,10 @@ func (its *MessageHandler) HandleMessage(m *nsq.Message) error {
 
 			//TODO 解析消息分发
 
-			err = producer.PublishAsync(model.MessageStoreTopic, m.Body)
+			//err = producer.PublishAsync(model.MessageStoreTopic, m.Body)
+			err = its.StorageRpc.SaveMessage(msg)
 			if err != nil {
-				global.Logger.Error("Error publishing message", zap.Error(err))
+				global.Logger.Error("Error saving message", zap.Error(err))
 				m.Requeue(-1)
 				return
 			}

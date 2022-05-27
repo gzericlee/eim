@@ -49,9 +49,9 @@ func newCliApp() *cli.App {
 
 		//开启Rpc服务
 		go func() {
-			err := seq.InitSeqServer("0.0.0.0", global.SystemConfig.SeqSvr.RpcPort)
+			err := seq.InitSeqServer(global.SystemConfig.LocalIp, global.SystemConfig.SeqSvr.RpcPort, global.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error starting Seq server", zap.Int("port", global.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+				global.Logger.Error("Error starting Seq rpc server", zap.Int("port", global.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
 			}
 		}()
 

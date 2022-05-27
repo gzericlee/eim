@@ -38,7 +38,7 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 			} else {
 				uId = pbMsg.ToId
 			}
-			pbMsg.SeqId, err = seqSvr.ID(uId)
+			pbMsg.SeqId, err = seqRpc.Id(uId)
 			if err != nil {
 				global.Logger.Error("Error getting seq id: %v，%v", zap.String("userId", pbMsg.FromId), zap.Error(err))
 				return

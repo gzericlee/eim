@@ -12,9 +12,8 @@ import (
 	"eim/build"
 	"eim/global"
 	"eim/internal/database/maindb"
-	"eim/internal/nsq/consumer"
 	"eim/internal/redis"
-	"eim/model"
+	"eim/internal/storage"
 )
 
 func newCliApp() *cli.App {
@@ -61,19 +60,27 @@ func newCliApp() *cli.App {
 		global.Logger.Info("Connected Tidb successful")
 
 		//初始化Nsq消费者
-		for {
-			err := consumer.InitConsumers(map[string][]string{
-				model.DeviceStoreTopic:  []string{model.DeviceStoreChannel},
-				model.MessageStoreTopic: []string{model.MessageStoreChannel},
-			}, global.SystemConfig.Nsq.Endpoints.Value())
+		//for {
+		//	err := consumer.InitConsumers(map[string][]string{
+		//		model.DeviceStoreTopic:  []string{model.DeviceStoreChannel},
+		//		model.MessageStoreTopic: []string{model.MessageStoreChannel},
+		//	}, global.SystemConfig.Nsq.Endpoints.Value())
+		//	if err != nil {
+		//		global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+		//		time.Sleep(time.Second)
+		//		continue
+		//	}
+		//	break
+		//}
+		//global.Logger.Info("Created Nsq consumers successful")
+
+		//开启Rpc服务
+		go func() {
+			err := storage.InitStorageServer(global.SystemConfig.LocalIp, global.SystemConfig.StorageSvr.RpcPort, global.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
+				global.Logger.Error("Error starting Storage rpc server", zap.Int("port", global.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
 			}
-			break
-		}
-		global.Logger.Info("Created Nsq consumers successful")
+		}()
 
 		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 

@@ -62,17 +62,21 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 			consumer.SetLogger(nil, 0)
 
 			switch topic {
-			case model.DeviceStoreTopic:
-				{
-					consumer.AddConcurrentHandlers(&storage.DeviceHandler{}, config.MaxInFlight)
-				}
-			case model.MessageStoreTopic:
-				{
-					consumer.AddConcurrentHandlers(&storage.MessageHandler{}, config.MaxInFlight)
-				}
+			//case model.DeviceStoreTopic:
+			//	{
+			//		consumer.AddConcurrentHandlers(&storage.DeviceHandler{}, config.MaxInFlight)
+			//	}
+			//case model.MessageStoreTopic:
+			//	{
+			//		consumer.AddConcurrentHandlers(&storage.MessageHandler{}, config.MaxInFlight)
+			//	}
 			case model.MessageDispatchTopic:
 				{
-					consumer.AddConcurrentHandlers(&dispatch.MessageHandler{}, config.MaxInFlight)
+					storageRpc, err := storage.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
+					if err != nil {
+						return err
+					}
+					consumer.AddConcurrentHandlers(&dispatch.MessageHandler{StorageRpc: storageRpc}, config.MaxInFlight)
 				}
 			case model.MessageSendTopic:
 				{
