@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"eim/global"
-	"eim/internal/nsq/producer"
+	"eim/internal/auth"
 	"eim/internal/seq"
 	"eim/internal/storage"
 	"eim/model"
@@ -24,6 +24,7 @@ import (
 var gatewaySvr *server
 var seqRpc *seq.RpcClient
 var storageRpc *storage.RpcClient
+var authRpc *auth.RpcClient
 
 type server struct {
 	ports           []string
@@ -48,6 +49,12 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := authRpc.CheckToken(r.Header.Get("Token"))
+	if err != nil {
+		global.Logger.Error("Error checking token", zap.Error(err))
+		return
+	}
+
 	u := websocket.NewUpgrader()
 
 	u.OnMessage(streamHandler)
@@ -59,35 +66,29 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	u.OnClose(func(conn *websocket.Conn, err error) {
-		sess := conn.Session().(*session)
-		if sess == nil {
+		session := conn.Session().(*session)
+		if session == nil {
 			return
 		}
 
 		defer func() {
 			gatewaySvr.clientTotal.Add(-1)
-			gatewaySvr.sessionManager.Remove(sess.device.DeviceId)
-			global.Logger.Debug("Device disconnected", zap.String("deviceId", sess.device.DeviceId), zap.Error(err))
+			gatewaySvr.sessionManager.Remove(session.device.DeviceId)
+			global.Logger.Debug("Device disconnected", zap.String("deviceId", session.device.DeviceId), zap.Error(err))
 		}()
 
-		if !sess.verified {
-			return
-		}
-
 		now := time.Now().Local()
-		sess.device.OfflineAt = &now
-		sess.device.State = model.OfflineState
+		session.device.OfflineAt = &now
+		session.device.State = model.OfflineState
 
 		gatewaySvr.workerPool.Go(func(device *model.Device) func() {
 			return func() {
-				body, _ := device.Serialize()
-				err = producer.PublishAsync(model.DeviceStoreTopic, body)
+				err := storageRpc.SaveDevice(device)
 				if err != nil {
-					global.Logger.Error("Error publishing message", zap.Error(err))
-					return
+					global.Logger.Error("Error saving device", zap.Error(err))
 				}
 			}
-		}(sess.device))
+		}(session.device))
 	})
 
 	conn, err := u.Upgrade(w, r, nil)
@@ -95,43 +96,45 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 		global.Logger.Error("Error upgrading websocket protocol", zap.Error(err))
 		return
 	}
+
 	wsConn := conn.(*websocket.Conn)
 	_ = wsConn.SetReadDeadline(time.Now().Add(gatewaySvr.keepaliveTime))
 
-	//TODO 校验身份
-	sess := &session{device: &model.Device{}}
+	session := &session{device: &model.Device{}}
 	now := time.Now().Local()
-	sess.device.OnlineAt = &now
-	sess.device.DeviceId = r.Header.Get("Deviceid")
-	sess.device.UserId = r.Header.Get("Userid")
-	sess.device.DeviceVersion = r.Header.Get("Deviceversion")
-	sess.device.DeviceType = r.Header.Get("Devicetype")
-	sess.device.State = model.OnlineState
-	sess.device.GatewayIp = global.SystemConfig.LocalIp
-	sess.verified = true
-	sess.conn = wsConn
 
-	wsConn.SetSession(sess)
+	//TODO 为了方便模拟，这里直接取Header的UserId，实际应该取Auth服务返回的User
+	session.device.UserId = r.Header.Get("Userid")
+	if session.device.UserId == "" {
+		session.device.UserId = user.UserId
+	}
 
-	sessions := gatewaySvr.sessionManager.GetByUserId(sess.device.UserId)
-	sessions = append(sessions, sess)
+	session.device.OnlineAt = &now
+	session.device.DeviceId = r.Header.Get("Deviceid")
+	session.device.DeviceVersion = r.Header.Get("Deviceversion")
+	session.device.DeviceType = r.Header.Get("Devicetype")
+	session.device.State = model.OnlineState
+	session.device.GatewayIp = global.SystemConfig.LocalIp
+	session.conn = wsConn
 
-	gatewaySvr.sessionManager.Save(sess.device.UserId, sessions)
+	wsConn.SetSession(session)
+
+	sessions := gatewaySvr.sessionManager.GetByUserId(session.device.UserId)
+	sessions = append(sessions, session)
+
+	gatewaySvr.sessionManager.Save(session.device.UserId, sessions)
 
 	gatewaySvr.workerPool.Go(func(device *model.Device) func() {
 		return func() {
-			err = storageRpc.SaveDevice(device)
+			err := storageRpc.SaveDevice(device)
 			if err != nil {
 				global.Logger.Warn("Error saving device", zap.Error(err))
 				_ = wsConn.Close()
-				return
 			}
+			gatewaySvr.clientTotal.Add(1)
+			global.Logger.Debug("Device login successful", zap.String("userId", device.UserId), zap.String("deviceId", device.DeviceId), zap.String("version", device.DeviceVersion))
 		}
-	}(sess.device))
-
-	gatewaySvr.clientTotal.Add(1)
-
-	global.Logger.Debug("Device login successful", zap.String("userId", sess.device.UserId), zap.String("deviceId", sess.device.DeviceId), zap.String("version", sess.device.DeviceVersion))
+	}(session.device))
 }
 
 func InitGatewayServer(ip string, ports []string) error {
@@ -144,6 +147,11 @@ func InitGatewayServer(ip string, ports []string) error {
 	}
 
 	storageRpc, err = storage.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
+	if err != nil {
+		return err
+	}
+
+	authRpc, err = auth.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
 	if err != nil {
 		return err
 	}

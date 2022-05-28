@@ -17,19 +17,19 @@ type RpcClient struct {
 }
 
 func NewRpcClient(etcdEndpoints []string) (*RpcClient, error) {
-	d1, err := etcd_client.NewEtcdV3Discovery("/eim_storage", "Device", etcdEndpoints, false, nil)
+	d1, err := etcd_client.NewEtcdV3Discovery(basePath, servicePath1, etcdEndpoints, false, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	d2, err := etcd_client.NewEtcdV3Discovery("/eim_storage", "Message", etcdEndpoints, false, nil)
+	d2, err := etcd_client.NewEtcdV3Discovery(basePath, servicePath2, etcdEndpoints, false, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &RpcClient{
-		devicePool:  client.NewXClientPool(runtime.NumCPU(), "Device", client.Failover, client.RoundRobin, d1, client.DefaultOption),
-		messagePool: client.NewXClientPool(runtime.NumCPU(), "Message", client.Failover, client.RoundRobin, d2, client.DefaultOption),
+		devicePool:  client.NewXClientPool(runtime.NumCPU(), servicePath1, client.Failover, client.RoundRobin, d1, client.DefaultOption),
+		messagePool: client.NewXClientPool(runtime.NumCPU(), servicePath2, client.Failover, client.RoundRobin, d2, client.DefaultOption),
 	}, nil
 }
 

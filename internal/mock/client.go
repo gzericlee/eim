@@ -7,6 +7,7 @@ import (
 )
 
 type client struct {
+	token         string
 	userId        string
 	deviceId      string
 	deviceName    string

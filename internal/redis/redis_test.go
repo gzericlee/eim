@@ -2,6 +2,10 @@ package redis
 
 import (
 	"testing"
+
+	"github.com/google/uuid"
+
+	"eim/model"
 )
 
 func init() {
@@ -21,4 +25,24 @@ func TestGetDevicesById(t *testing.T) {
 	}
 	body, _ := devices[0].Serialize()
 	t.Log(len(devices), string(body), err)
+}
+
+func TestSaveUser(t *testing.T) {
+	t.Log(SaveUser(&model.User{
+		UserId:   uuid.New().String(),
+		LoginId:  "lirui",
+		UserName: "李锐",
+		Password: "pass@word1",
+		Company:  "bingo",
+		SeqId:    100,
+	}))
+}
+
+func TestGetUser(t *testing.T) {
+	user, err := GetUser("lirui", "bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(user.UserId, user.LoginId, user.UserName)
 }

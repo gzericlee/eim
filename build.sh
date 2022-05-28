@@ -42,6 +42,15 @@ go build -o dist/eim_seq -tags netgo -ldflags \
 -X eim/build.Date=${NOW}" \
 ./cmd/seq
 
+echo "Compiling eim_auth service..."
+go build -o dist/eim_auth -tags netgo -ldflags \
+"-s -w
+-X eim/build.ServiceName=EIM-Auth
+-X eim/build.Branch=${BRANCH:-master}
+-X eim/build.Commit=${COMMIT:-dev}
+-X eim/build.Date=${NOW}" \
+./cmd/auth
+
 echo "Compiling eim_mock service..."
 go build -o dist/eim_mock -tags netgo -ldflags \
 "-s -w

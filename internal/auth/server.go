@@ -1,4 +1,4 @@
-package seq
+package auth
 
 import (
 	"context"
@@ -10,29 +10,33 @@ import (
 	"go.uber.org/zap"
 
 	"eim/global"
+	"eim/model"
 )
 
 const (
-	basePath    = "/eim_seq"
-	servicePath = "Id"
+	basePath    = "/eim_auth"
+	servicePath = "Auth"
 )
 
 type Request struct {
-	UserId string
+	Token string
 }
 
 type Reply struct {
-	Id int64
+	User *model.User
 }
 
-type Seq int
-
-func (its *Seq) Id(ctx context.Context, req *Request, reply *Reply) error {
-	reply.Id = newId(req.UserId).Get()
-	return nil
+type Authentication struct {
 }
 
-func InitSeqServer(ip string, port int, etcdEndpoints []string) error {
+func (its *Authentication) CheckToken(ctx context.Context, req *Request, reply *Reply) error {
+	authenticator := newAuthenticator(mode(global.SystemConfig.AuthSvr.Mode))
+	user, err := authenticator.CheckToken(req.Token)
+	reply.User = user
+	return err
+}
+
+func InitAuthServer(ip string, port int, etcdEndpoints []string) error {
 	svr := server.NewServer()
 
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
@@ -48,7 +52,7 @@ func InitSeqServer(ip string, port int, etcdEndpoints []string) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	err = svr.RegisterName(servicePath, new(Seq), "")
+	err = svr.RegisterName(servicePath, new(Authentication), "")
 	if err != nil {
 		return err
 	}

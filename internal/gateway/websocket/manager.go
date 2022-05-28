@@ -12,9 +12,8 @@ import (
 )
 
 type session struct {
-	device   *model.Device
-	conn     *websocket.Conn
-	verified bool
+	device *model.Device
+	conn   *websocket.Conn
 }
 
 func (its *session) send(cmd int, body []byte) {

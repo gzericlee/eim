@@ -11,13 +11,19 @@ import (
 	"eim/global"
 )
 
+const (
+	basePath     = "/eim_storage"
+	servicePath1 = "Device"
+	servicePath2 = "Message"
+)
+
 func InitStorageServer(ip string, port int, etcdEndpoints []string) error {
 	svr := server.NewServer()
 
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
 		ServiceAddress: fmt.Sprintf("tcp@%v:%v", ip, port),
 		EtcdServers:    etcdEndpoints,
-		BasePath:       "/eim_storage",
+		BasePath:       basePath,
 		UpdateInterval: time.Minute,
 	}
 	err := plugin.Start()
@@ -27,12 +33,12 @@ func InitStorageServer(ip string, port int, etcdEndpoints []string) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	err = svr.RegisterName("Device", new(Device), "")
+	err = svr.RegisterName(servicePath1, new(Device), "")
 	if err != nil {
 		return err
 	}
 
-	err = svr.RegisterName("Message", new(Message), "")
+	err = svr.RegisterName(servicePath2, new(Message), "")
 	if err != nil {
 		return err
 	}

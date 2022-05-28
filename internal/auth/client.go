@@ -1,4 +1,4 @@
-package seq
+package auth
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 
 	etcd_client "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
+
+	"eim/model"
 )
 
 type RpcClient struct {
@@ -21,11 +23,11 @@ func NewRpcClient(etcdEndpoints []string) (*RpcClient, error) {
 	return &RpcClient{pool: pool}, nil
 }
 
-func (its *RpcClient) Id(userId string) (int64, error) {
+func (its *RpcClient) CheckToken(token string) (*model.User, error) {
 	reply := &Reply{}
-	err := its.pool.Get().Call(context.Background(), "Id", &Request{UserId: userId}, reply)
+	err := its.pool.Get().Call(context.Background(), "CheckToken", &Request{Token: token}, reply)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return reply.Id, nil
+	return reply.User, nil
 }

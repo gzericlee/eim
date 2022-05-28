@@ -3,19 +3,12 @@ package redis
 import (
 	"time"
 
-	"go.uber.org/zap"
-
-	"eim/global"
 	"eim/model"
 )
 
-func GetIncrSeq(userId string) int64 {
+func GetIncrSeq(userId string) (int64, error) {
 	key := userId + ":seq"
-	id, err := rdsClient.Incr(key)
-	if err != nil {
-		global.Logger.Error("Error incr seq id", zap.String("key", key), zap.Error(err))
-	}
-	return id
+	return rdsClient.Incr(key)
 }
 
 func GetSegmentSeq(userId string) (*model.Seq, error) {

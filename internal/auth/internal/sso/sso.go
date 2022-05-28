@@ -9,7 +9,7 @@ type Authenticator struct {
 	resourceId   string
 }
 
-func (its *Authenticator) VerificationToken(token string) (*model.User, error) {
+func (its *Authenticator) CheckToken(token string) (*model.User, error) {
 	//TODO 具体的SSO认证逻辑
 	return nil, nil
 }

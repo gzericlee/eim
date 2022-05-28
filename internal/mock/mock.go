@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -103,13 +104,13 @@ func Do() {
 				defer wg.Done()
 				id := uuid.New().String()
 				u := url.URL{Scheme: "ws", Host: global.SystemConfig.Mock.EimEndpoints.Value()[i%len(global.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
-				var userId, deviceId, deviceName, deviceVersion, deviceType string
 
-				userId = "user_" + id
-				deviceId = "device_" + id
-				deviceName = "linux_" + id
-				deviceVersion = "1.0.0"
-				deviceType = model.LinuxDevice
+				token := base64.StdEncoding.EncodeToString([]byte("lirui@bingo:pass@word1"))
+				userId := "user_" + id
+				deviceId := "device_" + id
+				deviceName := "linux_" + id
+				deviceVersion := "1.0.0"
+				deviceType := model.LinuxDevice
 
 				dialer := &websocket.Dialer{
 					Engine:   engine,
@@ -123,6 +124,7 @@ func Do() {
 				for {
 					conn, _, err = dialer.Dial(u.String(), http.Header{
 						"UserId":        []string{userId},
+						"Token":         []string{token},
 						"DeviceId":      []string{deviceId},
 						"DeviceName":    []string{deviceName},
 						"DeviceVersion": []string{deviceVersion},
@@ -138,6 +140,7 @@ func Do() {
 
 				cli := &client{
 					userId:        userId,
+					token:         token,
 					deviceId:      deviceId,
 					deviceName:    deviceName,
 					deviceType:    deviceType,

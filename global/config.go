@@ -48,4 +48,8 @@ type systemConfig struct {
 	StorageSvr struct {
 		RpcPort int
 	}
+	AuthSvr struct {
+		RpcPort int
+		Mode    string
+	}
 }

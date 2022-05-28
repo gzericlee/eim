@@ -11,7 +11,7 @@ import (
 
 	"eim/build"
 	"eim/global"
-	"eim/internal/nsq/consumer"
+	"eim/internal/auth"
 	"eim/internal/redis"
 )
 
@@ -46,17 +46,13 @@ func newCliApp() *cli.App {
 		}
 		global.Logger.Info("Connected Redis cluster successful")
 
-		//初始化Nsq消费者
-		for {
-			err := consumer.InitConsumers(map[string][]string{}, global.SystemConfig.Nsq.Endpoints.Value())
+		//开启Rpc服务
+		go func() {
+			err := auth.InitAuthServer(global.SystemConfig.LocalIp, global.SystemConfig.AuthSvr.RpcPort, global.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
+				global.Logger.Error("Error starting Auth rpc server", zap.Int("port", global.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
 			}
-			break
-		}
-		global.Logger.Info("Created Nsq consumers successful")
+		}()
 
 		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
