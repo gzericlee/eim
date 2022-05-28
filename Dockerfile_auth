@@ -2,6 +2,6 @@ FROM alpine:3.11.5
 
 WORKDIR /opt/
 
-COPY ./eim_seq .
+COPY ./eim_auth .
 
 CMD ["./eim_seq"]

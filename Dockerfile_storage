@@ -4,6 +4,4 @@ WORKDIR /opt/
 
 COPY ./eim_storage .
 
-EXPOSE 10000
-
 CMD ["./eim_storage"]
