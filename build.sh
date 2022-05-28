@@ -69,6 +69,7 @@ if [[ -n $1 ]] && [[ $1 == 'build_images' ]]; then
   docker build -t eim/mock -f Dockerfile_mock ./dist
   docker build -t eim/gateway -f Dockerfile_gateway ./dist
   docker build -t eim/seq -f Dockerfile_seq ./dist
+  docker build -t eim/auth -f Dockerfile_auth ./dist
   docker build -t eim/dispatch -f Dockerfile_dispatch ./dist
   docker build -t eim/storage -f Dockerfile_storage ./dist
 

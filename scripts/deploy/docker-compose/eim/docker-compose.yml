@@ -21,9 +21,18 @@ services:
       - "10080-10090"
     depends_on:
       - seq
+      - auth
+      - storage
+      - dispatch
 
   seq:
     image: "eim/seq"
+    deploy:
+      replicas: 1
+    restart: always
+
+  auth:
+    image: "eim/auth"
     deploy:
       replicas: 1
     restart: always
