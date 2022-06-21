@@ -43,11 +43,9 @@ func TestMessage_Save(t *testing.T) {
 			Content:    "",
 			FromType:   1,
 			FromId:     uuid.New().String(),
-			FromName:   uuid.New().String(),
 			FromDevice: uuid.New().String(),
 			ToType:     0,
 			ToId:       uuid.New().String(),
-			ToName:     uuid.New().String(),
 			ToDevice:   uuid.New().String(),
 			SendTime:   0,
 		}

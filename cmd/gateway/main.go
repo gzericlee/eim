@@ -17,6 +17,7 @@ import (
 	"eim/internal/gateway/websocket"
 	"eim/internal/nsq/consumer"
 	"eim/internal/nsq/producer"
+	"eim/internal/redis"
 	"eim/model"
 )
 
@@ -39,8 +40,20 @@ func newCliApp() *cli.App {
 		//初始化日志
 		global.InitLogger()
 
+		//初始化Redis连接
+		for {
+			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
+			if err != nil {
+				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				time.Sleep(time.Second)
+				continue
+			}
+			break
+		}
+		global.Logger.Info("Connected Redis cluster successful")
+
 		//开启WS服务
-		err := websocket.InitGatewayServer(global.SystemConfig.LocalIp, global.SystemConfig.Gateway.WebSocketPorts.Value())
+		err := websocket.InitWebsocketServer(global.SystemConfig.LocalIp, global.SystemConfig.Gateway.WebSocketPorts.Value())
 		if err != nil {
 			global.Logger.Error("Gateway server startup error", zap.Error(err))
 		}
@@ -60,7 +73,7 @@ func newCliApp() *cli.App {
 		//初始化Nsq消费者
 		for {
 			err := consumer.InitConsumers(map[string][]string{
-				model.MessageSendTopic: []string{global.SystemConfig.LocalIp},
+				model.MessageSendTopic: {global.SystemConfig.LocalIp},
 			}, global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
 				global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))

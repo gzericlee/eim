@@ -19,7 +19,6 @@ const (
 
 	MessageDispatchTopic = "message_dispatch"
 	MessageSendTopic     = "message_send"
-	MessageStoreTopic    = "message_store"
 )
 
 const (
@@ -31,12 +30,12 @@ const (
 )
 
 const (
-	ToUser    = 1
-	ToGroup   = 2
-	ToService = 3
+	ToUser           = 1
+	ToGroup          = 2
+	ToServiceAccount = 3
 
-	FromUser    = 1
-	FromService = 1
+	FromUser           = 1
+	FromServiceAccount = 1
 )
 
 const (

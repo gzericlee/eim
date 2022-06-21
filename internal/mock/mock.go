@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -72,7 +73,7 @@ func Do() {
 					t.AppendSeparator()
 					t.Render()
 
-					if sentCount.Load() == msgCount.Load() && msgCount.Load() != 0 {
+					if sentCount.Load() == msgCount.Load() && sentCount.Load() == int64(global.SystemConfig.Mock.ClientCount*global.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
 						global.Logger.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
 							global.SystemConfig.Mock.ClientCount,
 							connectedConsume,
@@ -93,22 +94,22 @@ func Do() {
 	}
 
 	wg := sync.WaitGroup{}
-	pool := taskpool.New(runtime.NumCPU(), time.Minute)
+	pool := taskpool.NewFixedPool(runtime.NumCPU(), 1024)
 
 	connectionStart = time.Now()
 
-	for i := 0; i < global.SystemConfig.Mock.ClientCount; i++ {
+	for i := 1; i <= global.SystemConfig.Mock.ClientCount; i++ {
 		wg.Add(1)
 		pool.Go(func(i int) func() {
 			return func() {
 				defer wg.Done()
-				id := uuid.New().String()
+				id := strconv.Itoa(i)
 				u := url.URL{Scheme: "ws", Host: global.SystemConfig.Mock.EimEndpoints.Value()[i%len(global.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
 
 				token := base64.StdEncoding.EncodeToString([]byte("lirui@bingo:pass@word1"))
-				userId := "user_" + id
-				deviceId := "device_" + id
-				deviceName := "linux_" + id
+				userId := "user-" + id
+				deviceId := "device-" + id
+				deviceName := "linux-" + id
 				deviceVersion := "1.0.0"
 				deviceType := model.LinuxDevice
 
@@ -176,11 +177,9 @@ func Do() {
 							Content:    time.Now().String(),
 							FromType:   model.FromUser,
 							FromId:     cli.userId,
-							FromName:   cli.userId,
 							FromDevice: cli.deviceId,
-							ToType:     model.ToUser,
-							ToId:       cli.userId,
-							ToName:     cli.userId,
+							ToType:     model.ToGroup,
+							ToId:       "group-1",
 							ToDevice:   cli.deviceId,
 						}
 						body, _ := proto.Marshal(msg)

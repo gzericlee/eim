@@ -18,17 +18,18 @@ const (
 )
 
 type Request struct {
-	UserId string
+	Id string
 }
 
 type Reply struct {
-	Id int64
+	Number int64
 }
 
-type Seq int
+type Seq struct {
+}
 
-func (its *Seq) Id(ctx context.Context, req *Request, reply *Reply) error {
-	reply.Id = newId(req.UserId).Get()
+func (its *Seq) Number(ctx context.Context, req *Request, reply *Reply) error {
+	reply.Number = newSeq(req.Id).Get()
 	return nil
 }
 

@@ -11,6 +11,9 @@ const (
 
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
+	RedisEndpoint = "REDIS_ENDPOINT"
+	RedisPassword = "REDIS_PASSWORD"
+
 	LogLevel = "LOG_LEVEL"
 )
 
@@ -29,6 +32,20 @@ func ParseFlags(app *cli.App) {
 			Usage:       "Redis cluster endpoints",
 			EnvVars:     []string{EtcdEndpoints},
 			Destination: &global.SystemConfig.Etcd.Endpoints,
+		},
+		&cli.StringSliceFlag{
+			Name:        "redis-endpoint",
+			Value:       cli.NewStringSlice("10.8.12.23:7001", "10.8.12.23:7002", "10.8.12.23:7003"),
+			Usage:       "Redis cluster endpoints",
+			EnvVars:     []string{RedisEndpoint},
+			Destination: &global.SystemConfig.Redis.Endpoints,
+		},
+		&cli.StringFlag{
+			Name:        "redis-password",
+			Value:       "pass@word1",
+			Usage:       "Redis passwd",
+			EnvVars:     []string{RedisPassword},
+			Destination: &global.SystemConfig.Redis.Password,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",

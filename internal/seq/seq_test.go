@@ -23,7 +23,7 @@ func init() {
 func TestID_Get(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
-		_, err := rpcClient.Id("user_1")
+		_, err := rpcClient.Number("user_1")
 		if err != nil {
 			t.Log(err)
 		} else {
@@ -36,7 +36,7 @@ func TestID_Get(t *testing.T) {
 func BenchmarkID_Get(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			rpcClient.Id("user_1")
+			rpcClient.Number("user_1")
 		}
 	})
 }

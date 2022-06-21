@@ -1,7 +1,6 @@
 package dispatch
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/nsqio/go-nsq"
 	"go.uber.org/zap"
 
@@ -9,7 +8,6 @@ import (
 	"eim/internal/nsq/producer"
 	"eim/internal/storage"
 	"eim/model"
-	"eim/proto/pb"
 )
 
 type MessageHandler struct {
@@ -23,17 +21,14 @@ func (its *MessageHandler) HandleMessage(m *nsq.Message) error {
 
 	global.SystemPool.Go(func(m *nsq.Message) func() {
 		return func() {
-			msg := &pb.Message{}
-			err := proto.Unmarshal(m.Body, msg)
+			msg := &model.Message{}
+			err := msg.Deserialize(m.Body)
 			if err != nil {
 				global.Logger.Error("Error deserializing message", zap.Error(err))
 				m.Finish()
 				return
 			}
 
-			//TODO 解析消息分发
-
-			//err = producer.PublishAsync(model.MessageStoreTopic, m.Body)
 			err = its.StorageRpc.SaveMessage(msg)
 			if err != nil {
 				global.Logger.Error("Error saving message", zap.Error(err))

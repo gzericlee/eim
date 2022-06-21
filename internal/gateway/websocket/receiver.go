@@ -11,10 +11,11 @@ import (
 	"eim/internal/nsq/producer"
 	"eim/internal/protocol"
 	"eim/model"
+	"eim/pkg/json"
 	"eim/proto/pb"
 )
 
-func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
+func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 	_ = conn.SetReadDeadline(time.Now().Add(gatewaySvr.keepaliveTime))
 
 	start := time.Now()
@@ -32,15 +33,16 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 				return
 			}
 
-			uId := ""
+			id := ""
 			if pbMsg.ToType == model.ToUser {
-				uId = pbMsg.FromId
+				id = pbMsg.FromId
 			} else {
-				uId = pbMsg.ToId
+				id = pbMsg.ToId
 			}
-			pbMsg.SeqId, err = seqRpc.Id(uId)
+
+			pbMsg.SeqId, err = seqRpc.Number(id)
 			if err != nil {
-				global.Logger.Error("Error getting seq id: %v，%v", zap.String("userId", pbMsg.FromId), zap.Error(err))
+				global.Logger.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
 				return
 			}
 
@@ -48,12 +50,12 @@ func streamHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 
 			gatewaySvr.workerPool.Go(func(sess *session, pbMsg *pb.Message) func() {
 				return func() {
-					frame, err := proto.Marshal(pbMsg)
+					body, err := json.Marshal(pbMsg)
 					if err != nil {
 						global.Logger.Error("Error serializing message", zap.Error(err))
 						return
 					}
-					err = producer.PublishAsync(model.MessageDispatchTopic, frame)
+					err = producer.PublishAsync(model.MessageDispatchTopic, body)
 					if err != nil {
 						global.Logger.Error("Error publishing message", zap.Error(err))
 						return

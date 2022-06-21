@@ -7,7 +7,7 @@ import (
 )
 
 type Seq struct {
-	UserId   string    `json:"userId"`
+	Id       string    `json:"id"`
 	MaxId    int64     `json:"maxId"`
 	Step     int       `json:"step"`
 	CreateAt time.Time `json:"createAt"`

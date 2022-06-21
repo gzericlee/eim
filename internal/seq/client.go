@@ -21,11 +21,11 @@ func NewRpcClient(etcdEndpoints []string) (*RpcClient, error) {
 	return &RpcClient{pool: pool}, nil
 }
 
-func (its *RpcClient) Id(userId string) (int64, error) {
+func (its *RpcClient) Number(id string) (int64, error) {
 	reply := &Reply{}
-	err := its.pool.Get().Call(context.Background(), "Id", &Request{UserId: userId}, reply)
+	err := its.pool.Get().Call(context.Background(), "Number", &Request{Id: id}, reply)
 	if err != nil {
 		return 0, err
 	}
-	return reply.Id, nil
+	return reply.Number, nil
 }

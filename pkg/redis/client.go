@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -18,11 +19,17 @@ type Config struct {
 
 func NewClient(config *Config) (*Client, error) {
 	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:          config.Endpoints,
-		Password:       config.Password,
-		ReadOnly:       true,
-		RouteByLatency: true,
+		Addrs:              config.Endpoints,
+		Password:           config.Password,
+		DialTimeout:        10 * time.Second,
+		ReadTimeout:        30 * time.Second,
+		WriteTimeout:       30 * time.Second,
+		MaxRedirects:       8,
+		PoolTimeout:        30 * time.Second,
+		IdleTimeout:        time.Minute,
+		IdleCheckFrequency: 100 * time.Millisecond,
 	})
+
 	err := redisClient.Ping(context.Background()).Err()
 	client := &Client{rdc: redisClient}
 	return client, err
@@ -33,20 +40,21 @@ func (its *Client) Get(key string) (string, error) {
 }
 
 func (its *Client) GetAll(key string) ([]string, error) {
+	var locker sync.RWMutex
 	var result []string
+	var cursor uint64
 	err := its.rdc.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
-		keys, err := client.Keys(ctx, key).Result()
-		if err != nil {
-			return err
-		}
-		for _, key := range keys {
-			val, err := client.Get(context.Background(), key).Result()
+		iter := client.Scan(ctx, cursor, key, 1000).Iterator()
+		for iter.Next(ctx) {
+			val, err := client.Get(context.Background(), iter.Val()).Result()
 			if err != nil {
 				return err
 			}
+			locker.Lock()
 			result = append(result, val)
+			locker.Unlock()
 		}
-		return nil
+		return iter.Err()
 	})
 	return result, err
 }

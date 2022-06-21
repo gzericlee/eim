@@ -6,18 +6,13 @@ import (
 	"eim/model"
 )
 
-func GetIncrSeq(userId string) (int64, error) {
-	key := userId + ":seq"
-	return rdsClient.Incr(key)
-}
-
-func GetSegmentSeq(userId string) (*model.Seq, error) {
-	key := userId + ":seq"
+func GetSegmentSeq(id string) (*model.Seq, error) {
+	key := id + ":seq"
 	value, _ := rdsClient.Get(key)
 	seq := &model.Seq{}
 
 	if value == "" {
-		seq.UserId = userId
+		seq.Id = id
 		seq.MaxId = 0
 		seq.Step = 1000
 		seq.CreateAt = time.Now().Local()

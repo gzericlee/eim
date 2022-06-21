@@ -16,14 +16,13 @@ import (
 
 	"eim/global"
 	"eim/internal/auth"
+	"eim/internal/nsq/producer"
 	"eim/internal/seq"
-	"eim/internal/storage"
 	"eim/model"
 )
 
 var gatewaySvr *server
 var seqRpc *seq.RpcClient
-var storageRpc *storage.RpcClient
 var authRpc *auth.RpcClient
 
 type server struct {
@@ -57,7 +56,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	u := websocket.NewUpgrader()
 
-	u.OnMessage(streamHandler)
+	u.OnMessage(receiverHandler)
 
 	u.SetPingHandler(func(conn *websocket.Conn, s string) {
 		_ = conn.SetReadDeadline(time.Now().Add(gatewaySvr.keepaliveTime))
@@ -73,7 +72,7 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 		defer func() {
 			gatewaySvr.clientTotal.Add(-1)
-			gatewaySvr.sessionManager.Remove(session.device.DeviceId)
+			gatewaySvr.sessionManager.Remove(session.device.UserId, session.device.DeviceId)
 			global.Logger.Debug("Device disconnected", zap.String("deviceId", session.device.DeviceId), zap.Error(err))
 		}()
 
@@ -83,9 +82,10 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 		gatewaySvr.workerPool.Go(func(device *model.Device) func() {
 			return func() {
-				err := storageRpc.SaveDevice(device)
+				body, _ := device.Serialize()
+				err = producer.PublishAsync(model.DeviceStoreTopic, body)
 				if err != nil {
-					global.Logger.Error("Error saving device", zap.Error(err))
+					global.Logger.Error("Error publishing device", zap.Error(err))
 				}
 			}
 		}(session.device))
@@ -119,17 +119,14 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 
 	wsConn.SetSession(session)
 
-	sessions := gatewaySvr.sessionManager.GetByUserId(session.device.UserId)
-	sessions = append(sessions, session)
-
-	gatewaySvr.sessionManager.Save(session.device.UserId, sessions)
+	gatewaySvr.sessionManager.Add(session.device.UserId, session)
 
 	gatewaySvr.workerPool.Go(func(device *model.Device) func() {
 		return func() {
-			err := storageRpc.SaveDevice(device)
+			body, _ := device.Serialize()
+			err = producer.PublishAsync(model.DeviceStoreTopic, body)
 			if err != nil {
-				global.Logger.Warn("Error saving device", zap.Error(err))
-				_ = wsConn.Close()
+				global.Logger.Error("Error publishing device", zap.Error(err))
 			}
 			gatewaySvr.clientTotal.Add(1)
 			global.Logger.Debug("Device login successful", zap.String("userId", device.UserId), zap.String("deviceId", device.DeviceId), zap.String("version", device.DeviceVersion))
@@ -137,16 +134,11 @@ func (its *server) connHandler(w http.ResponseWriter, r *http.Request) {
 	}(session.device))
 }
 
-func InitGatewayServer(ip string, ports []string) error {
+func InitWebsocketServer(ip string, ports []string) error {
 	logging.SetLevel(logging.LevelNone)
 
 	var err error
 	seqRpc, err = seq.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
-	if err != nil {
-		return err
-	}
-
-	storageRpc, err = storage.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
 	if err != nil {
 		return err
 	}

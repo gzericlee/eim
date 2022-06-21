@@ -35,11 +35,9 @@ func BenchmarkPool_Publish(b *testing.B) {
 			Content:    time.Now().String(),
 			FromType:   1,
 			FromId:     "1",
-			FromName:   "1",
 			FromDevice: "1",
 			ToType:     1,
 			ToId:       "1",
-			ToName:     "1",
 			ToDevice:   "1",
 			SendTime:   time.Now().UnixMilli(),
 		}

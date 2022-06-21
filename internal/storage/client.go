@@ -8,7 +8,6 @@ import (
 	"github.com/smallnest/rpcx/client"
 
 	"eim/model"
-	"eim/proto/pb"
 )
 
 type RpcClient struct {
@@ -38,7 +37,7 @@ func (its *RpcClient) SaveDevice(device *model.Device) error {
 	return err
 }
 
-func (its *RpcClient) SaveMessage(msg *pb.Message) error {
+func (its *RpcClient) SaveMessage(msg *model.Message) error {
 	err := its.messagePool.Get().Call(context.Background(), "Save", &MessageRequest{Message: msg}, nil)
 	return err
 }

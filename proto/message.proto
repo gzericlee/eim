@@ -9,11 +9,9 @@ message Message {
   string content = 4;
   int64 fromType = 5;
   string fromId = 6;
-  string fromName = 7;
-  string fromDevice = 8;
-  int64 toType = 9;
-  string toId = 10;
-  string toName = 11;
-  string toDevice = 12;
-  int64 sendTime = 13;
+  string fromDevice = 7;
+  int64 toType = 8;
+  string toId = 9;
+  string toDevice = 10;
+  int64 sendTime = 11;
 }

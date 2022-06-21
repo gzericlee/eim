@@ -1,15 +1,14 @@
 package redis
 
 import (
+	"strconv"
 	"testing"
-
-	"github.com/google/uuid"
 
 	"eim/model"
 )
 
 func init() {
-	_ = InitRedisClusterClient([]string{"10.8.12.23:7001", "10.8.12.23:7002", "10.8.12.23:7003"}, "pass@word1")
+	_ = InitRedisClusterClient([]string{"10.8.12.23:7001", "10.8.12.23:7002", "10.8.12.23:7003", "10.8.12.23:7004", "10.8.12.23:7005"}, "pass@word1")
 }
 
 func TestGetDeviceByDeviceId(t *testing.T) {
@@ -29,12 +28,11 @@ func TestGetDevicesById(t *testing.T) {
 
 func TestSaveUser(t *testing.T) {
 	t.Log(SaveUser(&model.User{
-		UserId:   uuid.New().String(),
+		UserId:   "1",
 		LoginId:  "lirui",
 		UserName: "李锐",
 		Password: "pass@word1",
 		Company:  "bingo",
-		SeqId:    100,
 	}))
 }
 
@@ -45,4 +43,27 @@ func TestGetUser(t *testing.T) {
 		return
 	}
 	t.Log(user.UserId, user.LoginId, user.UserName)
+}
+
+func TestSaveGroupMember(t *testing.T) {
+	for i := 1; i <= 1000; i++ {
+		t.Log(SaveGroupMember(&model.GroupMember{
+			GroupId: "group-1",
+			UserId:  "user-" + strconv.Itoa(i),
+		}))
+	}
+}
+
+func TestGetGroupMembers(t *testing.T) {
+	members, err := GetGroupMembers("group-1")
+	t.Log(len(members), members, err)
+}
+
+func BenchmarkGetGroupMembers(b *testing.B) {
+	b.N = 100000
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			GetGroupMembers("group-1")
+		}
+	})
 }

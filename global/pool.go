@@ -9,10 +9,10 @@ import (
 var SystemPool *systemPool
 
 type systemPool struct {
-	*taskpool.FixedNoOrderPool
+	*taskpool.FixedPool
 }
 
 func init() {
 	SystemPool = &systemPool{}
-	SystemPool.FixedNoOrderPool = taskpool.NewFixedNoOrderPool(runtime.NumCPU(), 1024)
+	SystemPool.FixedPool = taskpool.NewFixedPool(runtime.NumCPU()*100, 1024)
 }

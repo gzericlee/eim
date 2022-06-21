@@ -13,6 +13,7 @@ import (
 	"eim/global"
 	"eim/internal/nsq/consumer"
 	"eim/internal/nsq/producer"
+	"eim/internal/redis"
 	"eim/model"
 )
 
@@ -35,6 +36,18 @@ func newCliApp() *cli.App {
 		//初始化日志
 		global.InitLogger()
 
+		//初始化Redis连接
+		for {
+			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
+			if err != nil {
+				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				time.Sleep(time.Second)
+				continue
+			}
+			break
+		}
+		global.Logger.Info("Connected Redis cluster successful")
+
 		//初始化Nsq生产者
 		for {
 			err := producer.InitProducers(global.SystemConfig.Nsq.Endpoints.Value())
@@ -51,6 +64,7 @@ func newCliApp() *cli.App {
 		for {
 			err := consumer.InitConsumers(map[string][]string{
 				model.MessageDispatchTopic: []string{model.MessageDispatchChannel},
+				model.DeviceStoreTopic:     []string{model.DeviceStoreChannel},
 			}, global.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
 				global.Logger.Error("Error creating Nsq consumers", zap.Error(err))
