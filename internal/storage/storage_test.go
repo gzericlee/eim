@@ -6,28 +6,26 @@ import (
 
 	"github.com/google/uuid"
 
-	"eim/global"
 	"eim/internal/database/maindb"
 	"eim/internal/redis"
-	"eim/model"
-	"eim/proto/pb"
+	"eim/internal/storage/rpc"
+	"eim/internal/types"
 )
 
-var rpcClient *RpcClient
+var rpcClient *rpc.Client
 
 func init() {
-	global.InitLogger()
-	fmt.Println(maindb.InitDBEngine("mysql", "root:pass@word1@tcp(10.8.12.23:4000)/eim?charset=utf8mb4&parseTime=True&loc=Local"))
+	fmt.Println(maindb.InitDBEngine("mysql", "root:pass@word1@tcp(127.0.0.1:4000)/eim?charset=utf8mb4&parseTime=True&loc=Local"))
 	go func() {
-		fmt.Println(InitStorageServer("0.0.0.0", 10000, []string{"10.8.12.23:2379", "10.8.12.23:2479", "10.8.12.23:2579"}))
+		fmt.Println(InitStorageServer("0.0.0.0", 10000, []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}))
 	}()
 
-	err := redis.InitRedisClusterClient([]string{"10.8.12.23:7001", "10.8.12.23:7002", "10.8.12.23:7003"}, "pass@word1")
+	err := redis.InitRedisClusterClient([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"}, "pass@word1")
 	if err != nil {
 		panic(err)
 	}
 
-	rpcClient, err = NewRpcClient([]string{"10.8.12.23:2379", "10.8.12.23:2479", "10.8.12.23:2579"})
+	rpcClient, err = rpc.NewClient([]string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"})
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +34,7 @@ func init() {
 func TestMessage_Save(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
-		msg := &pb.Message{
+		msg := &types.Message{
 			MsgId:      uuid.New().String(),
 			SeqId:      1,
 			MsgType:    1,
@@ -62,7 +60,7 @@ func TestMessage_Save(t *testing.T) {
 func TestDevice_Save(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
-		device := &model.Device{
+		device := &types.Device{
 			DeviceId:      uuid.New().String(),
 			UserId:        uuid.New().String(),
 			DeviceType:    uuid.New().String(),

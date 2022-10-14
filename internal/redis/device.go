@@ -3,19 +3,24 @@ package redis
 import (
 	"fmt"
 
-	"eim/model"
+	"eim/internal/types"
 	"eim/pkg/json"
 )
 
-func GetDevicesById(userId string) ([]*model.Device, error) {
+func SaveUserDevice(device *types.Device) error {
+	body, _ := device.Serialize()
+	return rdsClient.Set(fmt.Sprintf("%v:device:%v", device.UserId, device.DeviceId), body, 0)
+}
+
+func GetUserDevices(userId string) ([]*types.Device, error) {
 	values, err := rdsClient.GetAll(fmt.Sprintf("%v:device:*", userId))
 	if err != nil {
 		return nil, err
 	}
-	var devices []*model.Device
+	var devices []*types.Device
 	for _, value := range values {
-		device := &model.Device{}
-		err = json.Unmarshal([]byte(value), device)
+		device := &types.Device{}
+		err = device.Deserialize([]byte(value))
 		if err != nil {
 			continue
 		}
@@ -24,12 +29,12 @@ func GetDevicesById(userId string) ([]*model.Device, error) {
 	return devices, err
 }
 
-func GetDeviceById(userId, deviceId string) (*model.Device, error) {
+func GetUserDevice(userId, deviceId string) (*types.Device, error) {
 	value, err := rdsClient.Get(fmt.Sprintf("%v:device:%v", userId, deviceId))
 	if err != nil {
 		return nil, err
 	}
-	device := &model.Device{}
+	device := &types.Device{}
 	err = json.Unmarshal([]byte(value), device)
 	return device, err
 }

@@ -7,7 +7,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
-	"eim/model"
+	"eim/internal/types"
 )
 
 const (
@@ -22,8 +22,8 @@ type tidbRepository struct {
 }
 
 type Db interface {
-	SaveDevice(device *model.Device) error
-	SaveMessage(msg *model.Message) error
+	SaveDevice(device *types.Device) error
+	SaveMessage(msg *types.Message) error
 }
 
 func NewMainDB() Db {
@@ -51,7 +51,7 @@ func InitDBEngine(driver, dns string) error {
 			db.SetMaxIdleConns(100)
 			db.SetMaxOpenConns(200)
 
-			_ = tidb.AutoMigrate(&model.Device{}, &model.Message{})
+			_ = tidb.AutoMigrate(&types.Device{}, &types.Message{})
 
 			return nil
 		}

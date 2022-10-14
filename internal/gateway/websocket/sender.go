@@ -4,10 +4,10 @@ import (
 	"github.com/nsqio/go-nsq"
 	"go.uber.org/zap"
 
-	"eim/global"
+	"eim/internal/pool"
 	"eim/internal/protocol"
-	"eim/internal/redis"
-	"eim/model"
+	"eim/internal/types"
+	"eim/pkg/log"
 )
 
 var workerCount = make(chan struct{}, 100000)
@@ -21,12 +21,12 @@ func (its *SendHandler) HandleMessage(m *nsq.Message) error {
 		return nil
 	}
 
-	global.SystemPool.Go(func(m *nsq.Message) func() {
+	pool.SystemPool.Go(func(m *nsq.Message) func() {
 		return func() {
-			msg := &model.Message{}
+			msg := &types.Message{}
 			err := msg.Deserialize(m.Body)
 			if err != nil {
-				global.Logger.Error("Error deserializing message", zap.Error(err))
+				log.Error("Error deserializing message", zap.Error(err))
 				m.Finish()
 				return
 			}
@@ -36,30 +36,6 @@ func (its *SendHandler) HandleMessage(m *nsq.Message) error {
 			sessions := gatewaySvr.sessionManager.Get(msg.FromId)
 			for _, session := range sessions {
 				allSession = append(allSession, session)
-			}
-
-			switch msg.ToType {
-			case model.ToUser:
-				{
-					sessions := gatewaySvr.sessionManager.Get(msg.ToId)
-					for _, session := range sessions {
-						allSession = append(allSession, session)
-					}
-				}
-			case model.ToGroup:
-				{
-					members, err := redis.GetGroupMembers(msg.ToId)
-					if err != nil {
-						global.Logger.Error("Error getting Group members", zap.String("groupId", msg.ToId), zap.Error(err))
-						return
-					}
-					for _, userId := range members {
-						sessions := gatewaySvr.sessionManager.Get(userId)
-						for _, session := range sessions {
-							allSession = append(allSession, session)
-						}
-					}
-				}
 			}
 
 			for _, s := range allSession {

@@ -1,7 +1,0 @@
-FROM alpine:3.11.5
-
-WORKDIR /opt/
-
-COPY ./eim_storage .
-
-CMD ["./eim_storage"]

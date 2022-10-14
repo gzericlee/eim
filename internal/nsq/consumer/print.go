@@ -10,7 +10,7 @@ import (
 
 func printConsumersDetail() {
 	go func() {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(time.Second * 5)
 		for {
 			select {
 			case <-ticker.C:

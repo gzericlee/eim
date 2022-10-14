@@ -2,10 +2,8 @@
 .vs
 /vendor
 /go.sum
-/scripts/deploy/data
-/scripts/deploy/config
-/dist
-
-/scripts/deploy/docker-compose/tidb/data
+/data
+/config
+/build/dist
 
 *.log

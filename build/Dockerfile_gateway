@@ -1,0 +1,11 @@
+FROM alpine:3.11.5
+
+WORKDIR /opt/
+
+COPY ./dist/eim_gateway .
+
+RUN echo 'net.ipv4.ip_local_port_range = 1024 65535' >> /etc/sysctl.conf
+
+EXPOSE 10080-10090
+
+CMD ["./eim_gateway"]

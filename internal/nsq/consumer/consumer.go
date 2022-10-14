@@ -7,26 +7,27 @@ import (
 	"github.com/nsqio/go-nsq"
 	"go.uber.org/zap"
 
-	"eim/global"
+	"eim/internal/config"
 	"eim/internal/dispatch"
 	"eim/internal/gateway/websocket"
 	"eim/internal/nsq/api"
-	"eim/internal/storage"
-	"eim/model"
+	storage_rpc "eim/internal/storage/rpc"
+	"eim/internal/types"
+	"eim/pkg/log"
 )
 
 var consumers sync.Map
 
 func InitConsumers(topicChannels map[string][]string, endpoints []string) error {
-	config := nsq.NewConfig()
-	config.MaxInFlight = 1000
+	cfg := nsq.NewConfig()
+	cfg.MaxInFlight = 1000
 
 	var err error
 	var nodes []*api.Node
 	for _, endpoint := range endpoints {
 		nodes, err = api.GetNodes(endpoint)
 		if err != nil {
-			global.Logger.Warn("Error getting Nsq nodes", zap.String("endpoint", endpoint), zap.Error(err))
+			log.Warn("Error getting Nsq nodes", zap.String("endpoint", endpoint), zap.Error(err))
 			continue
 		}
 		break
@@ -42,7 +43,7 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 			if err != nil {
 				return err
 			}
-			global.Logger.Info("Created Nsq topic", zap.String("endpoint", httpAddr), zap.String("topic", topic))
+			log.Info("Created Nsq topic", zap.String("endpoint", httpAddr), zap.String("topic", topic))
 		}
 		for _, channel := range channels {
 			for _, node := range nodes {
@@ -51,33 +52,37 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 				if err != nil {
 					return err
 				}
-				global.Logger.Info("Created Nsq channel", zap.String("endpoint", httpAddr), zap.String("topic", topic), zap.String("channel", channel))
+				log.Info("Created Nsq channel", zap.String("endpoint", httpAddr), zap.String("topic", topic), zap.String("channel", channel))
 			}
 
-			consumer, err := nsq.NewConsumer(topic, channel, config)
+			consumer, err := nsq.NewConsumer(topic, channel, cfg)
 			if err != nil {
-				global.Logger.Error("Error creating Nsq consumer", zap.String("topic", topic), zap.String("channel", channel), zap.Error(err))
+				log.Error("Error creating Nsq consumer", zap.String("topic", topic), zap.String("channel", channel), zap.Error(err))
 				return err
 			}
 			consumer.SetLogger(nil, 0)
 
-			storageRpc, err := storage.NewRpcClient(global.SystemConfig.Etcd.Endpoints.Value())
+			storageRpc, err := storage_rpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
 				return err
 			}
 
 			switch topic {
-			case model.DeviceStoreTopic:
+			case types.DeviceStoreTopic:
 				{
-					consumer.AddConcurrentHandlers(&dispatch.DeviceHandler{StorageRpc: storageRpc}, config.MaxInFlight)
+					consumer.AddConcurrentHandlers(&dispatch.DeviceHandler{StorageRpc: storageRpc}, cfg.MaxInFlight)
 				}
-			case model.MessageDispatchTopic:
+			case types.MessageUserDispatchTopic:
 				{
-					consumer.AddConcurrentHandlers(&dispatch.MessageHandler{StorageRpc: storageRpc}, config.MaxInFlight)
+					consumer.AddConcurrentHandlers(&dispatch.UserMessageHandler{StorageRpc: storageRpc}, cfg.MaxInFlight)
 				}
-			case model.MessageSendTopic:
+			case types.MessageGroupDispatchTopic:
 				{
-					consumer.AddConcurrentHandlers(&websocket.SendHandler{}, config.MaxInFlight)
+					consumer.AddConcurrentHandlers(&dispatch.GroupMessageHandler{StorageRpc: storageRpc}, cfg.MaxInFlight)
+				}
+			case types.MessageSendTopic:
+				{
+					consumer.AddConcurrentHandlers(&websocket.SendHandler{}, cfg.MaxInFlight)
 				}
 			}
 
@@ -90,7 +95,7 @@ func InitConsumers(topicChannels map[string][]string, endpoints []string) error 
 		}
 	}
 
-	//printConsumersDetail()
+	printConsumersDetail()
 
 	return nil
 }

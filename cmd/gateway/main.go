@@ -7,18 +7,20 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/build"
-	"eim/global"
+	"eim/internal/build"
+	"eim/internal/config"
 	"eim/internal/gateway/websocket"
 	"eim/internal/nsq/consumer"
 	"eim/internal/nsq/producer"
 	"eim/internal/redis"
-	"eim/model"
+	"eim/internal/types"
+	"eim/pkg/log"
 )
 
 func newCliApp() *cli.App {
@@ -34,63 +36,80 @@ func newCliApp() *cli.App {
 	ParseFlags(app)
 	app.Action = func(c *cli.Context) error {
 
-		//打印编译信息
+		//打印版本信息
 		build.Printf()
 
 		//初始化日志
-		global.InitLogger()
+		log.InitLogger(log.Config{
+			ConsoleEnabled: true,
+			ConsoleLevel:   config.SystemConfig.LogLevel,
+			ConsoleJson:    false,
+			FileEnabled:    false,
+			FileLevel:      config.SystemConfig.LogLevel,
+			FileJson:       false,
+			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
+			Filename:       time.Now().Format("20060102") + ".log",
+			MaxSize:        200,
+			MaxBackups:     10,
+			MaxAge:         30,
+		})
 
 		//初始化Redis连接
 		for {
-			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
+			err := redis.InitRedisClusterClient(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
 			if err != nil {
-				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				log.Error("Error connecting to Redis cluster", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Connected Redis cluster successful")
+		log.Info("Connected Redis cluster successful")
 
 		//开启WS服务
-		err := websocket.InitWebsocketServer(global.SystemConfig.LocalIp, global.SystemConfig.Gateway.WebSocketPorts.Value())
-		if err != nil {
-			global.Logger.Error("Gateway server startup error", zap.Error(err))
+		for {
+			err := websocket.InitWebsocketServer(config.SystemConfig.LocalIp, config.SystemConfig.GatewaySvr.WebSocketPorts.Value())
+			if err != nil {
+				log.Error("GatewaySvr server startup error", zap.Error(err))
+				time.Sleep(time.Second)
+				continue
+			}
+			break
 		}
 
 		//初始化Nsq生产者
 		for {
-			err := producer.InitProducers(global.SystemConfig.Nsq.Endpoints.Value())
+			err := producer.InitProducers(config.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error creating Nsq %v producers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+				log.Error("Error creating Nsq %v producers", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Created Nsq producers successful")
+		log.Info("Created Nsq producers successful")
 
 		//初始化Nsq消费者
 		for {
 			err := consumer.InitConsumers(map[string][]string{
-				model.MessageSendTopic: {global.SystemConfig.LocalIp},
-			}, global.SystemConfig.Nsq.Endpoints.Value())
+				types.MessageSendTopic: {config.SystemConfig.LocalIp},
+			}, config.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error creating Nsq consumers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+				log.Error("Error creating Nsq consumers", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Created Nsq consumers successful")
+		log.Info("Created Nsq consumers successful")
 
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
 			return err
 		}
-		global.Logger.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
+		log.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
 
-		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		return http.Serve(l, nil)
 

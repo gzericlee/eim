@@ -3,11 +3,11 @@ package redis
 import (
 	"fmt"
 
-	"eim/model"
+	"eim/internal/types"
 	"eim/pkg/json"
 )
 
-func SaveGroupMember(member *model.GroupMember) error {
+func SaveGroupMember(member *types.GroupMember) error {
 	var users []string
 	key := fmt.Sprintf("%v:members", member.GroupId)
 

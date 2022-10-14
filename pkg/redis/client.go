@@ -67,6 +67,10 @@ func (its *Client) Incr(key string) (int64, error) {
 	return its.rdc.Incr(context.Background(), key).Result()
 }
 
+func (its *Client) Decr(key string) (int64, error) {
+	return its.rdc.Decr(context.Background(), key).Result()
+}
+
 func (its *Client) Publish(channel string, msg interface{}) {
 	its.rdc.Publish(context.Background(), channel, msg)
 }

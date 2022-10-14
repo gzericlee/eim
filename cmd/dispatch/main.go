@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/build"
-	"eim/global"
+	"eim/internal/build"
+	"eim/internal/config"
 	"eim/internal/nsq/consumer"
 	"eim/internal/nsq/producer"
 	"eim/internal/redis"
-	"eim/model"
+	"eim/internal/types"
+	"eim/pkg/log"
 )
 
 func newCliApp() *cli.App {
@@ -30,52 +32,66 @@ func newCliApp() *cli.App {
 	ParseFlags(app)
 	app.Action = func(c *cli.Context) error {
 
-		//打印编译信息
+		//打印版本信息
 		build.Printf()
 
 		//初始化日志
-		global.InitLogger()
+		log.InitLogger(log.Config{
+			ConsoleEnabled: true,
+			ConsoleLevel:   config.SystemConfig.LogLevel,
+			ConsoleJson:    false,
+			FileEnabled:    false,
+			FileLevel:      config.SystemConfig.LogLevel,
+			FileJson:       false,
+			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
+			Filename:       time.Now().Format("20060102") + ".log",
+			MaxSize:        200,
+			MaxBackups:     10,
+			MaxAge:         30,
+		})
 
 		//初始化Redis连接
 		for {
-			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
+			err := redis.InitRedisClusterClient(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
 			if err != nil {
-				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				log.Error("Error connecting to Redis cluster", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Connected Redis cluster successful")
+		log.Info("Connected Redis cluster successful")
 
 		//初始化Nsq生产者
 		for {
-			err := producer.InitProducers(global.SystemConfig.Nsq.Endpoints.Value())
+			err := producer.InitProducers(config.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error creating Nsq producers", zap.Strings("endpoints", global.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+				log.Error("Error creating Nsq producers", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Created Nsq producers successful")
+		log.Info("Created Nsq producers successful")
 
 		//初始化Nsq消费者
 		for {
 			err := consumer.InitConsumers(map[string][]string{
-				model.MessageDispatchTopic: []string{model.MessageDispatchChannel},
-				model.DeviceStoreTopic:     []string{model.DeviceStoreChannel},
-			}, global.SystemConfig.Nsq.Endpoints.Value())
+				types.MessageUserDispatchTopic:  []string{types.MessageDispatchChannel},
+				types.MessageGroupDispatchTopic: []string{types.MessageDispatchChannel},
+				types.DeviceStoreTopic:          []string{types.DeviceStoreChannel},
+			}, config.SystemConfig.Nsq.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error creating Nsq consumers", zap.Error(err))
+				log.Error("Error creating Nsq consumers", zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Created Nsq consumers successful")
 
-		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info("Created Nsq consumers successful")
+
+		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		select {}
 

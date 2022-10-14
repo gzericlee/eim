@@ -59,16 +59,6 @@ type Logger struct {
 
 var defaultZapLogger *Logger
 
-func init() {
-	defaultZapLogger = newZapLogger(Config{
-		ConsoleEnabled: true,
-		ConsoleLevel:   "DEBUG",
-		ConsoleJson:    false,
-		FileEnabled:    false,
-		FileJson:       true,
-	})
-}
-
 func Debug(msg string, fields ...Field) {
 	defaultZapLogger.Debug(msg, fields...)
 }
@@ -183,7 +173,7 @@ func newZapLogger(config Config) *Logger {
 
 	core := zapcore.NewTee(cores...)
 
-	unsugared := zap.New(core).WithOptions(zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	unsugared := zap.New(core).WithOptions(zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel), zap.AddCallerSkip(2))
 	return &Logger{
 		Logger: unsugared,
 	}

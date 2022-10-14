@@ -7,11 +7,11 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/global"
 	"eim/internal/nsq/producer"
 	"eim/internal/protocol"
-	"eim/model"
+	"eim/internal/types"
 	"eim/pkg/json"
+	"eim/pkg/log"
 	"eim/proto/pb"
 )
 
@@ -29,12 +29,12 @@ func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte)
 			pbMsg := &pb.Message{}
 			err := proto.Unmarshal(frame, pbMsg)
 			if err != nil {
-				global.Logger.Error("Illegal message", zap.ByteString("body", frame), zap.Error(err))
+				log.Error("Illegal message", zap.ByteString("body", frame), zap.Error(err))
 				return
 			}
 
 			id := ""
-			if pbMsg.ToType == model.ToUser {
+			if pbMsg.ToType == types.ToUser {
 				id = pbMsg.FromId
 			} else {
 				id = pbMsg.ToId
@@ -42,7 +42,7 @@ func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte)
 
 			pbMsg.SeqId, err = seqRpc.Number(id)
 			if err != nil {
-				global.Logger.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
+				log.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
 				return
 			}
 
@@ -52,21 +52,31 @@ func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte)
 				return func() {
 					body, err := json.Marshal(pbMsg)
 					if err != nil {
-						global.Logger.Error("Error serializing message", zap.Error(err))
+						log.Error("Error serializing message", zap.Error(err))
 						return
 					}
-					err = producer.PublishAsync(model.MessageDispatchTopic, body)
+
+					topic := ""
+					switch pbMsg.ToType {
+					case types.ToUser:
+						topic = types.MessageUserDispatchTopic
+					case types.ToGroup:
+						topic = types.MessageGroupDispatchTopic
+					}
+
+					err = producer.PublishAsync(topic, body)
 					if err != nil {
-						global.Logger.Error("Error publishing message", zap.Error(err))
+						log.Error("Error publishing message", zap.Error(err))
 						return
 					}
+
 					sess.send(protocol.Ack, []byte(pbMsg.MsgId))
 				}
 			}(sess, pbMsg))
 
 			gatewaySvr.receivedTotal.Add(1)
 
-			global.Logger.Debug("Time consuming to process messages", zap.Duration("duration", time.Since(start)))
+			log.Debug("Time consuming to process messages", zap.Duration("duration", time.Since(start)))
 		}
 	}
 }

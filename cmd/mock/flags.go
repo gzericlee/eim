@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/urfave/cli/v2"
 
-	"eim/global"
+	"eim/internal/config"
 )
 
 const (
@@ -18,31 +18,31 @@ func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
 		&cli.StringSliceFlag{
 			Name:        "eim-endpoints",
-			Value:       cli.NewStringSlice("10.8.12.23:10081", "10.8.12.23:10082", "10.8.12.23:10083", "10.8.12.23:10084", "10.8.12.23:10085", "10.8.12.23:10086", "10.8.12.23:10087", "10.8.12.23:10088", "10.8.12.23:10089", "10.8.12.23:10090"),
+			Value:       cli.NewStringSlice("127.0.0.1:10081", "127.0.0.1:10082", "127.0.0.1:10083", "127.0.0.1:10084", "127.0.0.1:10085", "127.0.0.1:10086", "127.0.0.1:10087", "127.0.0.1:10088", "127.0.0.1:10089", "127.0.0.1:10090"),
 			Usage:       "EIM endpoints",
 			EnvVars:     []string{EimEndpoints},
-			Destination: &global.SystemConfig.Mock.EimEndpoints,
+			Destination: &config.SystemConfig.Mock.EimEndpoints,
 		},
 		&cli.IntFlag{
 			Name:        "client-count",
 			Value:       1,
 			Usage:       "Mock client count",
 			EnvVars:     []string{ClientCount},
-			Destination: &global.SystemConfig.Mock.ClientCount,
+			Destination: &config.SystemConfig.Mock.ClientCount,
 		},
 		&cli.IntFlag{
 			Name:        "message-count",
 			Value:       100,
 			Usage:       "Mock one client sent message count",
 			EnvVars:     []string{MessageCount},
-			Destination: &global.SystemConfig.Mock.MessageCount,
+			Destination: &config.SystemConfig.Mock.MessageCount,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",
 			Value:       "INFO",
 			Usage:       "Log level",
 			EnvVars:     []string{LogLevel},
-			Destination: &global.SystemConfig.LogLevel,
+			Destination: &config.SystemConfig.LogLevel,
 		},
 	}
 	app.Flags = append(app.Flags, flags...)

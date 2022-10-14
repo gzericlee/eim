@@ -3,13 +3,21 @@ package redis
 import (
 	"time"
 
-	"eim/model"
+	"eim/internal/types"
 )
 
-func GetSegmentSeq(id string) (*model.Seq, error) {
+func Incr(key string) (int64, error) {
+	return rdsClient.Incr(key)
+}
+
+func Decr(key string) (int64, error) {
+	return rdsClient.Decr(key)
+}
+
+func GetSegmentSeq(id string) (*types.Seq, error) {
 	key := id + ":seq"
 	value, _ := rdsClient.Get(key)
-	seq := &model.Seq{}
+	seq := &types.Seq{}
 
 	if value == "" {
 		seq.Id = id

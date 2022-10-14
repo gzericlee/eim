@@ -6,8 +6,8 @@ import (
 	"github.com/nsqio/go-nsq"
 	"go.uber.org/zap"
 
-	"eim/global"
 	"eim/internal/nsq/api"
+	"eim/pkg/log"
 )
 
 var pool *Pool
@@ -18,7 +18,7 @@ func Publish(topic string, body []byte) error {
 	if err != nil {
 		return err
 	}
-	global.Logger.Debug("Published successful", zap.String("topic", topic), zap.ByteString("body", body))
+	log.Debug("Published successful", zap.String("topic", topic), zap.ByteString("body", body))
 	return nil
 }
 
@@ -27,7 +27,7 @@ func PublishAsync(topic string, body []byte) error {
 	if err != nil {
 		return err
 	}
-	global.Logger.Debug("Published successful", zap.String("topic", topic), zap.ByteString("body", body))
+	log.Debug("Published successful", zap.String("topic", topic), zap.ByteString("body", body))
 	return nil
 }
 
@@ -38,7 +38,7 @@ func InitProducers(endpoints []string) error {
 	for _, endpoint := range endpoints {
 		nodes, err = api.GetNodes(endpoint)
 		if err != nil {
-			global.Logger.Warn("Error getting Nsq nodes", zap.String("endpoint", endpoint), zap.Error(err))
+			log.Warn("Error getting Nsq nodes", zap.String("endpoint", endpoint), zap.Error(err))
 			continue
 		}
 		break
@@ -62,7 +62,7 @@ func InitProducers(endpoints []string) error {
 	go func() {
 		for done := range doneChan {
 			if done.Error != nil {
-				global.Logger.Error("Error publishing to Nsq", zap.Error(err))
+				log.Error("Error publishing to Nsq", zap.Error(err))
 			}
 		}
 	}()

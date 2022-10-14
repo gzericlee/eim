@@ -3,6 +3,7 @@ package mock
 import (
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,9 +23,10 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
-	"eim/global"
+	"eim/internal/config"
 	"eim/internal/protocol"
-	"eim/model"
+	"eim/internal/types"
+	"eim/pkg/log"
 	"eim/proto/pb"
 )
 
@@ -73,11 +75,11 @@ func Do() {
 					t.AppendSeparator()
 					t.Render()
 
-					if sentCount.Load() == msgCount.Load() && sentCount.Load() == int64(global.SystemConfig.Mock.ClientCount*global.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
-						global.Logger.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
-							global.SystemConfig.Mock.ClientCount,
+					if sentCount.Load() == msgCount.Load() && sentCount.Load() == int64(config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
+						log.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
+							config.SystemConfig.Mock.ClientCount,
 							connectedConsume,
-							global.SystemConfig.Mock.ClientCount*global.SystemConfig.Mock.MessageCount,
+							config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount,
 							time.Since(sendStart)))
 						return
 					}
@@ -98,20 +100,20 @@ func Do() {
 
 	connectionStart = time.Now()
 
-	for i := 1; i <= global.SystemConfig.Mock.ClientCount; i++ {
+	for i := 1; i <= config.SystemConfig.Mock.ClientCount; i++ {
 		wg.Add(1)
 		pool.Go(func(i int) func() {
 			return func() {
 				defer wg.Done()
 				id := strconv.Itoa(i)
-				u := url.URL{Scheme: "ws", Host: global.SystemConfig.Mock.EimEndpoints.Value()[i%len(global.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
+				u := url.URL{Scheme: "ws", Host: config.SystemConfig.Mock.EimEndpoints.Value()[i%len(config.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
 
 				token := base64.StdEncoding.EncodeToString([]byte("lirui@bingo:pass@word1"))
 				userId := "user-" + id
 				deviceId := "device-" + id
 				deviceName := "linux-" + id
 				deviceVersion := "1.0.0"
-				deviceType := model.LinuxDevice
+				deviceType := types.LinuxDevice
 
 				dialer := &websocket.Dialer{
 					Engine:   engine,
@@ -132,7 +134,7 @@ func Do() {
 						"DeviceType":    []string{deviceType},
 					})
 					if err != nil {
-						global.Logger.Error("Error connecting remote server", zap.String("endpoint", u.String()), zap.Error(err))
+						log.Error("Error connecting remote server", zap.String("endpoint", u.String()), zap.Error(err))
 						time.Sleep(time.Second)
 						continue
 					}
@@ -165,27 +167,28 @@ func Do() {
 
 	conns.Range(func(key, value interface{}) bool {
 		go func(cli *client) {
-			var msgTotal = global.SystemConfig.Mock.MessageCount
+			var msgTotal = config.SystemConfig.Mock.MessageCount
 			ticker := time.NewTicker(time.Second)
 			for {
 				select {
 				case <-ticker.C:
 					{
+						id := strconv.Itoa(rand.Intn(999) + 1)
 						msg := &pb.Message{
 							MsgId:      uuid.New().String(),
-							MsgType:    model.TextMessage,
+							MsgType:    types.TextMessage,
 							Content:    time.Now().String(),
-							FromType:   model.FromUser,
+							FromType:   types.FromUser,
 							FromId:     cli.userId,
 							FromDevice: cli.deviceId,
-							ToType:     model.ToGroup,
-							ToId:       "group-1",
-							ToDevice:   cli.deviceId,
+							ToType:     types.ToUser,
+							ToId:       "user-" + id,
+							ToDevice:   "device-" + id,
 						}
 						body, _ := proto.Marshal(msg)
 						err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))
 						if err != nil {
-							global.Logger.Warn("Error sending message", zap.Error(err))
+							log.Warn("Error sending message", zap.Error(err))
 							return
 						}
 						sentCount.Add(1)

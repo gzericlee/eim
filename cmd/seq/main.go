@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/build"
-	"eim/global"
+	"eim/internal/build"
+	"eim/internal/config"
 	"eim/internal/redis"
 	"eim/internal/seq"
+	"eim/pkg/log"
 )
 
 func newCliApp() *cli.App {
@@ -29,33 +31,45 @@ func newCliApp() *cli.App {
 	ParseFlags(app)
 	app.Action = func(c *cli.Context) error {
 
-		//打印编译信息
+		//打印版本信息
 		build.Printf()
 
 		//初始化日志
-		global.InitLogger()
+		log.InitLogger(log.Config{
+			ConsoleEnabled: true,
+			ConsoleLevel:   config.SystemConfig.LogLevel,
+			ConsoleJson:    false,
+			FileEnabled:    false,
+			FileLevel:      config.SystemConfig.LogLevel,
+			FileJson:       false,
+			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
+			Filename:       time.Now().Format("20060102") + ".log",
+			MaxSize:        200,
+			MaxBackups:     10,
+			MaxAge:         30,
+		})
 
 		//初始化Redis连接
 		for {
-			err := redis.InitRedisClusterClient(global.SystemConfig.Redis.Endpoints.Value(), global.SystemConfig.Redis.Password)
+			err := redis.InitRedisClusterClient(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
 			if err != nil {
-				global.Logger.Error("Error connecting to Redis cluster", zap.Strings("endpoints", global.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				log.Error("Error connecting to Redis cluster", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second)
 				continue
 			}
 			break
 		}
-		global.Logger.Info("Connected Redis cluster successful")
+		log.Info("Connected Redis cluster successful")
 
 		//开启Rpc服务
 		go func() {
-			err := seq.InitSeqServer(global.SystemConfig.LocalIp, global.SystemConfig.SeqSvr.RpcPort, global.SystemConfig.Etcd.Endpoints.Value())
+			err := seq.InitSeqServer(config.SystemConfig.LocalIp, config.SystemConfig.SeqSvr.RpcPort, config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				global.Logger.Error("Error starting Seq rpc server", zap.Int("port", global.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+				log.Error("Error starting Seq rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
 			}
 		}()
 
-		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		select {}
 

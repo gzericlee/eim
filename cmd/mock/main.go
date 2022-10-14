@@ -6,15 +6,17 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"syscall"
-
-	"go.uber.org/zap"
-
-	"eim/build"
-	"eim/global"
-	"eim/internal/mock"
+	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
+
+	"eim/internal/build"
+	"eim/internal/config"
+	"eim/internal/mock"
+	"eim/pkg/log"
 )
 
 func newCliApp() *cli.App {
@@ -30,22 +32,34 @@ func newCliApp() *cli.App {
 	ParseFlags(app)
 	app.Action = func(c *cli.Context) error {
 
-		//打印编译信息
+		//打印版本信息
 		build.Printf()
 
 		//初始化日志
-		global.InitLogger()
+		log.InitLogger(log.Config{
+			ConsoleEnabled: true,
+			ConsoleLevel:   config.SystemConfig.LogLevel,
+			ConsoleJson:    false,
+			FileEnabled:    false,
+			FileLevel:      config.SystemConfig.LogLevel,
+			FileJson:       false,
+			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
+			Filename:       time.Now().Format("20060102") + ".log",
+			MaxSize:        200,
+			MaxBackups:     10,
+			MaxAge:         30,
+		})
 
-		global.Logger.Info("EIM Gateway", zap.Strings("endpoints", global.SystemConfig.Mock.EimEndpoints.Value()))
-		global.Logger.Info("Mock info", zap.Int("client_number", global.SystemConfig.Mock.ClientCount), zap.Int("send_number", global.SystemConfig.Mock.MessageCount))
+		log.Info("EIM GatewaySvr", zap.Strings("endpoints", config.SystemConfig.Mock.EimEndpoints.Value()))
+		log.Info("Mock info", zap.Int("client_number", config.SystemConfig.Mock.ClientCount), zap.Int("send_number", config.SystemConfig.Mock.MessageCount))
 
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
 			return err
 		}
-		global.Logger.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
+		log.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
 
-		global.Logger.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
 
 		mock.Do()
 

@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  gateway:
+    image: "eim/gateway"
+    deploy:
+      replicas: ${GATEWAY_REPLICAS:-1}
+    command:
+      sh -c "sysctl -p && ./eim_gateway"
+    restart: always
+    environment:
+      #10082,10083,10084,10085,10086,10087,10088,10089,10090
+      SEQ_ENDPOINT: "seq:10000"
+      WEBSOCKET_PORTS: "10081,10082,10083,10084"
+    ulimits:
+      nofile:
+        soft: 3000000
+        hard: 3000000
+    privileged: true
+    ports:
+      - "10080-10090"
+    depends_on:
+      - seq
+      - auth
+      - storage
+      - dispatch
+
+  seq:
+    image: "eim/seq"
+    deploy:
+      replicas: 1
+    restart: always
+
+  auth:
+    image: "eim/auth"
+    deploy:
+      replicas: 1
+    restart: always
+
+  dispatch:
+    image: "eim/dispatch"
+    deploy:
+      replicas: ${DISPATCH_REPLICAS:-1}
+    restart: always
+
+  storage:
+    image: "eim/storage"
+    deploy:
+      replicas: ${STORAGE_REPLICAS:-0}
+    restart: always
+    environment:
+      MAIN_DB_CONNECTION: "root:pass@word1@tcp(127.0.0.1:4000)/eim?charset=utf8mb4&parseTime=True&loc=Local"
+
+  mock:
+    image: "eim/mock"
+    deploy:
+      replicas: ${MOCK_REPLICAS:-1}
+    environment:
+      #,gateway:10082,gateway:10083,gateway:10084,gateway:10085,gateway:10086,gateway:10087,gateway:10088,gateway:10089,gateway:10090
+      EMB_ENDPOINTS: "gateway:10081,gateway:10082,gateway:10083,gateway:10084"
+      CLIENT_COUNT: "${CLIENT_COUNT:-1}"
+      MESSAGE_COUNT: "${MESSAGE_COUNT:-1}"
+    command:
+      sh -c "sysctl -p && ./eim_mock"
+    restart: always
+    ulimits:
+      nofile:
+        soft: 3000000
+        hard: 3000000
+    privileged: true
+    depends_on:
+      - gateway

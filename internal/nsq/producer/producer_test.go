@@ -9,11 +9,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/nsqio/go-nsq"
 
-	"eim/model"
+	"eim/internal/types"
 )
 
 func init() {
-	log.Println(InitProducers([]string{"10.8.12.23:4161", "10.8.12.23:4261"}))
+	log.Println(InitProducers([]string{"127.0.0.1:4161", "127.0.0.1:4261"}))
 }
 
 func BenchmarkPool_Publish(b *testing.B) {
@@ -28,7 +28,7 @@ func BenchmarkPool_Publish(b *testing.B) {
 	wg.Add(b.N)
 	time.Sleep(time.Second)
 	for i := 0; i < b.N; i++ {
-		msg := &model.Message{
+		msg := &types.Message{
 			MsgId:      uuid.New().String(),
 			SeqId:      1,
 			MsgType:    1,
