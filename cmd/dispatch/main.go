@@ -3,19 +3,20 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
-	"strings"
 	"time"
 
+	"github.com/panjf2000/ants"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/internal/build"
 	"eim/internal/config"
-	"eim/internal/nsq/consumer"
-	"eim/internal/nsq/producer"
+	"eim/internal/dispatch"
+	"eim/internal/mq"
 	"eim/internal/redis"
-	"eim/internal/types"
+	storagerpc "eim/internal/storage/rpc"
+	"eim/internal/version"
 	"eim/pkg/log"
 )
 
@@ -33,65 +34,71 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		build.Printf()
-
-		//初始化日志
-		log.InitLogger(log.Config{
-			ConsoleEnabled: true,
-			ConsoleLevel:   config.SystemConfig.LogLevel,
-			ConsoleJson:    false,
-			FileEnabled:    false,
-			FileLevel:      config.SystemConfig.LogLevel,
-			FileJson:       false,
-			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
-			Filename:       time.Now().Format("20060102") + ".log",
-			MaxSize:        200,
-			MaxBackups:     10,
-			MaxAge:         30,
-		})
-
-		//初始化Redis连接
-		for {
-			err := redis.InitRedisClusterClient(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
-			if err != nil {
-				log.Error("Error connecting to Redis cluster", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
-			}
-			break
-		}
-		log.Info("Connected Redis cluster successful")
-
-		//初始化Nsq生产者
-		for {
-			err := producer.InitProducers(config.SystemConfig.Nsq.Endpoints.Value())
-			if err != nil {
-				log.Error("Error creating Nsq producers", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
-			}
-			break
-		}
-		log.Info("Created Nsq producers successful")
+		version.Printf()
 
 		//初始化Nsq消费者
 		for {
-			err := consumer.InitConsumers(map[string][]string{
-				types.MessageUserDispatchTopic:  []string{types.MessageDispatchChannel},
-				types.MessageGroupDispatchTopic: []string{types.MessageDispatchChannel},
-				types.DeviceStoreTopic:          []string{types.DeviceStoreChannel},
-			}, config.SystemConfig.Nsq.Endpoints.Value())
+			storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				log.Error("Error creating Nsq consumers", zap.Error(err))
-				time.Sleep(time.Second)
+				log.Error("Error creating storage rpc client", zap.Strings("endpoints", config.SystemConfig.Etcd.Endpoints.Value()), zap.Error(err))
+				time.Sleep(time.Second * 5)
 				continue
 			}
+
+			redisManager, err := redis.NewManager(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
+			if err != nil {
+				log.Error("Error creating redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
+			producer, err := mq.NewProducer(config.SystemConfig.Nsq.Endpoints.Value())
+			if err != nil {
+				log.Error("Error creating mq producer", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
+			taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
+			if err != nil {
+				log.Error("Error creating task pool", zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
+			consumer, err := mq.NewConsumer(config.SystemConfig.Nsq.Endpoints.Value())
+
+			err = consumer.Subscribe(string(mq.UserMessageDispatchTopic), string(mq.MessageDispatchChannel), &dispatch.UserMessageHandler{
+				StorageRpc:   storageRpc,
+				RedisManager: redisManager,
+				Producer:     producer,
+				TaskPool:     taskPool,
+			})
+			if err != nil {
+				goto ERROR
+			}
+
+			err = consumer.Subscribe(string(mq.GroupMessageDispatchTopic), string(mq.MessageDispatchChannel), &dispatch.GroupMessageHandler{
+				StorageRpc:   storageRpc,
+				RedisManager: redisManager,
+				Producer:     producer,
+				TaskPool:     taskPool,
+			})
+			if err != nil {
+				goto ERROR
+			}
+
 			break
+
+		ERROR:
+			log.Error("Error creating mq consumers", zap.Error(err))
+			time.Sleep(time.Second * 5)
+			continue
 		}
 
-		log.Info("Created Nsq consumers successful")
+		log.Info("Created mq consumers successfully")
 
-		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
 
 		select {}
 
@@ -103,7 +110,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", build.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

@@ -32,7 +32,7 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.IntFlag{
 			Name:        "message-count",
-			Value:       100,
+			Value:       1,
 			Usage:       "Mock one client sent message count",
 			EnvVars:     []string{MessageCount},
 			Destination: &config.SystemConfig.Mock.MessageCount,

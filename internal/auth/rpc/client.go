@@ -4,26 +4,26 @@ import (
 	"context"
 	"runtime"
 
-	etcd_client "github.com/rpcxio/rpcx-etcd/client"
-	"github.com/smallnest/rpcx/client"
+	rpcx_etcd_client "github.com/rpcxio/rpcx-etcd/client"
+	rpcx_client "github.com/smallnest/rpcx/client"
 
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
 type Client struct {
-	pool *client.XClientPool
+	pool *rpcx_client.XClientPool
 }
 
 func NewClient(etcdEndpoints []string) (*Client, error) {
-	d, err := etcd_client.NewEtcdV3Discovery(basePath, servicePath, etcdEndpoints, false, nil)
+	d, err := rpcx_etcd_client.NewEtcdV3Discovery(basePath, servicePath, etcdEndpoints, false, nil)
 	if err != nil {
 		return nil, err
 	}
-	pool := client.NewXClientPool(runtime.NumCPU(), servicePath, client.Failover, client.RoundRobin, d, client.DefaultOption)
+	pool := rpcx_client.NewXClientPool(runtime.NumCPU(), servicePath, rpcx_client.Failover, rpcx_client.RoundRobin, d, rpcx_client.DefaultOption)
 	return &Client{pool: pool}, nil
 }
 
-func (its *Client) CheckToken(token string) (*types.User, error) {
+func (its *Client) CheckToken(token string) (*model.User, error) {
 	reply := &Reply{}
 	err := its.pool.Get().Call(context.Background(), "CheckToken", &Request{Token: token}, reply)
 	if err != nil {

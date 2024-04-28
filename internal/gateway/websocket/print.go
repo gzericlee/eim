@@ -9,58 +9,54 @@ import (
 
 	"eim/internal/config"
 	"eim/internal/metric"
-	"eim/internal/redis"
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
-var maxL7Cps, lastClientTotal, lastMaxL7Cps int64
+var maxL7Cps, lastClientTotal int64
 
-func printWebSocketServiceDetail() {
-	go func() {
-		ticker := time.NewTicker(time.Second * 5)
-		for {
-			select {
-			case <-ticker.C:
-				{
-					currentClientTotal := gatewaySvr.clientTotal.Load()
-					if currentClientTotal > lastClientTotal {
-						l7Cps := currentClientTotal - lastClientTotal
-						if l7Cps > maxL7Cps {
-							maxL7Cps = l7Cps
-						}
-						lastClientTotal = currentClientTotal
+func (its *Server) printServiceDetail() {
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		select {
+		case <-ticker.C:
+			{
+				if its.clientTotal > lastClientTotal {
+					l7Cps := its.clientTotal - lastClientTotal
+					if l7Cps > maxL7Cps {
+						maxL7Cps = l7Cps
 					}
-					t := table.NewWriter()
-					t.SetOutputMirror(os.Stdout)
-					t.AppendHeader(table.Row{"Devices", "L7 CPS", "Received", "Sent", "Invalid", "Heartbeat", "Goroutines"})
-					t.AppendRows([]table.Row{{
-						gatewaySvr.clientTotal.Load(),
-						maxL7Cps,
-						gatewaySvr.receivedTotal.Load(),
-						gatewaySvr.sentTotal.Load(),
-						gatewaySvr.invalidMsgTotal.Load(),
-						gatewaySvr.heartbeatTotal.Load(),
-						runtime.NumGoroutine()},
-					})
-					t.AppendSeparator()
-					t.Render()
+					lastClientTotal = its.clientTotal
+				}
+				t := table.NewWriter()
+				t.SetOutputMirror(os.Stdout)
+				t.AppendHeader(table.Row{"Devices", "L7 CPS", "Received", "Send", "Invalid", "Heartbeat", "Goroutines"})
+				t.AppendRows([]table.Row{{
+					its.clientTotal,
+					maxL7Cps,
+					its.receivedTotal,
+					its.sendTotal,
+					its.invalidMsgTotal,
+					its.heartbeatTotal,
+					runtime.NumGoroutine()},
+				})
+				t.AppendSeparator()
+				t.Render()
 
-					mMetric, _ := metric.GetMachineMetric()
-					err := redis.RegisterGateway(&types.Gateway{
-						Ip:             config.SystemConfig.LocalIp,
-						ClientTotal:    gatewaySvr.clientTotal.Load(),
-						SentTotal:      gatewaySvr.sentTotal.Load(),
-						ReceivedTotal:  gatewaySvr.receivedTotal.Load(),
-						InvalidTotal:   gatewaySvr.invalidMsgTotal.Load(),
-						GoroutineTotal: int64(runtime.NumGoroutine()),
-						MemUsed:        mMetric.MemUsed,
-						CpuUsed:        mMetric.CpuUsed,
-					})
-					if err != nil {
-						return
-					}
+				mMetric, _ := metric.GetMachineMetric()
+				err := its.redisManager.RegisterGateway(&model.Gateway{
+					Ip:             config.SystemConfig.LocalIp,
+					ClientTotal:    its.clientTotal,
+					SendTotal:      its.sendTotal,
+					ReceivedTotal:  its.receivedTotal,
+					InvalidTotal:   its.invalidMsgTotal,
+					GoroutineTotal: int64(runtime.NumGoroutine()),
+					MemUsed:        mMetric.MemUsed,
+					CpuUsed:        mMetric.CpuUsed,
+				})
+				if err != nil {
+					return
 				}
 			}
 		}
-	}()
+	}
 }

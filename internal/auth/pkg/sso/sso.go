@@ -1,7 +1,7 @@
 package sso
 
 import (
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
 type Authenticator struct {
@@ -11,7 +11,7 @@ type Authenticator struct {
 	resourceId   string
 }
 
-func (its *Authenticator) CheckToken(token string) (*types.User, error) {
+func (its *Authenticator) CheckToken(token string) (*model.User, error) {
 	//TODO 具体的SSO认证逻辑
 	return nil, nil
 }

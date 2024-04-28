@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"eim/internal/model"
 	"eim/internal/redis"
-	"eim/internal/types"
 )
 
 type Authenticator struct {
+	RedisManager *redis.Manager
 }
 
-func (its *Authenticator) CheckToken(token string) (*types.User, error) {
+func (its *Authenticator) CheckToken(token string) (*model.User, error) {
 	c, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		return nil, err
@@ -24,16 +25,16 @@ func (its *Authenticator) CheckToken(token string) (*types.User, error) {
 	}
 	passwd := cs[s+1:]
 
-	var loginId, company string
+	var loginId, tenantId string
 	uc := strings.IndexByte(cs[:s], '@')
 	if uc < 0 {
 		loginId = cs[:s]
 	} else {
 		loginId = cs[:s][:uc]
-		company = cs[:s][uc+1:]
+		tenantId = cs[:s][uc+1:]
 	}
 
-	user, err := redis.GetUser(loginId, company)
+	user, err := its.RedisManager.GetUser(loginId, tenantId)
 	if err != nil {
 		return nil, err
 	}

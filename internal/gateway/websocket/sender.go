@@ -1,29 +1,31 @@
 package websocket
 
 import (
+	"sync/atomic"
+
 	"github.com/nsqio/go-nsq"
+	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
 
-	"eim/internal/pool"
+	"eim/internal/model"
 	"eim/internal/protocol"
-	"eim/internal/types"
 	"eim/pkg/log"
 )
 
-var workerCount = make(chan struct{}, 100000)
-
 type SendHandler struct {
+	Server   *Server
+	TaskPool *ants.Pool
 }
 
 func (its *SendHandler) HandleMessage(m *nsq.Message) error {
 	if len(m.Body) == 0 {
-		gatewaySvr.invalidMsgTotal.Add(1)
+		atomic.AddInt64(&its.Server.invalidMsgTotal, 1)
 		return nil
 	}
 
-	pool.SystemPool.Go(func(m *nsq.Message) func() {
+	err := its.TaskPool.Submit(func(m *nsq.Message) func() {
 		return func() {
-			msg := &types.Message{}
+			msg := &model.Message{}
 			err := msg.Deserialize(m.Body)
 			if err != nil {
 				log.Error("Error deserializing message", zap.Error(err))
@@ -33,27 +35,23 @@ func (its *SendHandler) HandleMessage(m *nsq.Message) error {
 
 			var allSession []*session
 
-			sessions := gatewaySvr.sessionManager.Get(msg.FromId)
+			sessions := its.Server.sessionManager.Get(msg.FromId)
 			for _, session := range sessions {
 				allSession = append(allSession, session)
 			}
 
 			for _, s := range allSession {
-				//if session.device.DeviceId == msg.FromDevice {
-				//	continue
-				//}
-				workerCount <- struct{}{}
-				go func(s *session, body []byte) {
-					s.send(protocol.Message, body)
-					<-workerCount
-				}(s, m.Body)
+				s.send(protocol.Message, m.Body)
 			}
 
-			gatewaySvr.sentTotal.Add(1)
+			atomic.AddInt64(&its.Server.sendTotal, 1)
 
 			m.Finish()
 		}
 	}(m))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

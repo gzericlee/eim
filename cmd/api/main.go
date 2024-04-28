@@ -7,16 +7,14 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
 	"eim/internal/api"
-	"eim/internal/build"
 	"eim/internal/config"
-	"eim/internal/redis"
+	"eim/internal/version"
 	"eim/pkg/log"
 )
 
@@ -34,34 +32,7 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		build.Printf()
-
-		//初始化日志
-		log.InitLogger(log.Config{
-			ConsoleEnabled: true,
-			ConsoleLevel:   config.SystemConfig.LogLevel,
-			ConsoleJson:    false,
-			FileEnabled:    false,
-			FileLevel:      config.SystemConfig.LogLevel,
-			FileJson:       false,
-			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
-			Filename:       time.Now().Format("20060102") + ".log",
-			MaxSize:        200,
-			MaxBackups:     10,
-			MaxAge:         30,
-		})
-
-		//初始化Redis连接
-		for {
-			err := redis.InitRedisClusterClient(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
-			if err != nil {
-				log.Error("Error connecting to Redis cluster", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
-			}
-			break
-		}
-		log.Info("Connected Redis cluster successful")
+		version.Printf()
 
 		go func() {
 			httpServer := api.HttpServer{}
@@ -70,7 +41,7 @@ func newCliApp() *cli.App {
 				err := httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort})
 				if err != nil {
 					log.Error("ApiSvr server startup error", zap.Error(err))
-					time.Sleep(time.Second)
+					time.Sleep(time.Second * 5)
 					continue
 				}
 				break
@@ -81,9 +52,9 @@ func newCliApp() *cli.App {
 		if err != nil {
 			return err
 		}
-		log.Info("PProf service started successful", zap.String("addr", l.Addr().String()))
+		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
 
-		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
 
 		return http.Serve(l, nil)
 
@@ -95,7 +66,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", build.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

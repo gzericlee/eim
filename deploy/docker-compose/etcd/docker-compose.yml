@@ -1,9 +1,13 @@
-version: '3'
 services:
   etcd-1:
-    image: "quay.io/coreos/etcd:v3.4.7"
+    image: "quay.io/coreos/etcd:v3.5.13"
     entrypoint: /usr/local/bin/etcd
     restart: always
+    environment:
+      HTTPS_PROXY: ""
+      HTTP_PROXY: ""
+      https_proxy: ""
+      http_proxy: ""
     command:
       - '--name=etcd-1'
       - '--data-dir=/etcd_data'
@@ -26,9 +30,14 @@ services:
       - ${EIM_DATA_DIR}/etcd/etcd-1:/etcd_data
 
   etcd-2:
-    image: "quay.io/coreos/etcd:v3.4.7"
+    image: "quay.io/coreos/etcd:v3.5.13"
     entrypoint: /usr/local/bin/etcd
     restart: always
+    environment:
+      HTTPS_PROXY: ""
+      HTTP_PROXY: ""
+      https_proxy: ""
+      http_proxy: ""
     command:
       - '--name=etcd-2'
       - '--data-dir=/etcd_data'
@@ -50,9 +59,14 @@ services:
     volumes:
       - ${EIM_DATA_DIR}/etcd/etcd-2:/etcd_data
   etcd-3:
-    image: "quay.io/coreos/etcd:v3.4.7"
+    image: "quay.io/coreos/etcd:v3.5.13"
     entrypoint: /usr/local/bin/etcd
     restart: always
+    environment:
+      HTTPS_PROXY: ""
+      HTTP_PROXY: ""
+      https_proxy: ""
+      http_proxy: ""
     command:
       - '--name=etcd-3'
       - '--data-dir=/etcd_data'

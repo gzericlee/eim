@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -9,55 +8,50 @@ import (
 	"github.com/smallnest/rpcx/server"
 	"go.uber.org/zap"
 
-	"eim/internal/config"
-	"eim/internal/types"
+	"eim/internal/redis"
 	"eim/pkg/log"
 )
 
 const (
 	basePath    = "/eim_auth"
-	servicePath = "Auth"
+	servicePath = "auth"
 )
 
-type Request struct {
-	Token string
+type Config struct {
+	Ip             string
+	Port           int
+	EtcdEndpoints  []string
+	RedisEndpoints []string
+	RedisPassword  string
 }
 
-type Reply struct {
-	User *types.User
-}
-
-type Authentication struct {
-}
-
-func (its *Authentication) CheckToken(ctx context.Context, req *Request, reply *Reply) error {
-	authenticator := newAuthenticator(mode(config.SystemConfig.AuthSvr.Mode))
-	user, err := authenticator.CheckToken(req.Token)
-	reply.User = user
-	return err
-}
-
-func StartServer(ip string, port int, etcdEndpoints []string) error {
+func StartServer(cfg Config) error {
 	svr := server.NewServer()
 
+	redisManager, err := redis.NewManager(cfg.RedisEndpoints, cfg.RedisPassword)
+	if err != nil {
+		log.Error("Error connection redis cluster", zap.Error(err))
+		return err
+	}
+
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
-		ServiceAddress: fmt.Sprintf("tcp@%v:%v", ip, port),
-		EtcdServers:    etcdEndpoints,
+		ServiceAddress: fmt.Sprintf("tcp@%v:%v", cfg.Ip, cfg.Port),
+		EtcdServers:    cfg.EtcdEndpoints,
 		BasePath:       basePath,
 		UpdateInterval: time.Minute,
 	}
-	err := plugin.Start()
+	err = plugin.Start()
 	if err != nil {
 		log.Error("Error registering etcd plugin", zap.Error(err))
 		return err
 	}
 	svr.Plugins.Add(plugin)
 
-	err = svr.RegisterName(servicePath, new(Authentication), "")
+	err = svr.RegisterName(servicePath, &Authentication{RedisManager: redisManager}, "")
 	if err != nil {
 		return err
 	}
 
-	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", ip, port))
+	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
 	return err
 }

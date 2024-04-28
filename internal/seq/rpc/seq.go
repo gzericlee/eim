@@ -1,73 +1,73 @@
 package rpc
 
 import (
-	"sync"
+	"context"
+	"fmt"
 	"time"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
 
-	"eim/internal/cache"
-	"eim/internal/redis"
 	"eim/pkg/log"
 )
 
-type seq struct {
-	id       string
-	ch       chan int64
-	min, max int64
-	locker   sync.RWMutex
+type Request struct {
+	Id string
 }
 
-func newSeq(id string) *seq {
-	var s = &seq{}
-	s.locker.Lock()
-	defer s.locker.Unlock()
+type Reply struct {
+	Number int64
+}
 
-	var key = "seq_" + id
+type Seq struct {
+	etcdClient *clientv3.Client
+}
 
-	if obj, exist := cache.SystemCache.Get(key); exist {
-		s = obj.(*seq)
+func (its *Seq) Number(ctx context.Context, req *Request, reply *Reply) error {
+	if req.Id == "" {
+		return fmt.Errorf("id is empty")
+	}
+
+	session, err := concurrency.NewSession(its.etcdClient, concurrency.WithTTL(10))
+	if err != nil {
+		return fmt.Errorf("failed to create etcd session: %v", err)
+	}
+	defer session.Close()
+
+	mutex := concurrency.NewMutex(session, fmt.Sprintf("/%s/%s", basePath, req.Id))
+	for i := 0; i < 3; i++ {
+		err = mutex.Lock(ctx)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %v", err)
+	}
+	defer mutex.Unlock(ctx)
+
+	resp, err := its.etcdClient.Get(ctx, fmt.Sprintf("/%s/%s", basePath, req.Id))
+	if err != nil {
+		return fmt.Errorf("failed to get seq: %v", err)
+	}
+
+	var seq int64
+	if resp.Count == 0 {
+		seq = 1
 	} else {
-		s.id = id
-		s.ch = make(chan int64, 1)
-		go s.generate()
-		cache.SystemCache.Save(key, s)
+		seq = resp.Kvs[0].Version + 1
 	}
 
-	return s
-}
-
-func (its *seq) Get() int64 {
-	select {
-	case id := <-its.ch:
-		return id
+	_, err = its.etcdClient.Put(ctx, fmt.Sprintf("/%s/%s", basePath, req.Id), "")
+	if err != nil {
+		return fmt.Errorf("failed to update seq: %v", err)
 	}
-}
 
-func (its *seq) generate() {
-	_ = its.reload()
-	for {
-		if its.min >= its.max {
-			_ = its.reload()
-		}
-		its.min++
-		its.ch <- its.min
-	}
-}
+	reply.Number = seq
 
-func (its *seq) reload() error {
-	its.locker.Lock()
-	defer its.locker.Unlock()
-	for {
-		seq, err := redis.GetSegmentSeq(its.id)
-		if err != nil {
-			log.Error("Error getting Seq", zap.String("id", its.id), zap.Error(err))
-			time.Sleep(time.Second)
-			continue
-		}
-		its.min = seq.MaxId
-		its.max = seq.MaxId + int64(seq.Step)
-		log.Info("Reload new seq segment", zap.String("id", its.id), zap.Int64("min", its.min), zap.Int64("max", its.max))
-		return nil
-	}
+	log.Info("Get seq", zap.String("id", req.Id), zap.Int64("seq", seq))
+
+	return nil
 }

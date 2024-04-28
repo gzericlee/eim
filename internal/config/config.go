@@ -13,7 +13,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	SystemConfig = &systemConfig{LocalIp: ip}
+	SystemConfig = &systemConfig{
+		LocalIp: ip,
+	}
 }
 
 type systemConfig struct {
@@ -35,8 +37,9 @@ type systemConfig struct {
 		ClientCount  int
 		MessageCount int
 	}
-	MainDB struct {
+	Database struct {
 		Driver     string
+		Name       string
 		Connection string
 	}
 	Nsq struct {

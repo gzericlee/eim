@@ -6,8 +6,8 @@ source "${dir}"/env
 
 mkdir -p "${EIM_CONFIG_DIR}"
 mkdir -p "${EIM_DATA_DIR}"
-mkdir -p "${EIM_DATA_DIR}"/tidb
-mkdir -p "${EIM_DATA_DIR}"/tidb/logs
+
+mkdir -p "${EIM_DATA_DIR}"/mongodb
 
 for no in $(seq 1 6); do \
   mkdir -p "${EIM_CONFIG_DIR}"/redis/redis-"${no}" \
@@ -21,4 +21,5 @@ done
 
 for no in $(seq 1 3); do \
   mkdir -p "${EIM_DATA_DIR}"/etcd/etcd-"${no}"
+  sudo chmod 700 -R "${EIM_DATA_DIR}"/etcd/etcd-"${no}"
 done

@@ -24,14 +24,14 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/config"
+	"eim/internal/model"
 	"eim/internal/protocol"
-	"eim/internal/types"
 	"eim/pkg/log"
 	"eim/proto/pb"
 )
 
 var connectedCount = &atomic.Int64{}
-var sentCount = &atomic.Int64{}
+var sendCount = &atomic.Int64{}
 var ackCount = &atomic.Int64{}
 var msgCount = &atomic.Int64{}
 var hbCount = &atomic.Int64{}
@@ -52,7 +52,7 @@ func Do() {
 			select {
 			case <-ticker.C:
 				{
-					sc := sentCount.Load()
+					sc := sendCount.Load()
 					if sc > 0 && lastSent.Load() < sc {
 						sl++
 						so = sc / sl
@@ -70,18 +70,27 @@ func Do() {
 					t.SetOutputMirror(os.Stdout)
 					t.AppendHeader(table.Row{"Devices", "Send", "Send Tps", "Received", "Received Tps", "Ack", "Heartbeat", "Goroutines"})
 					t.AppendRows([]table.Row{{
-						connectedCount.Load(), sentCount.Load(), so, msgCount.Load(), ro, ackCount.Load(), hbCount.Load(), runtime.NumGoroutine(),
+						connectedCount.Load(), sendCount.Load(), so, msgCount.Load(), ro, ackCount.Load(), hbCount.Load(), runtime.NumGoroutine(),
 					}})
 					t.AppendSeparator()
 					t.Render()
 
-					if sentCount.Load() == msgCount.Load() && sentCount.Load() == int64(config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
-						log.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
-							config.SystemConfig.Mock.ClientCount,
-							connectedConsume,
-							config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount,
-							time.Since(sendStart)))
-						return
+					if config.SystemConfig.Mock.MessageCount > 0 {
+						if sendCount.Load() == msgCount.Load()/2 && sendCount.Load() == int64(config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
+							log.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
+								config.SystemConfig.Mock.ClientCount,
+								connectedConsume,
+								config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount,
+								time.Since(sendStart)))
+							return
+						}
+					} else {
+						if connectedCount.Load() == int64(config.SystemConfig.Mock.ClientCount) {
+							log.Info(fmt.Sprintf("Mock completed，Connection %v : %v",
+								config.SystemConfig.Mock.ClientCount,
+								connectedConsume))
+							return
+						}
 					}
 				}
 			}
@@ -96,7 +105,7 @@ func Do() {
 	}
 
 	wg := sync.WaitGroup{}
-	pool := taskpool.NewFixedPool(runtime.NumCPU(), 1024)
+	pool := taskpool.New(32, 1024)
 
 	connectionStart = time.Now()
 
@@ -113,7 +122,7 @@ func Do() {
 				deviceId := "device-" + id
 				deviceName := "linux-" + id
 				deviceVersion := "1.0.0"
-				deviceType := types.LinuxDevice
+				deviceType := model.LinuxDevice
 
 				dialer := &websocket.Dialer{
 					Engine:   engine,
@@ -167,41 +176,6 @@ func Do() {
 
 	conns.Range(func(key, value interface{}) bool {
 		go func(cli *client) {
-			var msgTotal = config.SystemConfig.Mock.MessageCount
-			ticker := time.NewTicker(time.Second)
-			for {
-				select {
-				case <-ticker.C:
-					{
-						id := strconv.Itoa(rand.Intn(999) + 1)
-						msg := &pb.Message{
-							MsgId:      uuid.New().String(),
-							MsgType:    types.TextMessage,
-							Content:    time.Now().String(),
-							FromType:   types.FromUser,
-							FromId:     cli.userId,
-							FromDevice: cli.deviceId,
-							ToType:     types.ToUser,
-							ToId:       "user-" + id,
-							ToDevice:   "device-" + id,
-						}
-						body, _ := proto.Marshal(msg)
-						err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))
-						if err != nil {
-							log.Warn("Error sending message", zap.Error(err))
-							return
-						}
-						sentCount.Add(1)
-						msgTotal--
-						if msgTotal == 0 {
-							return
-						}
-					}
-				}
-			}
-		}(value.(*client))
-
-		go func(cli *client) {
 			ticker := time.NewTicker(time.Second * 30)
 			for {
 				select {
@@ -214,4 +188,38 @@ func Do() {
 		}(value.(*client))
 		return true
 	})
+
+	if config.SystemConfig.Mock.MessageCount > 0 {
+		conns.Range(func(key, value interface{}) bool {
+			go func(cli *client) {
+				var msgTotal = config.SystemConfig.Mock.MessageCount
+				for {
+					id := strconv.Itoa(rand.Intn(999) + 1)
+					msg := &pb.Message{
+						MsgId:      uuid.New().String(),
+						MsgType:    model.TextMessage,
+						Content:    time.Now().String(),
+						FromType:   model.FromUser,
+						FromId:     cli.userId,
+						FromDevice: cli.deviceId,
+						ToType:     model.ToUser,
+						ToId:       "user-" + id,
+						ToDevice:   "device-" + id,
+					}
+					body, _ := proto.Marshal(msg)
+					err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))
+					if err != nil {
+						log.Warn("Error sending message", zap.Error(err))
+						return
+					}
+					sendCount.Add(1)
+					msgTotal--
+					if msgTotal == 0 {
+						return
+					}
+				}
+			}(value.(*client))
+			return true
+		})
+	}
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/emicklei/go-restful/v3"
 
 	"eim/internal/api/handler"
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
 func regExampleAPIs() *restful.WebService {
@@ -19,7 +19,7 @@ func regExampleAPIs() *restful.WebService {
 	ws.Route(ws.POST("/list").To(gatewayHandler.List).
 		Doc("获取网关列表").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
-		Writes([]*types.Gateway{}))
+		Writes([]*model.Gateway{}))
 
 	return ws
 }

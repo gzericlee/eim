@@ -1,5 +1,5 @@
 # global
-export EIM_DATA_DIR=${PWD}/data
+export EIM_DATA_DIR=/${HOME}/AppData/eim
 export EIM_CONFIG_DIR=${PWD}/config
 
 # service
@@ -13,3 +13,4 @@ export MESSAGE_COUNT=1
 export CLIENT_COUNT=50000
 
 export EXTERNAL_IP=`ip a show scope global | grep "inet " | head -n1 | awk '{print $2}' | awk -F '/' '{print $1}'`
+

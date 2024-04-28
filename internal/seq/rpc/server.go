@@ -1,12 +1,12 @@
 package rpc
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
 
 	"eim/pkg/log"
@@ -14,46 +14,45 @@ import (
 
 const (
 	basePath    = "/eim_seq"
-	servicePath = "Id"
+	servicePath = "id"
 )
 
-type Request struct {
-	Id string
+type Config struct {
+	Ip            string
+	Port          int
+	EtcdEndpoints []string
 }
 
-type Reply struct {
-	Number int64
-}
-
-type Seq struct {
-}
-
-func (its *Seq) Number(ctx context.Context, req *Request, reply *Reply) error {
-	reply.Number = newSeq(req.Id).Get()
-	return nil
-}
-
-func StartServer(ip string, port int, etcdEndpoints []string) error {
+func StartServer(cfg Config) error {
 	svr := server.NewServer()
 
+	client, err := clientv3.New(clientv3.Config{
+		Endpoints:   cfg.EtcdEndpoints,
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		log.Error("Error connecting etcd cluster", zap.Error(err))
+		return err
+	}
+
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
-		ServiceAddress: fmt.Sprintf("tcp@%v:%v", ip, port),
-		EtcdServers:    etcdEndpoints,
+		ServiceAddress: fmt.Sprintf("tcp@%v:%v", cfg.Ip, cfg.Port),
+		EtcdServers:    cfg.EtcdEndpoints,
 		BasePath:       basePath,
 		UpdateInterval: time.Minute,
 	}
-	err := plugin.Start()
+	err = plugin.Start()
 	if err != nil {
 		log.Error("Error registering etcd plugin", zap.Error(err))
 		return err
 	}
 	svr.Plugins.Add(plugin)
 
-	err = svr.RegisterName(servicePath, new(Seq), "")
+	err = svr.RegisterName(servicePath, &Seq{etcdClient: client}, "")
 	if err != nil {
 		return err
 	}
 
-	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", ip, port))
+	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
 	return err
 }

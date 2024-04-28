@@ -3,21 +3,22 @@ package rpc
 import (
 	"eim/internal/auth/pkg/basic"
 	"eim/internal/auth/pkg/sso"
-	"eim/internal/types"
+	"eim/internal/model"
+	"eim/internal/redis"
 )
 
-type mode string
+type Mode string
 
 const (
-	SSOMode   mode = "sso"
-	BasicMode mode = "basic"
+	SSOMode   Mode = "sso"
+	BasicMode Mode = "basic"
 )
 
-type authenticator interface {
-	CheckToken(token string) (*types.User, error)
+type Authenticator interface {
+	CheckToken(token string) (*model.User, error)
 }
 
-func newAuthenticator(mode mode) authenticator {
+func NewAuthenticator(mode Mode, redisManager *redis.Manager) Authenticator {
 	//TODO 参数
 	switch mode {
 	case SSOMode:
@@ -26,7 +27,7 @@ func newAuthenticator(mode mode) authenticator {
 		}
 	case BasicMode:
 		{
-			return &basic.Authenticator{}
+			return &basic.Authenticator{RedisManager: redisManager}
 		}
 	default:
 		{

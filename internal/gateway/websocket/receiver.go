@@ -1,22 +1,24 @@
 package websocket
 
 import (
+	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/internal/nsq/producer"
+	"eim/internal/model"
+	"eim/internal/mq"
 	"eim/internal/protocol"
-	"eim/internal/types"
 	"eim/pkg/json"
 	"eim/pkg/log"
 	"eim/proto/pb"
 )
 
-func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
-	_ = conn.SetReadDeadline(time.Now().Add(gatewaySvr.keepaliveTime))
+func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
+	_ = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
 
 	start := time.Now()
 	cmd, frame := protocol.WebsocketCodec.Decode(data)
@@ -29,18 +31,19 @@ func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte)
 			pbMsg := &pb.Message{}
 			err := proto.Unmarshal(frame, pbMsg)
 			if err != nil {
+				atomic.AddInt64(&its.invalidMsgTotal, 1)
 				log.Error("Illegal message", zap.ByteString("body", frame), zap.Error(err))
 				return
 			}
 
 			id := ""
-			if pbMsg.ToType == types.ToUser {
+			if pbMsg.ToType == model.ToUser {
 				id = pbMsg.FromId
 			} else {
 				id = pbMsg.ToId
 			}
 
-			pbMsg.SeqId, err = seqRpc.Number(id)
+			pbMsg.SeqId, err = its.seqRpc.Number(id)
 			if err != nil {
 				log.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
 				return
@@ -48,7 +51,7 @@ func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte)
 
 			pbMsg.SendTime = time.Now().UnixNano()
 
-			gatewaySvr.workerPool.Go(func(sess *session, pbMsg *pb.Message) func() {
+			its.workerPool.Go(func(sess *session, pbMsg *pb.Message) func() {
 				return func() {
 					body, err := json.Marshal(pbMsg)
 					if err != nil {
@@ -56,25 +59,21 @@ func receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte)
 						return
 					}
 
-					topic := ""
-					switch pbMsg.ToType {
-					case types.ToUser:
-						topic = types.MessageUserDispatchTopic
-					case types.ToGroup:
-						topic = types.MessageGroupDispatchTopic
+					if topic, exist := mq.MessageTopics[strconv.FormatInt(pbMsg.ToType, 10)]; exist {
+						err = its.producer.Publish(string(topic), body)
+						if err != nil {
+							log.Error("Error publishing message", zap.Error(err))
+							return
+						}
+						sess.send(protocol.Ack, []byte(pbMsg.MsgId))
+					} else {
+						atomic.AddInt64(&its.invalidMsgTotal, 1)
+						log.Error("Illegal message", zap.ByteString("body", body))
 					}
-
-					err = producer.PublishAsync(topic, body)
-					if err != nil {
-						log.Error("Error publishing message", zap.Error(err))
-						return
-					}
-
-					sess.send(protocol.Ack, []byte(pbMsg.MsgId))
 				}
 			}(sess, pbMsg))
 
-			gatewaySvr.receivedTotal.Add(1)
+			atomic.AddInt64(&its.receivedTotal, 1)
 
 			log.Debug("Time consuming to process messages", zap.Duration("duration", time.Since(start)))
 		}

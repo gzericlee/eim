@@ -5,24 +5,26 @@ import (
 
 	"go.uber.org/zap"
 
-	"eim/internal/types"
+	"eim/internal/database"
+	"eim/internal/model"
 	"eim/pkg/log"
 )
 
 type Message struct {
+	Database database.IDatabase
 }
 
 type MessageRequest struct {
-	Message *types.Message
+	Message *model.Message
 }
 
 type MessageReply struct {
 }
 
 func (its *Message) Save(ctx context.Context, req *MessageRequest, reply *MessageReply) error {
-	err := mainDb.SaveMessage(req.Message)
+	err := its.Database.SaveMessage(req.Message)
 	if err != nil {
-		log.Error("Error inserting into Tidb", zap.Error(err))
+		log.Error("Error inserting into database", zap.Error(err))
 		return err
 	}
 

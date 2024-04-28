@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"time"
 
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
-func RegisterGateway(gateway *types.Gateway) error {
+func (its *Manager) RegisterGateway(gateway *model.Gateway) error {
 	body, _ := gateway.Serialize()
-	return rdsClient.Set(fmt.Sprintf("gateway:%v", gateway.Ip), body, time.Second*6)
+	return its.rdsClient.Set(fmt.Sprintf("gateway:%v", gateway.Ip), body, time.Second*6)
 }
 
-func GetGateways() ([]*types.Gateway, error) {
-	values, err := rdsClient.GetAll(fmt.Sprintf("gateway:*"))
+func (its *Manager) GetGateways() ([]*model.Gateway, error) {
+	values, err := its.rdsClient.GetAll(fmt.Sprintf("gateway:*"))
 	if err != nil {
 		return nil, err
 	}
-	var gateways []*types.Gateway
+	var gateways []*model.Gateway
 	for _, value := range values {
-		gateway := &types.Gateway{}
+		gateway := &model.Gateway{}
 		err = gateway.Deserialize([]byte(value))
 		if err != nil {
 			continue

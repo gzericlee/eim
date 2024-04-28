@@ -3,22 +3,22 @@ package redis
 import (
 	"fmt"
 
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
-func SaveUser(user *types.User) error {
-	key := fmt.Sprintf("%v@%v:info", user.LoginId, user.Company)
+func (its *Manager) SaveUser(user *model.User) error {
+	key := fmt.Sprintf("%v@%v:info", user.LoginId, user.TenantId)
 	body, _ := user.Serialize()
-	return rdsClient.Set(key, body, 0)
+	return its.rdsClient.Set(key, body, 0)
 }
 
-func GetUser(loginId, company string) (*types.User, error) {
-	key := fmt.Sprintf("%v@%v:info", loginId, company)
-	result, err := rdsClient.Get(key)
+func (its *Manager) GetUser(loginId, tenantId string) (*model.User, error) {
+	key := fmt.Sprintf("%v@%v:info", loginId, tenantId)
+	result, err := its.rdsClient.Get(key)
 	if err != nil {
 		return nil, err
 	}
-	user := &types.User{}
+	user := &model.User{}
 	err = user.Deserialize([]byte(result))
 	return user, err
 }

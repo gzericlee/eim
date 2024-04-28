@@ -3,28 +3,25 @@ package storage
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 
-	"eim/internal/database/maindb"
-	"eim/internal/redis"
+	"eim/internal/database"
+	"eim/internal/model"
 	"eim/internal/storage/rpc"
-	"eim/internal/types"
 )
 
 var rpcClient *rpc.Client
 
 func init() {
-	fmt.Println(maindb.InitDBEngine("mysql", "root:pass@word1@tcp(127.0.0.1:4000)/eim?charset=utf8mb4&parseTime=True&loc=Local"))
 	go func() {
-		fmt.Println(InitStorageServer("0.0.0.0", 10000, []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}))
+		fmt.Println(rpc.StartServer(rpc.Config{Ip: "0.0.0.0", Port: 10000, EtcdEndpoints: []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}, DatabaseConnection: "mongodb://admin:pass@word1@127.0.0.1:27017", DatabaseDriver: database.DriverMongoDB}))
 	}()
 
-	err := redis.InitRedisClusterClient([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"}, "pass@word1")
-	if err != nil {
-		panic(err)
-	}
+	time.Sleep(time.Second)
 
+	var err error
 	rpcClient, err = rpc.NewClient([]string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"})
 	if err != nil {
 		panic(err)
@@ -34,7 +31,7 @@ func init() {
 func TestMessage_Save(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
-		msg := &types.Message{
+		msg := &model.Message{
 			MsgId:      uuid.New().String(),
 			SeqId:      1,
 			MsgType:    1,
@@ -60,7 +57,7 @@ func TestMessage_Save(t *testing.T) {
 func TestDevice_Save(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
-		device := &types.Device{
+		device := &model.Device{
 			DeviceId:      uuid.New().String(),
 			UserId:        uuid.New().String(),
 			DeviceType:    uuid.New().String(),

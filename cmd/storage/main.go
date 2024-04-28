@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/internal/build"
 	"eim/internal/config"
-	"eim/internal/database/maindb"
-	"eim/internal/redis"
-	"eim/internal/storage"
+	"eim/internal/database"
+	storagerpc "eim/internal/storage/rpc"
+	"eim/internal/version"
 	"eim/pkg/log"
 )
 
@@ -32,56 +30,31 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		build.Printf()
-
-		//初始化日志
-		log.InitLogger(log.Config{
-			ConsoleEnabled: true,
-			ConsoleLevel:   config.SystemConfig.LogLevel,
-			ConsoleJson:    false,
-			FileEnabled:    false,
-			FileLevel:      config.SystemConfig.LogLevel,
-			FileJson:       false,
-			Directory:      "./logs/" + strings.ToLower(build.ServiceName) + "/",
-			Filename:       time.Now().Format("20060102") + ".log",
-			MaxSize:        200,
-			MaxBackups:     10,
-			MaxAge:         30,
-		})
-
-		//初始化Redis连接
-		for {
-			err := redis.InitRedisClusterClient(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
-			if err != nil {
-				log.Error("Error connecting to Redis cluster", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
-			}
-			break
-		}
-		log.Info("Connected Redis cluster successful")
-
-		//初始化Tidb
-		for {
-			err := maindb.InitDBEngine(config.SystemConfig.MainDB.Driver, config.SystemConfig.MainDB.Connection)
-			if err != nil {
-				log.Error("Error connecting to Tidb", zap.String("endpoint", config.SystemConfig.MainDB.Connection), zap.Error(err))
-				time.Sleep(time.Second)
-				continue
-			}
-			break
-		}
-		log.Info("Connected Tidb successful")
+		version.Printf()
 
 		//开启Storage服务
 		go func() {
-			err := storage.InitStorageServer(config.SystemConfig.LocalIp, config.SystemConfig.StorageSvr.RpcPort, config.SystemConfig.Etcd.Endpoints.Value())
-			if err != nil {
-				log.Error("Error starting Storage rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+			for {
+				err := storagerpc.StartServer(storagerpc.Config{
+					Ip:                 config.SystemConfig.LocalIp,
+					Port:               config.SystemConfig.StorageSvr.RpcPort,
+					DatabaseName:       config.SystemConfig.Database.Name,
+					EtcdEndpoints:      config.SystemConfig.Etcd.Endpoints.Value(),
+					DatabaseDriver:     database.Driver(config.SystemConfig.Database.Driver),
+					DatabaseConnection: config.SystemConfig.Database.Connection,
+					RedisEndpoints:     config.SystemConfig.Redis.Endpoints.Value(),
+					RedisPassword:      config.SystemConfig.Redis.Password,
+				})
+				if err != nil {
+					log.Error("Error starting rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+					time.Sleep(time.Second * 5)
+					continue
+				}
+				break
 			}
 		}()
 
-		log.Info(fmt.Sprintf("%v Service started successful", build.ServiceName))
+		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
 
 		select {}
 
@@ -93,7 +66,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", build.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

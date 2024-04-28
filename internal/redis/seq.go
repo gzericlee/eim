@@ -3,21 +3,21 @@ package redis
 import (
 	"time"
 
-	"eim/internal/types"
+	"eim/internal/model"
 )
 
-func Incr(key string) (int64, error) {
-	return rdsClient.Incr(key)
+func (its *Manager) Incr(key string) (int64, error) {
+	return its.rdsClient.Incr(key)
 }
 
-func Decr(key string) (int64, error) {
-	return rdsClient.Decr(key)
+func (its *Manager) Decr(key string) (int64, error) {
+	return its.rdsClient.Decr(key)
 }
 
-func GetSegmentSeq(id string) (*types.Seq, error) {
+func (its *Manager) GetSegmentSeq(id string) (*model.Seq, error) {
 	key := id + ":seq"
-	value, _ := rdsClient.Get(key)
-	seq := &types.Seq{}
+	value, _ := its.rdsClient.Get(key)
+	seq := &model.Seq{}
 
 	if value == "" {
 		seq.Id = id
@@ -35,6 +35,6 @@ func GetSegmentSeq(id string) (*types.Seq, error) {
 	}
 
 	body, _ := seq.Serialize()
-	err := rdsClient.Set(key, body, 0)
+	err := its.rdsClient.Set(key, body, 0)
 	return seq, err
 }

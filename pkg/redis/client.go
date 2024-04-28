@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 type Client struct {
@@ -19,15 +19,13 @@ type Config struct {
 
 func NewClient(config *Config) (*Client, error) {
 	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:              config.Endpoints,
-		Password:           config.Password,
-		DialTimeout:        10 * time.Second,
-		ReadTimeout:        30 * time.Second,
-		WriteTimeout:       30 * time.Second,
-		MaxRedirects:       8,
-		PoolTimeout:        30 * time.Second,
-		IdleTimeout:        time.Minute,
-		IdleCheckFrequency: 100 * time.Millisecond,
+		Addrs:        config.Endpoints,
+		Password:     config.Password,
+		DialTimeout:  10 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		MaxRedirects: 8,
+		PoolTimeout:  30 * time.Second,
 	})
 
 	err := redisClient.Ping(context.Background()).Err()
@@ -81,4 +79,13 @@ func (its *Client) Subscribe(channel string, callback func(msg interface{}, err 
 		msg, err := sub.ReceiveMessage(context.Background())
 		callback(msg, err)
 	}
+}
+
+func (its *Client) SAdd(key string, members ...interface{}) error {
+	_, err := its.rdc.SAdd(context.Background(), key, members...).Result()
+	return err
+}
+
+func (its *Client) SMembers(key string) ([]string, error) {
+	return its.rdc.SMembers(context.Background(), key).Result()
 }

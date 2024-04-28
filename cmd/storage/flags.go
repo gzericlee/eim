@@ -11,8 +11,9 @@ const (
 
 	NsqEndpoints = "NSQ_ENDPOINTS"
 
-	MainDBDriver     = "MAIN_DB_DRIVER"
-	MainDBConnection = "MAIN_DB_CONNECTION"
+	DatabaseDriver     = "DATABASE_DRIVER"
+	DatabaseName       = "DATABASE_NAME"
+	DatabaseConnection = "DATABASE_CONNECTION"
 
 	RedisEndpoint = "REDIS_ENDPOINT"
 	RedisPassword = "REDIS_PASSWORD"
@@ -39,22 +40,29 @@ func ParseFlags(app *cli.App) {
 			Destination: &config.SystemConfig.Nsq.Endpoints,
 		},
 		&cli.StringFlag{
-			Name:        "main-db-driver",
-			Value:       "mysql",
-			Usage:       "Main db driver",
-			EnvVars:     []string{MainDBDriver},
-			Destination: &config.SystemConfig.MainDB.Driver,
+			Name:        "database-driver",
+			Value:       "mongodb",
+			Usage:       "database driver",
+			EnvVars:     []string{DatabaseDriver},
+			Destination: &config.SystemConfig.Database.Driver,
 		},
 		&cli.StringFlag{
-			Name:        "main-db-connection",
-			Value:       "root:pass@word1@tcp(127.0.0.1:4000)/eim?charset=utf8mb4&parseTime=True&loc=Local",
-			Usage:       "Main db connection",
-			EnvVars:     []string{MainDBConnection},
-			Destination: &config.SystemConfig.MainDB.Connection,
+			Name:        "database-name",
+			Value:       "eim",
+			Usage:       "database name",
+			EnvVars:     []string{DatabaseName},
+			Destination: &config.SystemConfig.Database.Name,
+		},
+		&cli.StringFlag{
+			Name:        "database-connection",
+			Value:       "mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct",
+			Usage:       "database connection",
+			EnvVars:     []string{DatabaseConnection},
+			Destination: &config.SystemConfig.Database.Connection,
 		},
 		&cli.StringSliceFlag{
 			Name:        "redis-endpoint",
-			Value:       cli.NewStringSlice("127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"),
+			Value:       cli.NewStringSlice("127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004"),
 			Usage:       "Redis cluster endpoints",
 			EnvVars:     []string{RedisEndpoint},
 			Destination: &config.SystemConfig.Redis.Endpoints,
