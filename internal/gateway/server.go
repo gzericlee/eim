@@ -50,7 +50,10 @@ func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
 		return nil, err
 	}
 
-	server := websocket.NewServer(cfg.Ip, cfg.Ports, seqRpc, authRpc, storageRpc, redisManager, producer)
+	server, err := websocket.NewServer(cfg.Ip, cfg.Ports, seqRpc, authRpc, storageRpc, redisManager, producer)
+	if err != nil {
+		return nil, err
+	}
 
 	err = server.Start()
 	if err != nil {

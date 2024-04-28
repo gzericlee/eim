@@ -3,13 +3,14 @@ package websocket
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
-	"github.com/lesismal/nbio/taskpool"
+	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
 
 	authrpc "eim/internal/auth/rpc"
@@ -27,7 +28,7 @@ type Server struct {
 	ports          []string
 	keepaliveTime  time.Duration
 	sessionManager *manager
-	workerPool     *taskpool.TaskPool
+	workerPool     *ants.Pool
 	http           *nbhttp.Server
 	seqRpc         *seqrpc.Client
 	authRpc        *authrpc.Client
@@ -42,10 +43,15 @@ type Server struct {
 	clientTotal     int64
 }
 
-func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrpc.Client, storageRpc *storagerpc.Client, redisManager *redis.Manager, producer mq.Producer) *Server {
+func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrpc.Client, storageRpc *storagerpc.Client, redisManager *redis.Manager, producer mq.Producer) (*Server, error) {
 	var address []string
 	for _, port := range ports {
 		address = append(address, fmt.Sprintf("%v:%v", ip, port))
+	}
+
+	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
+	if err != nil {
+		return nil, err
 	}
 
 	keepaliveTime := time.Minute * 5
@@ -55,7 +61,7 @@ func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrp
 		ports:          ports,
 		keepaliveTime:  keepaliveTime,
 		sessionManager: new(manager),
-		workerPool:     taskpool.New(32, 1024),
+		workerPool:     taskPool,
 		seqRpc:         seqRpc,
 		authRpc:        authRpc,
 		redisManager:   redisManager,
@@ -77,7 +83,7 @@ func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrp
 
 	go server.printServiceDetail()
 
-	return server
+	return server, nil
 }
 
 func (its *Server) Start() error {

@@ -19,7 +19,7 @@ import (
 	"github.com/lesismal/nbio/logging"
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/lesismal/nbio/nbhttp/websocket"
-	"github.com/lesismal/nbio/taskpool"
+	"github.com/panjf2000/ants"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
@@ -100,18 +100,22 @@ func Do() {
 	engine := nbhttp.NewEngine(nbhttp.Config{})
 	err := engine.Start()
 	if err != nil {
-		fmt.Printf("nbio.Start failed: %v\n", err)
+		log.Error("nbio.Start failed: %v\n", zap.Error(err))
 		return
 	}
 
 	wg := sync.WaitGroup{}
-	pool := taskpool.New(32, 1024)
+	pool, err := ants.NewPoolPreMalloc(1024)
+	if err != nil {
+		log.Error("ants.NewPoolPreMalloc failed: %v\n", zap.Error(err))
+		return
+	}
 
 	connectionStart = time.Now()
 
 	for i := 1; i <= config.SystemConfig.Mock.ClientCount; i++ {
 		wg.Add(1)
-		pool.Go(func(i int) func() {
+		err := pool.Submit(func(i int) func() {
 			return func() {
 				defer wg.Done()
 				id := strconv.Itoa(i)
@@ -166,6 +170,10 @@ func Do() {
 				connectedCount.Add(1)
 			}
 		}(i))
+		if err != nil {
+			log.Error("Error submitting task", zap.Error(err))
+			return
+		}
 	}
 
 	wg.Wait()

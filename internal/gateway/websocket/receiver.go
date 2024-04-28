@@ -51,7 +51,7 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 
 			pbMsg.SendTime = time.Now().UnixNano()
 
-			its.workerPool.Go(func(sess *session, pbMsg *pb.Message) func() {
+			err = its.workerPool.Submit(func(sess *session, pbMsg *pb.Message) func() {
 				return func() {
 					body, err := json.Marshal(pbMsg)
 					if err != nil {
@@ -72,6 +72,10 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 					}
 				}
 			}(sess, pbMsg))
+			if err != nil {
+				log.Error("Error submitting task", zap.Error(err))
+				return
+			}
 
 			atomic.AddInt64(&its.receivedTotal, 1)
 
