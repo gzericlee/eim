@@ -29,13 +29,14 @@ func (its *Server) printServiceDetail() {
 				}
 				t := table.NewWriter()
 				t.SetOutputMirror(os.Stdout)
-				t.AppendHeader(table.Row{"Devices", "L7 CPS", "Received", "Send", "Invalid", "Heartbeat", "Goroutines"})
+				t.AppendHeader(table.Row{"Devices", "L7 CPS", "Received", "Send", "Invalid", "Error", "Heartbeat", "Goroutines"})
 				t.AppendRows([]table.Row{{
 					its.clientTotal,
 					maxL7Cps,
-					its.receivedTotal,
-					its.sendTotal,
+					its.receivedMsgTotal,
+					its.sendMsgTotal,
 					its.invalidMsgTotal,
+					its.errorTotal,
 					its.heartbeatTotal,
 					runtime.NumGoroutine()},
 				})
@@ -44,14 +45,14 @@ func (its *Server) printServiceDetail() {
 
 				mMetric, _ := metric.GetMachineMetric()
 				err := its.redisManager.RegisterGateway(&model.Gateway{
-					Ip:             config.SystemConfig.LocalIp,
-					ClientTotal:    its.clientTotal,
-					SendTotal:      its.sendTotal,
-					ReceivedTotal:  its.receivedTotal,
-					InvalidTotal:   its.invalidMsgTotal,
-					GoroutineTotal: int64(runtime.NumGoroutine()),
-					MemUsed:        mMetric.MemUsed,
-					CpuUsed:        mMetric.CpuUsed,
+					Ip:               config.SystemConfig.LocalIp,
+					ClientTotal:      its.clientTotal,
+					SendMsgTotal:     its.sendMsgTotal,
+					ReceivedMsgTotal: its.receivedMsgTotal,
+					InvalidMsgTotal:  its.invalidMsgTotal,
+					GoroutineTotal:   int64(runtime.NumGoroutine()),
+					MemUsed:          float32(mMetric.MemUsed),
+					CpuUsed:          float32(mMetric.CpuUsed),
 				})
 				if err != nil {
 					return

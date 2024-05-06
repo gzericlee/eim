@@ -5,8 +5,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"eim/internal/database"
 	"eim/internal/model"
+
+	"eim/internal/database"
 	"eim/internal/redis"
 	"eim/pkg/log"
 )
@@ -36,7 +37,7 @@ func (its *Device) Save(ctx context.Context, req *DeviceRequest, reply *DeviceRe
 		return err
 	}
 
-	log.Info("Store device", zap.String("userId", req.Device.UserId), zap.String("deviceId", req.Device.DeviceId), zap.String("gatewayIp", req.Device.GatewayIp), zap.Int("state", req.Device.State))
+	log.Debug("Store device", zap.String("userId", req.Device.UserId), zap.String("deviceId", req.Device.DeviceId), zap.String("gatewayIp", req.Device.GatewayIp), zap.Int32("state", req.Device.State))
 
 	return nil
 }

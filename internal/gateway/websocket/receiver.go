@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	"strconv"
+	"encoding/binary"
 	"sync/atomic"
 	"time"
 
@@ -12,9 +12,8 @@ import (
 	"eim/internal/model"
 	"eim/internal/mq"
 	"eim/internal/protocol"
-	"eim/pkg/json"
+	"eim/pkg/idgenerator"
 	"eim/pkg/log"
-	"eim/proto/pb"
 )
 
 func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
@@ -28,8 +27,8 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 	switch cmd {
 	case protocol.Message:
 		{
-			pbMsg := &pb.Message{}
-			err := proto.Unmarshal(frame, pbMsg)
+			msg := &model.Message{}
+			err := proto.Unmarshal(frame, msg)
 			if err != nil {
 				atomic.AddInt64(&its.invalidMsgTotal, 1)
 				log.Error("Illegal message", zap.ByteString("body", frame), zap.Error(err))
@@ -37,47 +36,51 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			}
 
 			id := ""
-			if pbMsg.ToType == model.ToUser {
-				id = pbMsg.FromId
+			if msg.ToType == model.ToUser {
+				id = msg.FromId
 			} else {
-				id = pbMsg.ToId
+				id = msg.ToId
 			}
 
-			pbMsg.SeqId, err = its.seqRpc.Number(id)
+			msg.SeqId, err = its.seqRpc.Number(id)
 			if err != nil {
 				log.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
+				atomic.AddInt64(&its.errorTotal, 1)
 				return
 			}
 
-			pbMsg.SendTime = time.Now().UnixNano()
+			msgId := idgenerator.NextId()
+			msg.MsgId = msgId
+			msg.SendTime = time.Now().UnixNano()
 
-			err = its.workerPool.Submit(func(sess *session, pbMsg *pb.Message) func() {
+			err = its.workerPool.Submit(func(sess *session, pbMsg *model.Message) func() {
 				return func() {
-					body, err := json.Marshal(pbMsg)
+					body, err := proto.Marshal(pbMsg)
 					if err != nil {
 						log.Error("Error serializing message", zap.Error(err))
+						atomic.AddInt64(&its.errorTotal, 1)
 						return
 					}
 
-					if topic, exist := mq.MessageTopics[strconv.FormatInt(pbMsg.ToType, 10)]; exist {
-						err = its.producer.Publish(string(topic), body)
-						if err != nil {
-							log.Error("Error publishing message", zap.Error(err))
-							return
-						}
-						sess.send(protocol.Ack, []byte(pbMsg.MsgId))
-					} else {
-						atomic.AddInt64(&its.invalidMsgTotal, 1)
-						log.Error("Illegal message", zap.ByteString("body", body))
+					err = its.producer.Publish(mq.MessageDispatchSubject, body)
+					if err != nil {
+						log.Error("Error publishing message", zap.Error(err))
+						atomic.AddInt64(&its.errorTotal, 1)
+						return
 					}
+					idBody := make([]byte, binary.MaxVarintLen64)
+					binary.PutVarint(idBody, pbMsg.MsgId)
+					sess.send(protocol.Ack, idBody)
 				}
-			}(sess, pbMsg))
+			}(sess, msg))
+
 			if err != nil {
 				log.Error("Error submitting task", zap.Error(err))
+				atomic.AddInt64(&its.errorTotal, 1)
 				return
 			}
 
-			atomic.AddInt64(&its.receivedTotal, 1)
+			atomic.AddInt64(&its.receivedMsgTotal, 1)
 
 			log.Debug("Time consuming to process messages", zap.Duration("duration", time.Since(start)))
 		}

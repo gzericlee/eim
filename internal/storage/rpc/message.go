@@ -5,8 +5,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"eim/internal/database"
 	"eim/internal/model"
+
+	"eim/internal/database"
 	"eim/pkg/log"
 )
 
@@ -28,7 +29,7 @@ func (its *Message) Save(ctx context.Context, req *MessageRequest, reply *Messag
 		return err
 	}
 
-	log.Info("Store message", zap.String("msgId", req.Message.MsgId), zap.String("fromId", req.Message.FromId), zap.Int64("seqId", req.Message.SeqId))
+	log.Debug("Store message", zap.Int64("msgId", req.Message.MsgId), zap.Int64("seqId", req.Message.SeqId))
 
 	return nil
 }

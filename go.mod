@@ -12,6 +12,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.8
 	github.com/json-iterator/go v1.1.12
 	github.com/lesismal/nbio v1.5.8
+	github.com/nats-io/nats.go v1.34.1
 	github.com/nsqio/go-nsq v1.1.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/orcaman/concurrent-map/v2 v2.0.1
@@ -22,6 +23,7 @@ require (
 	github.com/smallnest/rpcx v1.8.30
 	github.com/urfave/cli/v2 v2.27.1
 	github.com/valyala/fasthttp v1.52.0
+	github.com/yitter/idgenerator-go v1.3.3
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.mongodb.org/mongo-driver v1.15.0
 	go.uber.org/atomic v1.11.0
@@ -87,6 +89,8 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
+	github.com/nats-io/nkeys v0.4.7 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.17.1 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

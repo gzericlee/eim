@@ -12,10 +12,12 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"eim/internal/model"
 
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
-	"eim/internal/model"
 	"eim/internal/mq"
 	"eim/internal/redis"
 	seqrpc "eim/internal/seq/rpc"
@@ -36,11 +38,12 @@ type Server struct {
 	redisManager   *redis.Manager
 	producer       mq.Producer
 
-	receivedTotal   int64
-	sendTotal       int64
-	invalidMsgTotal int64
-	heartbeatTotal  int64
-	clientTotal     int64
+	receivedMsgTotal int64
+	sendMsgTotal     int64
+	invalidMsgTotal  int64
+	heartbeatTotal   int64
+	clientTotal      int64
+	errorTotal       int64
 }
 
 func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrpc.Client, storageRpc *storagerpc.Client, redisManager *redis.Manager, producer mq.Producer) (*Server, error) {
@@ -128,8 +131,7 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 			log.Debug("Device disconnected", zap.String("deviceId", sess.device.DeviceId), zap.Error(err))
 		}()
 
-		now := time.Now().Local()
-		sess.device.OfflineAt = &now
+		sess.device.OfflineAt = timestamppb.Now()
 		sess.device.State = model.OfflineState
 
 		err = its.storageRpc.SaveDevice(sess.device)
@@ -147,8 +149,6 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 
 	_ = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
 
-	now := time.Now().Local()
-
 	sess := &session{device: &model.Device{}}
 
 	//TODO 为了方便模拟，这里直接取Header的UserId，实际应该取Auth服务返回的User
@@ -157,7 +157,7 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 		sess.device.UserId = user.UserId
 	}
 
-	sess.device.OnlineAt = &now
+	sess.device.OnlineAt = timestamppb.Now()
 	sess.device.DeviceId = r.Header.Get("DeviceId")
 	sess.device.DeviceVersion = r.Header.Get("DeviceVersion")
 	sess.device.DeviceType = r.Header.Get("DeviceType")

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
+
+	"github.com/golang/protobuf/proto"
 
 	"eim/internal/metric"
 	"eim/internal/model"
@@ -25,7 +28,7 @@ func TestGetDeviceByDeviceId(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	body, _ := device.Serialize()
+	body, _ := proto.Marshal(device)
 	t.Log(string(body), err)
 }
 
@@ -35,7 +38,7 @@ func TestGetDevicesById(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	body, _ := devices[0].Serialize()
+	body, _ := proto.Marshal(devices[0])
 	t.Log(len(devices), string(body), err)
 }
 
@@ -61,15 +64,17 @@ func TestGetUser(t *testing.T) {
 
 func TestSaveGroupMember(t *testing.T) {
 	for i := 1; i <= 1000; i++ {
-		t.Log(manager.SaveGroupMember(&model.GroupMember{
-			GroupId: "group-1",
-			UserId:  "user-" + strconv.Itoa(i),
+		t.Log(manager.SaveObjectMember(&model.ObjectMember{
+			ObjectId:   "group-1",
+			ObjectType: "group",
+			UserId:     "user-" + strconv.Itoa(i),
+			AckSeq:     0,
 		}))
 	}
 }
 
 func TestGetGroupMembers(t *testing.T) {
-	members, err := manager.GetGroupMembers("group-1")
+	members, err := manager.GetObjectMembers("group", "group-1")
 	t.Log(len(members), members, err)
 }
 
@@ -77,7 +82,7 @@ func BenchmarkGetGroupMembers(b *testing.B) {
 	b.N = 100000
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = manager.GetGroupMembers("group-1")
+			_, _ = manager.GetObjectMembers("group", "group-1")
 		}
 	})
 }
@@ -90,9 +95,9 @@ func TestSaveGateway(t *testing.T) {
 	}
 	t.Log(manager.RegisterGateway(&model.Gateway{
 		Ip:      "10.200.20.14",
-		MemUsed: mMetric.MemUsed,
-		CpuUsed: mMetric.CpuUsed,
-	}), err)
+		MemUsed: float32(mMetric.MemUsed),
+		CpuUsed: float32(mMetric.CpuUsed),
+	}, time.Second*10), err)
 }
 
 func TestGetGateways(t *testing.T) {
@@ -107,16 +112,16 @@ func TestGetGateways(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
-	users, err := manager.rdsClient.GetAll(fmt.Sprintf("%v*", "user-*:device:"))
+	users, err := manager.getAll(fmt.Sprintf("%s*", "user-*:device:"))
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log("Redis总用户数:", len(users))
+	t.Log("Redis总设备数:", len(users))
 }
 
 func TestGetAllGateway(t *testing.T) {
-	gateways, err := manager.rdsClient.GetAll(fmt.Sprintf("%v:*", "gateway"))
+	gateways, err := manager.getAll(fmt.Sprintf("%v:*", "gateway"))
 	if err != nil {
 		t.Error(err)
 		return

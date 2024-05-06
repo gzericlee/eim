@@ -3,8 +3,7 @@ package websocket
 import (
 	"sync/atomic"
 
-	"github.com/nsqio/go-nsq"
-	"github.com/panjf2000/ants"
+	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
 	"eim/internal/model"
@@ -13,45 +12,34 @@ import (
 )
 
 type SendHandler struct {
-	Server   *Server
-	TaskPool *ants.Pool
+	Server *Server
 }
 
-func (its *SendHandler) HandleMessage(m *nsq.Message) error {
-	if len(m.Body) == 0 {
+func (its *SendHandler) HandleMessage(data []byte) error {
+	if data == nil || len(data) == 0 {
 		atomic.AddInt64(&its.Server.invalidMsgTotal, 1)
 		return nil
 	}
 
-	err := its.TaskPool.Submit(func(m *nsq.Message) func() {
-		return func() {
-			msg := &model.Message{}
-			err := msg.Deserialize(m.Body)
-			if err != nil {
-				log.Error("Error deserializing message", zap.Error(err))
-				m.Finish()
-				return
-			}
-
-			var allSession []*session
-
-			sessions := its.Server.sessionManager.Get(msg.FromId)
-			for _, session := range sessions {
-				allSession = append(allSession, session)
-			}
-
-			for _, s := range allSession {
-				s.send(protocol.Message, m.Body)
-			}
-
-			atomic.AddInt64(&its.Server.sendTotal, 1)
-
-			m.Finish()
-		}
-	}(m))
+	msg := &model.Message{}
+	err := proto.Unmarshal(data, msg)
 	if err != nil {
-		return err
+		log.Error("Error deserializing message", zap.Error(err))
+		return nil
 	}
+
+	var allSession []*session
+
+	sessions := its.Server.sessionManager.Get(msg.UserId)
+	for _, session := range sessions {
+		allSession = append(allSession, session)
+	}
+
+	for _, s := range allSession {
+		s.send(protocol.Message, data)
+	}
+
+	atomic.AddInt64(&its.Server.sendMsgTotal, 1)
 
 	return nil
 }

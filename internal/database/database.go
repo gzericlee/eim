@@ -8,11 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 
 	"eim/internal/database/mongodb"
-	mysqldb "eim/internal/database/mysql"
 	"eim/internal/model"
 )
 
@@ -30,24 +27,24 @@ type IDatabase interface {
 
 func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
 	switch driver {
-	case DriverMySQL:
-		{
-			orm, err := gorm.Open(mysql.Open(connection), &gorm.Config{SkipDefaultTransaction: true})
-			if err != nil {
-				return nil, err
-			}
-			db, err := orm.DB()
-			if err != nil {
-				return nil, err
-			}
-			db.SetConnMaxLifetime(time.Hour)
-			db.SetMaxIdleConns(100)
-			db.SetMaxOpenConns(200)
-
-			_ = orm.AutoMigrate(&model.Device{}, &model.Message{})
-
-			return mysqldb.NewRepository(orm), nil
-		}
+	//case DriverMySQL:
+	//	{
+	//		orm, err := gorm.Open(mysql.Open(connection), &gorm.Config{SkipDefaultTransaction: true})
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		db, err := orm.DB()
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		db.SetConnMaxLifetime(time.Hour)
+	//		db.SetMaxIdleConns(100)
+	//		db.SetMaxOpenConns(200)
+	//
+	//		_ = orm.AutoMigrate(&model.Device{}, &model.Message{})
+	//
+	//		return mysqldb.NewRepository(orm), nil
+	//	}
 	case DriverMongoDB:
 		{
 			client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connection))

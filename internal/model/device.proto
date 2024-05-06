@@ -1,0 +1,16 @@
+syntax = "proto3";
+option go_package = "../model";
+
+import "google/protobuf/timestamp.proto";
+
+message Device {
+  string deviceId = 1;
+  string userId = 2;
+  string deviceType = 3;
+  string deviceVersion = 4;
+  string gatewayIp = 5;
+  string fromId = 6;
+  google.protobuf.Timestamp onlineAt = 7;
+  google.protobuf.Timestamp offlineAt = 8;
+  int32 state = 9;
+}

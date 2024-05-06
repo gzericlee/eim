@@ -32,7 +32,7 @@ func TestMessage_Save(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
 		msg := &model.Message{
-			MsgId:      uuid.New().String(),
+			MsgId:      0,
 			SeqId:      1,
 			MsgType:    1,
 			Content:    "",

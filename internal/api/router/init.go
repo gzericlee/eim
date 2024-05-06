@@ -8,11 +8,12 @@ import (
 	"github.com/go-openapi/spec"
 
 	"eim/internal/api/filter"
+	"eim/internal/redis"
 	"eim/pkg/log"
 )
 
-func RegisterAPIRoute() error {
-	restful.DefaultContainer.Add(regExampleAPIs())
+func RegisterAPIRoute(redisManager *redis.Manager) error {
+	restful.DefaultContainer.Add(regGatewayAPIs(redisManager))
 
 	config := restfulspec.Config{
 		WebServices:                   restful.RegisteredWebServices(),

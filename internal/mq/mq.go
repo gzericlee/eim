@@ -1,25 +1,27 @@
 package mq
 
-import "github.com/nsqio/go-nsq"
-
 type base interface {
 	printDetails()
 }
 
+type Handler interface {
+	HandleMessage(data []byte) error
+}
+
 type Producer interface {
 	base
-	Publish(topic string, body []byte) error
+	Publish(subj string, body []byte) error
 }
 
 type Consumer interface {
 	base
-	Subscribe(topic string, channel string, handler nsq.Handler) error
+	Subscribe(subj string, queue string, handler Handler) error
 }
 
 func NewProducer(endpoints []string) (Producer, error) {
-	return newNsqProducer(endpoints)
+	return newNatsProducer(endpoints)
 }
 
 func NewConsumer(endpoints []string) (Consumer, error) {
-	return newNsqConsumer(endpoints)
+	return newNatsConsumer(endpoints)
 }

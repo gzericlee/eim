@@ -6,15 +6,16 @@ import (
 
 	"eim/internal/api/handler"
 	"eim/internal/model"
+	"eim/internal/redis"
 )
 
-func regExampleAPIs() *restful.WebService {
+func regGatewayAPIs(redisManager *redis.Manager) *restful.WebService {
 	tags := []string{"网关"}
 
 	ws := &restful.WebService{}
-	ws.Path("/gateway").Produces(restful.MIME_JSON, restful.MIME_OCTET).Doc("范例")
+	ws.Path("/gateway").Produces(restful.MIME_JSON, restful.MIME_OCTET).Doc("网关管理")
 
-	gatewayHandler := handler.GatewayHandler{}
+	gatewayHandler := handler.GatewayHandler{RedisManager: redisManager}
 
 	ws.Route(ws.POST("/list").To(gatewayHandler.List).
 		Doc("获取网关列表").

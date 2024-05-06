@@ -1,0 +1,14 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message Gateway {
+  string ip = 1;
+  int64 clientTotal = 2;
+  int64 sendMsgTotal = 3;
+  int64 receivedMsgTotal = 4;
+  int64 invalidMsgTotal = 5;
+  int64 goroutineTotal = 6;
+  float memUsed = 7;
+  float cpuUsed= 8;
+}

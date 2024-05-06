@@ -1,8 +1,6 @@
 package sso
 
-import (
-	"eim/internal/model"
-)
+import "eim/internal/model"
 
 type Authenticator struct {
 	endpoint     string

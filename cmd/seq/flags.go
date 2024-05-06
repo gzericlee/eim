@@ -49,7 +49,7 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.StringFlag{
 			Name:        "log-level",
-			Value:       "INFO",
+			Value:       "DEBUG",
 			Usage:       "Log level",
 			EnvVars:     []string{LogLevel},
 			Destination: &config.SystemConfig.LogLevel,

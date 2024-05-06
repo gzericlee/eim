@@ -10,11 +10,13 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/api/router"
+	"eim/internal/redis"
 	"eim/pkg/log"
 )
 
 type Config struct {
-	Port int
+	Port         int
+	RedisManager *redis.Manager
 }
 
 type HttpServer struct {
@@ -22,7 +24,7 @@ type HttpServer struct {
 }
 
 func (its *HttpServer) Run(cfg Config) error {
-	err := router.RegisterAPIRoute()
+	err := router.RegisterAPIRoute(cfg.RedisManager)
 	if err != nil {
 		return err
 	}

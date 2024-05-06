@@ -1,26 +1,31 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
+
 	"eim/internal/model"
-	"eim/pkg/json"
 )
 
 func (its *Manager) SaveDevice(device *model.Device) error {
-	body, _ := device.Serialize()
-	return its.rdsClient.Set(fmt.Sprintf("%v:device:%v", device.UserId, device.DeviceId), body, 0)
+	body, err := proto.Marshal(device)
+	if err != nil {
+		return err
+	}
+	return its.redisClient.Set(context.Background(), fmt.Sprintf("%v:device:%v", device.UserId, device.DeviceId), body, 0).Err()
 }
 
 func (its *Manager) GetUserDevices(userId string) ([]*model.Device, error) {
-	values, err := its.rdsClient.GetAll(fmt.Sprintf("%v:device:*", userId))
+	values, err := its.getAll(fmt.Sprintf("%v:device:*", userId))
 	if err != nil {
 		return nil, err
 	}
 	var devices []*model.Device
 	for _, value := range values {
 		device := &model.Device{}
-		err = device.Deserialize([]byte(value))
+		err = proto.Unmarshal([]byte(value), device)
 		if err != nil {
 			continue
 		}
@@ -30,11 +35,11 @@ func (its *Manager) GetUserDevices(userId string) ([]*model.Device, error) {
 }
 
 func (its *Manager) GetUserDevice(userId, deviceId string) (*model.Device, error) {
-	value, err := its.rdsClient.Get(fmt.Sprintf("%v:device:%v", userId, deviceId))
+	value, err := its.redisClient.Get(context.Background(), fmt.Sprintf("%v:device:%v", userId, deviceId)).Result()
 	if err != nil {
 		return nil, err
 	}
 	device := &model.Device{}
-	err = json.Unmarshal([]byte(value), device)
+	err = proto.Unmarshal([]byte(value), device)
 	return device, err
 }

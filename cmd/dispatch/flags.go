@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	NsqEndpoints = "NSQ_ENDPOINTS"
+	MqEndpoints = "MQ_ENDPOINTS"
 
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
@@ -20,11 +20,11 @@ const (
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
 		&cli.StringSliceFlag{
-			Name:        "nsq-endpoints",
-			Value:       cli.NewStringSlice("127.0.0.1:4161", "127.0.0.1:4261"),
-			Usage:       "Nsqlookupd地址",
-			EnvVars:     []string{NsqEndpoints},
-			Destination: &config.SystemConfig.Nsq.Endpoints,
+			Name:        "mq-endpoints",
+			Value:       cli.NewStringSlice("127.0.0.1:4222", "127.0.0.1:4223", "127.0.0.1:4224"),
+			Usage:       "Mq地址",
+			EnvVars:     []string{MqEndpoints},
+			Destination: &config.SystemConfig.Mq.Endpoints,
 		},
 		&cli.StringSliceFlag{
 			Name:        "etcd-endpoint",
@@ -49,7 +49,7 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.StringFlag{
 			Name:        "log-level",
-			Value:       "INFO",
+			Value:       "DEBUG",
 			Usage:       "Log level",
 			EnvVars:     []string{LogLevel},
 			Destination: &config.SystemConfig.LogLevel,

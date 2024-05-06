@@ -6,11 +6,10 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime"
 	"sort"
+	"strings"
 	"time"
 
-	"github.com/panjf2000/ants"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
@@ -19,6 +18,7 @@ import (
 	"eim/internal/gateway/websocket"
 	"eim/internal/mq"
 	"eim/internal/version"
+	"eim/pkg/idgenerator"
 	"eim/pkg/log"
 )
 
@@ -44,7 +44,7 @@ func newCliApp() *cli.App {
 		for {
 			server, err = gateway.StartWebsocketServer(gateway.Config{
 				Ports:          config.SystemConfig.GatewaySvr.WebSocketPorts.Value(),
-				NsqEndpoints:   config.SystemConfig.Nsq.Endpoints.Value(),
+				MqEndpoints:    config.SystemConfig.Mq.Endpoints.Value(),
 				EtcdEndpoints:  config.SystemConfig.Etcd.Endpoints.Value(),
 				RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
 				RedisPassword:  config.SystemConfig.Redis.Password,
@@ -59,21 +59,13 @@ func newCliApp() *cli.App {
 
 		//初始化Nsq消费者
 		for {
-			taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
-			if err != nil {
-				log.Error("Error creating task pool", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			consumer, err := mq.NewConsumer(config.SystemConfig.Nsq.Endpoints.Value())
+			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
 			if err != nil {
 				goto ERROR
 			}
 
-			err = consumer.Subscribe(fmt.Sprintf(string(mq.MessageSendDispatchTopic), config.SystemConfig.LocalIp), string(mq.MessageDispatchChannel), &websocket.SendHandler{
-				Server:   server,
-				TaskPool: taskPool,
+			err = consumer.Subscribe(fmt.Sprintf(mq.MessageSendSubject, strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), "", &websocket.SendHandler{
+				Server: server,
 			})
 			if err != nil {
 				goto ERROR
@@ -81,13 +73,15 @@ func newCliApp() *cli.App {
 			break
 
 		ERROR:
-			log.Error("Error creating mq consumers", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+			log.Error("Error creating mq consumers", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
 			time.Sleep(time.Second * 5)
 			continue
 
 		}
 
 		log.Info("Created mq consumers successfully")
+
+		idgenerator.Init(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
 
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {

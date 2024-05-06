@@ -3,7 +3,6 @@ package mock
 import (
 	"encoding/base64"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,7 +12,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/lesismal/nbio/extension/tls"
 	"github.com/lesismal/nbio/logging"
@@ -27,7 +25,6 @@ import (
 	"eim/internal/model"
 	"eim/internal/protocol"
 	"eim/pkg/log"
-	"eim/proto/pb"
 )
 
 var connectedCount = &atomic.Int64{}
@@ -202,17 +199,15 @@ func Do() {
 			go func(cli *client) {
 				var msgTotal = config.SystemConfig.Mock.MessageCount
 				for {
-					id := strconv.Itoa(rand.Intn(999) + 1)
-					msg := &pb.Message{
-						MsgId:      uuid.New().String(),
+					msg := &model.Message{
 						MsgType:    model.TextMessage,
 						Content:    time.Now().String(),
 						FromType:   model.FromUser,
 						FromId:     cli.userId,
 						FromDevice: cli.deviceId,
 						ToType:     model.ToUser,
-						ToId:       "user-" + id,
-						ToDevice:   "device-" + id,
+						ToId:       cli.userId,
+						ToDevice:   cli.deviceId,
 					}
 					body, _ := proto.Marshal(msg)
 					err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))

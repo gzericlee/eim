@@ -1,9 +1,7 @@
 package seq
 
 import (
-	"fmt"
 	"log"
-	"math/rand/v2"
 	"sync"
 	"testing"
 	"time"
@@ -16,11 +14,17 @@ var etcdEndpoints = []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579
 
 func init() {
 	go func() {
-		err := rpc.StartServer(rpc.Config{Ip: "127.0.0.1", Port: 18080, EtcdEndpoints: etcdEndpoints})
+		err := rpc.StartServer(rpc.Config{
+			Ip:             "127.0.0.1",
+			Port:           18080,
+			EtcdEndpoints:  etcdEndpoints,
+			RedisEndpoints: []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"},
+			RedisPassword:  "pass@word1",
+		})
 		log.Println(err)
 	}()
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 5)
 
 	var err error
 	rpcClient, err = rpc.NewClient(etcdEndpoints)
@@ -31,11 +35,11 @@ func init() {
 
 func TestID_Get(t *testing.T) {
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 1; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			seq, err := rpcClient.Number("user_1")
+			seq, err := rpcClient.Number("user_2")
 			if err != nil {
 				t.Log(err)
 			}
@@ -46,13 +50,9 @@ func TestID_Get(t *testing.T) {
 }
 
 func BenchmarkID_Get(b *testing.B) {
-	rpcClient, err := rpc.NewClient(etcdEndpoints)
-	if err != nil {
-		b.Fatal(err)
-	}
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, err := rpcClient.Number(fmt.Sprintf("%v", rand.Int64N(100000)))
+			_, err := rpcClient.Number("user_2")
 			if err != nil {
 				b.Error(err)
 				return

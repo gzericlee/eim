@@ -16,7 +16,7 @@ import (
 type Config struct {
 	Ip             string
 	Ports          []string
-	NsqEndpoints   []string
+	MqEndpoints    []string
 	EtcdEndpoints  []string
 	RedisEndpoints []string
 	RedisPassword  string
@@ -45,7 +45,7 @@ func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
 		return nil, err
 	}
 
-	producer, err := mq.NewProducer(cfg.NsqEndpoints)
+	producer, err := mq.NewProducer(cfg.MqEndpoints)
 	if err != nil {
 		return nil, err
 	}

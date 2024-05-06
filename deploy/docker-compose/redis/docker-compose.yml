@@ -23,8 +23,8 @@ services:
       - "7001:7001"
       - "17001:17001"
     volumes:
-      - ${EIM_CONFIG_DIR}/redis/redis-1/redis.conf:/etc/redis/redis.conf
-      - ${EIM_DATA_DIR}/redis/redis-1:/data
+      - ./redis-1.conf:/etc/redis/redis.conf
+      - redis-1-data:/data
     command: redis-server /etc/redis/redis.conf
 
   redis-2:
@@ -37,8 +37,8 @@ services:
       - "7002:7002"
       - "17002:17002"
     volumes:
-      - ${EIM_CONFIG_DIR}/redis/redis-2/redis.conf:/etc/redis/redis.conf
-      - ${EIM_DATA_DIR}/redis/redis-2:/data
+      - ./redis-2.conf:/etc/redis/redis.conf
+      - redis-2-data:/data
     command: redis-server /etc/redis/redis.conf
 
   redis-3:
@@ -51,8 +51,8 @@ services:
       - "7003:7003"
       - "17003:17003"
     volumes:
-      - ${EIM_CONFIG_DIR}/redis/redis-3/redis.conf:/etc/redis/redis.conf
-      - ${EIM_DATA_DIR}/redis/redis-3:/data
+      - ./redis-3.conf:/etc/redis/redis.conf
+      - redis-3-data:/data
     command: redis-server /etc/redis/redis.conf
 
   redis-4:
@@ -65,8 +65,8 @@ services:
       - "7004:7004"
       - "17004:17004"
     volumes:
-      - ${EIM_CONFIG_DIR}/redis/redis-4/redis.conf:/etc/redis/redis.conf
-      - ${EIM_DATA_DIR}/redis/redis-4:/data
+      - ./redis-4.conf:/etc/redis/redis.conf
+      - redis-4-data:/data
     command: redis-server /etc/redis/redis.conf
 
   redis-5:
@@ -79,8 +79,8 @@ services:
       - "7005:7005"
       - "17005:17005"
     volumes:
-      - ${EIM_CONFIG_DIR}/redis/redis-5/redis.conf:/etc/redis/redis.conf
-      - ${EIM_DATA_DIR}/redis/redis-5:/data
+      - ./redis-5.conf:/etc/redis/redis.conf
+      - redis-5-data:/data
     command: redis-server /etc/redis/redis.conf
 
   redis-6:
@@ -93,10 +93,26 @@ services:
       - "7006:7006"
       - "17006:17006"
     volumes:
-      - ${EIM_CONFIG_DIR}/redis/redis-6/redis.conf:/etc/redis/redis.conf
-      - ${EIM_DATA_DIR}/redis/redis-6:/data
+      - ./redis-6.conf:/etc/redis/redis.conf
+      - redis-6-data:/data
     command: redis-server /etc/redis/redis.conf
-    
+
+volumes:
+  redis-1-data:
+    driver: local
+  redis-2-data:
+    driver: local
+  redis-3-data:
+    driver: local
+  redis-4-data:
+    driver: local
+  redis-5-data:
+    driver: local
+  redis-6-data:
+    driver: local
+  redis-config:
+    driver: local
+
 networks:
   redis:
     driver: bridge

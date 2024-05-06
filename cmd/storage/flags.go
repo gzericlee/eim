@@ -9,7 +9,7 @@ import (
 const (
 	RpcPort = "RPC_PORT"
 
-	NsqEndpoints = "NSQ_ENDPOINTS"
+	MqEndpoints = "MQ_ENDPOINTS"
 
 	DatabaseDriver     = "DATABASE_DRIVER"
 	DatabaseName       = "DATABASE_NAME"
@@ -33,11 +33,11 @@ func ParseFlags(app *cli.App) {
 			Destination: &config.SystemConfig.StorageSvr.RpcPort,
 		},
 		&cli.StringSliceFlag{
-			Name:        "nsq-endpoints",
-			Value:       cli.NewStringSlice("127.0.0.1:4161", "127.0.0.1:4261"),
-			Usage:       "Nsqlookupd endpoints",
-			EnvVars:     []string{NsqEndpoints},
-			Destination: &config.SystemConfig.Nsq.Endpoints,
+			Name:        "mq-endpoints",
+			Value:       cli.NewStringSlice("127.0.0.1:4222", "127.0.0.1:4223", "127.0.0.1:4224"),
+			Usage:       "Mq地址",
+			EnvVars:     []string{MqEndpoints},
+			Destination: &config.SystemConfig.Mq.Endpoints,
 		},
 		&cli.StringFlag{
 			Name:        "database-driver",
@@ -83,7 +83,7 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.StringFlag{
 			Name:        "log-level",
-			Value:       "INFO",
+			Value:       "DEBUG",
 			Usage:       "Log level",
 			EnvVars:     []string{LogLevel},
 			Destination: &config.SystemConfig.LogLevel,

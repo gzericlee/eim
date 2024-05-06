@@ -2,10 +2,13 @@ package dispatch
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
 	"eim/internal/model"
+
 	"eim/internal/mq"
 	"eim/internal/redis"
 	"eim/pkg/log"
@@ -35,7 +38,11 @@ func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Produce
 		log.Error("Error getting from user devices", zap.String("userId", msg.FromId), zap.Error(err))
 		return err
 	}
-	body, _ := msg.Serialize()
+	body, err := proto.Marshal(msg)
+	if err != nil {
+		log.Error("Error marshalling message", zap.Error(err))
+		return err
+	}
 
 	for _, device := range devices {
 		//if msg.FromDevice == device.DeviceId {
@@ -48,12 +55,12 @@ func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Produce
 			return err
 		}
 		if device.State == model.OnlineState {
-			err = producer.Publish(fmt.Sprintf(string(mq.MessageSendDispatchTopic), device.GatewayIp), body)
+			err = producer.Publish(fmt.Sprintf(mq.MessageSendSubject, strings.Replace(device.GatewayIp, ".", "-", -1)), body)
 			if err != nil {
 				log.Error("Error publishing message", zap.Error(err))
 				return err
 			}
-			log.Debug("Online message", zap.String("gateway", device.GatewayIp), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId))
+			log.Debug("Online message", zap.String("gateway", device.GatewayIp), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
 		} else {
 			log.Debug("Offline message", zap.Int64("count", offlineCount), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId))
 		}

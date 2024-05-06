@@ -1,0 +1,12 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message User {
+  string userId = 1;
+  string loginId = 2;
+  string userName = 3;
+  string password = 4;
+  string tenantId = 5;
+  string tenantName = 6;
+}

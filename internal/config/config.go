@@ -42,7 +42,7 @@ type systemConfig struct {
 		Name       string
 		Connection string
 	}
-	Nsq struct {
+	Mq struct {
 		Endpoints cli.StringSlice
 	}
 	SeqSvr struct {

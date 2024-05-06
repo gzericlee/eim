@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"sort"
 	"time"
 
-	"github.com/panjf2000/ants"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
@@ -52,51 +50,32 @@ func newCliApp() *cli.App {
 				continue
 			}
 
-			producer, err := mq.NewProducer(config.SystemConfig.Nsq.Endpoints.Value())
+			producer, err := mq.NewProducer(config.SystemConfig.Mq.Endpoints.Value())
 			if err != nil {
-				log.Error("Error creating mq producer", zap.Strings("endpoints", config.SystemConfig.Nsq.Endpoints.Value()), zap.Error(err))
+				log.Error("Error creating mq producer", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
+			log.Info("Created mq producers successfully")
+
+			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
+
+			err = consumer.Subscribe(mq.MessageDispatchSubject, mq.DispatchQueue, &dispatch.UserMessageHandler{
+				StorageRpc:   storageRpc,
+				RedisManager: redisManager,
+				Producer:     producer,
+			})
 			if err != nil {
-				log.Error("Error creating task pool", zap.Error(err))
+				log.Error("Error creating mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			consumer, err := mq.NewConsumer(config.SystemConfig.Nsq.Endpoints.Value())
-
-			err = consumer.Subscribe(string(mq.UserMessageDispatchTopic), string(mq.MessageDispatchChannel), &dispatch.UserMessageHandler{
-				StorageRpc:   storageRpc,
-				RedisManager: redisManager,
-				Producer:     producer,
-				TaskPool:     taskPool,
-			})
-			if err != nil {
-				goto ERROR
-			}
-
-			err = consumer.Subscribe(string(mq.GroupMessageDispatchTopic), string(mq.MessageDispatchChannel), &dispatch.GroupMessageHandler{
-				StorageRpc:   storageRpc,
-				RedisManager: redisManager,
-				Producer:     producer,
-				TaskPool:     taskPool,
-			})
-			if err != nil {
-				goto ERROR
-			}
+			log.Info("Created mq consumers successfully")
 
 			break
-
-		ERROR:
-			log.Error("Error creating mq consumers", zap.Error(err))
-			time.Sleep(time.Second * 5)
-			continue
 		}
-
-		log.Info("Created mq consumers successfully")
 
 		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
 

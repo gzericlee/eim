@@ -14,6 +14,7 @@ import (
 
 	"eim/internal/api"
 	"eim/internal/config"
+	"eim/internal/redis"
 	"eim/internal/version"
 	"eim/pkg/log"
 )
@@ -38,7 +39,14 @@ func newCliApp() *cli.App {
 			httpServer := api.HttpServer{}
 			//开启Http服务
 			for {
-				err := httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort})
+				redisManager, err := redis.NewManager(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
+				if err != nil {
+					log.Error("Error creating redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+					time.Sleep(time.Second * 5)
+					continue
+				}
+
+				err = httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort, RedisManager: redisManager})
 				if err != nil {
 					log.Error("ApiSvr server startup error", zap.Error(err))
 					time.Sleep(time.Second * 5)

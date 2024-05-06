@@ -17,7 +17,7 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	pool := rpcx_client.NewXClientPool(runtime.NumCPU(), servicePath, rpcx_client.Failover, rpcx_client.RoundRobin, d, rpcx_client.DefaultOption)
+	pool := rpcx_client.NewXClientPool(runtime.NumCPU(), servicePath, rpcx_client.Failover, rpcx_client.ConsistentHash, d, rpcx_client.DefaultOption)
 	return &Client{pool: pool}, nil
 }
 

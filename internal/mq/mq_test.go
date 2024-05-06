@@ -1,28 +1,39 @@
 package mq
 
 import (
+	"fmt"
+	"log"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/golang/protobuf/proto"
 
 	"eim/internal/model"
+	"eim/pkg/idgenerator"
 )
 
 var producer Producer
+var consumer Consumer
 
 func init() {
+	idgenerator.Init([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"}, "pass@word1")
+
 	var err error
-	producer, err = NewProducer([]string{"127.0.0.1:4151", "127.0.0.1:4161", "127.0.0.1:4171"})
+	producer, err = NewProducer([]string{"127.0.0.1:4222"})
+	if err != nil {
+		panic(err)
+	}
+
+	consumer, err = NewConsumer([]string{"127.0.0.1:4222"})
 	if err != nil {
 		panic(err)
 	}
 }
 
-func BenchmarkPool_Publish(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+func BenchmarkPublish(b *testing.B) {
+	for i := 0; i < 1; i++ {
 		msg := &model.Message{
-			MsgId:      uuid.New().String(),
+			MsgId:      idgenerator.NextId(),
 			SeqId:      1,
 			MsgType:    1,
 			Content:    time.Now().String(),
@@ -34,11 +45,31 @@ func BenchmarkPool_Publish(b *testing.B) {
 			ToDevice:   "1",
 			SendTime:   time.Now().UnixMilli(),
 		}
-		body, _ := msg.Serialize()
-		err := producer.Publish("test", body)
+		body, _ := proto.Marshal(msg)
+		err := producer.Publish(fmt.Sprintf(MessageSendSubject, "192_168_3_58"), body)
 		if err != nil {
 			b.Log(err)
 			return
 		}
 	}
+}
+
+type testHandler struct{}
+
+func (h *testHandler) HandleMessage(data []byte) error {
+	msg := &model.Message{}
+	err := proto.Unmarshal(data, msg)
+	if err != nil {
+		return err
+	}
+	log.Printf("%s", data)
+	return nil
+}
+
+func TestSubscribe(t *testing.T) {
+	err := consumer.Subscribe(fmt.Sprintf(MessageSendSubject, "192_168_3_58"), "192_168_3_58", &testHandler{})
+	if err != nil {
+		return
+	}
+	time.Sleep(time.Second * 5)
 }
