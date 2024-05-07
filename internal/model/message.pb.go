@@ -25,18 +25,18 @@ type Message struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MsgId      int64  `protobuf:"varint,1,opt,name=msgId,proto3" json:"msgId,omitempty"`
-	SeqId      int64  `protobuf:"varint,2,opt,name=seqId,proto3" json:"seqId,omitempty"`
-	MsgType    int64  `protobuf:"varint,3,opt,name=msgType,proto3" json:"msgType,omitempty"`
-	Content    string `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
-	FromType   int64  `protobuf:"varint,5,opt,name=fromType,proto3" json:"fromType,omitempty"`
-	FromId     string `protobuf:"bytes,6,opt,name=fromId,proto3" json:"fromId,omitempty"`
-	FromDevice string `protobuf:"bytes,7,opt,name=fromDevice,proto3" json:"fromDevice,omitempty"`
-	ToType     int64  `protobuf:"varint,8,opt,name=toType,proto3" json:"toType,omitempty"`
-	ToId       string `protobuf:"bytes,9,opt,name=toId,proto3" json:"toId,omitempty"`
-	ToDevice   string `protobuf:"bytes,10,opt,name=toDevice,proto3" json:"toDevice,omitempty"`
-	SendTime   int64  `protobuf:"varint,11,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
-	UserId     string `protobuf:"bytes,12,opt,name=userId,proto3" json:"userId,omitempty"`
+	MsgId      int64  `protobuf:"varint,1,opt,name=msgId,proto3" json:"msgId,omitempty" bson:"msg_id"`
+	SeqId      int64  `protobuf:"varint,2,opt,name=seqId,proto3" json:"seqId,omitempty" bson:"seq_id"`
+	MsgType    int64  `protobuf:"varint,3,opt,name=msgType,proto3" json:"msgType,omitempty" bson:"msg_type"`
+	Content    string `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty" bson:"content"`
+	FromType   int64  `protobuf:"varint,5,opt,name=fromType,proto3" json:"fromType,omitempty" bson:"from_type"`
+	FromId     string `protobuf:"bytes,6,opt,name=fromId,proto3" json:"fromId,omitempty" bson:"from_id"`
+	FromDevice string `protobuf:"bytes,7,opt,name=fromDevice,proto3" json:"fromDevice,omitempty" bson:"from_device"`
+	ToType     int64  `protobuf:"varint,8,opt,name=toType,proto3" json:"toType,omitempty" bson:"to_type"`
+	ToId       string `protobuf:"bytes,9,opt,name=toId,proto3" json:"toId,omitempty" bson:"to_id"`
+	ToDevice   string `protobuf:"bytes,10,opt,name=toDevice,proto3" json:"toDevice,omitempty" bson:"to_device"`
+	SendTime   int64  `protobuf:"varint,11,opt,name=sendTime,proto3" json:"sendTime,omitempty" bson:"send_time"`
+	UserId     string `protobuf:"bytes,12,opt,name=userId,proto3" json:"userId,omitempty" bson:"user_id"`
 }
 
 func (x *Message) Reset() {

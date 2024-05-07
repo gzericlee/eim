@@ -2,9 +2,9 @@ syntax = "proto3";
 package model;
 option go_package = "../model";
 
-message ObjectMember {
-  string objectId = 1;
-  string objectType = 2;
+message BizMember {
+  string bizId = 1;
+  string bizType = 2;
   string userId = 3;
   int64 ackSeq = 4;
 }

@@ -1,6 +1,10 @@
 package idgenerator
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/yitter/idgenerator-go/idgen"
 	"go.uber.org/zap"
 
@@ -20,6 +24,14 @@ func Init(redisEndpoints []string, password string) {
 	options.WorkerIdBitLength = 10
 	options.SeqBitLength = 10
 	idgen.SetIdGenerator(options)
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		unRegistry()
+		os.Exit(0)
+	}()
 }
 
 func NextId() int64 {

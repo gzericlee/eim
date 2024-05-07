@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -16,18 +17,19 @@ import (
 type Driver string
 
 const (
-	DriverMySQL   Driver = "mysql"
-	DriverMongoDB Driver = "mongodb"
+	MySQLDriver   Driver = "mysql"
+	MongoDBDriver Driver = "mongodb"
 )
 
 type IDatabase interface {
 	SaveDevice(device *model.Device) error
 	SaveMessage(msg *model.Message) error
+	GetSegment(id string) (*model.Segment, error)
 }
 
 func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
 	switch driver {
-	//case DriverMySQL:
+	//case MySQLDriver:
 	//	{
 	//		orm, err := gorm.Open(mysql.Open(connection), &gorm.Config{SkipDefaultTransaction: true})
 	//		if err != nil {
@@ -45,18 +47,42 @@ func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
 	//
 	//		return mysqldb.NewRepository(orm), nil
 	//	}
-	case DriverMongoDB:
+	case MongoDBDriver:
 		{
-			client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connection))
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			client, err := mongo.Connect(ctx, options.Client().ApplyURI(connection))
 			if err != nil {
 				return nil, err
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
+
 			if err := client.Ping(ctx, readpref.Primary()); err != nil {
 				return nil, err
 			}
-			return mongodb.NewRepository(client.Database(name)), err
+
+			db := client.Database(name)
+
+			db.Collection("device").Indexes().CreateOne(ctx, mongo.IndexModel{
+				Keys:    bson.M{"device_id": 1},
+				Options: options.Index().SetUnique(true),
+			})
+
+			db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
+				Keys:    bson.M{"msg_id": 1},
+				Options: options.Index().SetUnique(true),
+			})
+
+			db.Collection("segment").Indexes().CreateOne(ctx, mongo.IndexModel{
+				Keys:    bson.M{"biz_id": 1},
+				Options: options.Index().SetUnique(true),
+			})
+
+			db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
+				Keys: bson.M{"seq_id": 1},
+			})
+
+			return mongodb.NewRepository(db), err
 		}
 	}
 	return nil, fmt.Errorf("unsupported driver: %s", driver)

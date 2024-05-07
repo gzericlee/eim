@@ -15,7 +15,7 @@ import (
 )
 
 func toGroup(msg *model.Message, redisManager *redis.Manager, producer mq.Producer) error {
-	members, err := redisManager.GetGroupMembers(msg.ToId)
+	members, err := redisManager.GetBizMembers(model.BizGroup, msg.ToId)
 	if err != nil {
 		log.Error("Error getting group members", zap.String("groupId", msg.ToId), zap.Error(err))
 		return err

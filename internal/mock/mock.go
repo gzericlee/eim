@@ -22,8 +22,8 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/config"
+	"eim/internal/gateway/protocol"
 	"eim/internal/model"
-	"eim/internal/protocol"
 	"eim/pkg/log"
 )
 

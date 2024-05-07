@@ -53,7 +53,7 @@ func (its *Server) printServiceDetail() {
 					GoroutineTotal:   int64(runtime.NumGoroutine()),
 					MemUsed:          float32(mMetric.MemUsed),
 					CpuUsed:          float32(mMetric.CpuUsed),
-				})
+				}, time.Second*10)
 				if err != nil {
 					return
 				}

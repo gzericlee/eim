@@ -42,7 +42,7 @@ func newCliApp() *cli.App {
 		}
 		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
 
-		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
 
 		mock.Do()
 

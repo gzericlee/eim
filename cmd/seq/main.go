@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/config"
+	"eim/internal/database"
 	seqrpc "eim/internal/seq/rpc"
 	"eim/internal/version"
 	"eim/pkg/log"
@@ -36,9 +37,14 @@ func newCliApp() *cli.App {
 		go func() {
 			for {
 				err := seqrpc.StartServer(seqrpc.Config{
-					Ip:            config.SystemConfig.LocalIp,
-					Port:          config.SystemConfig.SeqSvr.RpcPort,
-					EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
+					Ip:                 config.SystemConfig.LocalIp,
+					Port:               config.SystemConfig.SeqSvr.RpcPort,
+					DatabaseDriver:     database.Driver(config.SystemConfig.Database.Driver),
+					DatabaseConnection: config.SystemConfig.Database.Connection,
+					DatabaseName:       config.SystemConfig.Database.Name,
+					EtcdEndpoints:      config.SystemConfig.Etcd.Endpoints.Value(),
+					RedisEndpoints:     config.SystemConfig.Redis.Endpoints.Value(),
+					RedisPassword:      config.SystemConfig.Redis.Password,
 				})
 				if err != nil {
 					log.Error("Error starting rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
@@ -49,7 +55,7 @@ func newCliApp() *cli.App {
 			}
 		}()
 
-		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
 
 		select {}
 

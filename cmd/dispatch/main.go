@@ -77,7 +77,7 @@ func newCliApp() *cli.App {
 			break
 		}
 
-		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
 
 		select {}
 

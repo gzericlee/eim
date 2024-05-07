@@ -21,9 +21,18 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 	return &Client{pool: pool}, nil
 }
 
-func (its *Client) Number(id string) (int64, error) {
+func (its *Client) IncrementId(bizId string) (int64, error) {
 	reply := &Reply{}
-	err := its.pool.Get().Call(context.Background(), "Number", &Request{Id: id}, reply)
+	err := its.pool.Get().Call(context.Background(), "IncrementId", &Request{BizId: bizId}, reply)
+	if err != nil {
+		return 0, err
+	}
+	return reply.Number, nil
+}
+
+func (its *Client) SnowflakeId() (int64, error) {
+	reply := &Reply{}
+	err := its.pool.Get().Call(context.Background(), "SnowflakeId", &Request{}, reply)
 	if err != nil {
 		return 0, err
 	}

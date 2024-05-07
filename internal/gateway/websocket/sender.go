@@ -6,8 +6,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
+	"eim/internal/gateway/protocol"
 	"eim/internal/model"
-	"eim/internal/protocol"
 	"eim/pkg/log"
 )
 

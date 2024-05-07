@@ -3,7 +3,7 @@ package mock
 import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 
-	"eim/internal/protocol"
+	"eim/internal/gateway/protocol"
 )
 
 type client struct {

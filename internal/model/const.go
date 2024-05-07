@@ -26,3 +26,9 @@ const (
 const (
 	TextMessage = 1
 )
+
+const (
+	BizGroup   = "group"
+	BizUser    = "user"
+	BizService = "service"
+)

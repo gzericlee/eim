@@ -3,7 +3,7 @@ package rpc
 import "context"
 
 type Request struct {
-	Id string
+	BizId string
 }
 
 type Reply struct {
@@ -11,5 +11,6 @@ type Reply struct {
 }
 
 type Seq interface {
-	Number(ctx context.Context, req *Request, reply *Reply) error
+	IncrementId(ctx context.Context, req *Request, reply *Reply) error
+	SnowflakeId(ctx context.Context, req *Request, reply *Reply) error
 }

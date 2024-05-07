@@ -19,7 +19,7 @@ func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Dura
 }
 
 func (its *Manager) GetGateways() ([]*model.Gateway, error) {
-	values, err := its.getAll(fmt.Sprintf("gateway:*"))
+	values, err := its.getAll(fmt.Sprintf("gateway:*"), 5000)
 	if err != nil {
 		return nil, err
 	}

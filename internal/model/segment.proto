@@ -1,0 +1,13 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+import "google/protobuf/timestamp.proto";
+
+message Segment {
+  string bizId = 1;
+  int64 maxId = 2;
+  int32 step = 3;
+  google.protobuf.Timestamp createAt = 4;
+  google.protobuf.Timestamp updateAt = 5;
+}

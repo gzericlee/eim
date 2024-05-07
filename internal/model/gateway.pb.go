@@ -25,14 +25,14 @@ type Gateway struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Ip               string  `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
-	ClientTotal      int64   `protobuf:"varint,2,opt,name=clientTotal,proto3" json:"clientTotal,omitempty"`
-	SendMsgTotal     int64   `protobuf:"varint,3,opt,name=sendMsgTotal,proto3" json:"sendMsgTotal,omitempty"`
-	ReceivedMsgTotal int64   `protobuf:"varint,4,opt,name=receivedMsgTotal,proto3" json:"receivedMsgTotal,omitempty"`
-	InvalidMsgTotal  int64   `protobuf:"varint,5,opt,name=invalidMsgTotal,proto3" json:"invalidMsgTotal,omitempty"`
-	GoroutineTotal   int64   `protobuf:"varint,6,opt,name=goroutineTotal,proto3" json:"goroutineTotal,omitempty"`
-	MemUsed          float32 `protobuf:"fixed32,7,opt,name=memUsed,proto3" json:"memUsed,omitempty"`
-	CpuUsed          float32 `protobuf:"fixed32,8,opt,name=cpuUsed,proto3" json:"cpuUsed,omitempty"`
+	Ip               string  `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty" bson:"ip"`
+	ClientTotal      int64   `protobuf:"varint,2,opt,name=clientTotal,proto3" json:"clientTotal,omitempty" bson:"client_total"`
+	SendMsgTotal     int64   `protobuf:"varint,3,opt,name=sendMsgTotal,proto3" json:"sendMsgTotal,omitempty" bson:"send_msg_total"`
+	ReceivedMsgTotal int64   `protobuf:"varint,4,opt,name=receivedMsgTotal,proto3" json:"receivedMsgTotal,omitempty" bson:"received_msg_total"`
+	InvalidMsgTotal  int64   `protobuf:"varint,5,opt,name=invalidMsgTotal,proto3" json:"invalidMsgTotal,omitempty" bson:"invalid_msg_total"`
+	GoroutineTotal   int64   `protobuf:"varint,6,opt,name=goroutineTotal,proto3" json:"goroutineTotal,omitempty" bson:"goroutine_total"`
+	MemUsed          float32 `protobuf:"fixed32,7,opt,name=memUsed,proto3" json:"memUsed,omitempty" bson:"mem_used"`
+	CpuUsed          float32 `protobuf:"fixed32,8,opt,name=cpuUsed,proto3" json:"cpuUsed,omitempty" bson:"cpu_used"`
 }
 
 func (x *Gateway) Reset() {

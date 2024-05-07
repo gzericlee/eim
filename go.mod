@@ -13,7 +13,6 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/lesismal/nbio v1.5.8
 	github.com/nats-io/nats.go v1.34.1
-	github.com/nsqio/go-nsq v1.1.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/panjf2000/ants v1.2.1
@@ -22,7 +21,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.3
 	github.com/smallnest/rpcx v1.8.30
 	github.com/urfave/cli/v2 v2.27.1
-	github.com/valyala/fasthttp v1.52.0
 	github.com/yitter/idgenerator-go v1.3.3
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.mongodb.org/mongo-driver v1.15.0
@@ -30,15 +28,12 @@ require (
 	go.uber.org/zap v1.27.0
 	google.golang.org/protobuf v1.33.1-0.20240423095020-c2b76eee36e7
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	gorm.io/driver/mysql v1.5.6
 	gorm.io/gorm v1.25.10
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alitto/pond v1.8.3 // indirect
-	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/apache/thrift v0.20.0 // indirect
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
@@ -58,7 +53,6 @@ require (
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-ping/ping v1.1.0 // indirect
-	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/godzie44/go-uring v0.0.0-20220926161041-69611e8b13d5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -112,7 +106,6 @@ require (
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.8.0 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect

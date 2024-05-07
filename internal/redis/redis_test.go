@@ -64,25 +64,25 @@ func TestGetUser(t *testing.T) {
 
 func TestSaveGroupMember(t *testing.T) {
 	for i := 1; i <= 1000; i++ {
-		t.Log(manager.SaveObjectMember(&model.ObjectMember{
-			ObjectId:   "group-1",
-			ObjectType: "group",
-			UserId:     "user-" + strconv.Itoa(i),
-			AckSeq:     0,
+		t.Log(manager.SaveBizMember(&model.BizMember{
+			BizId:   "group-1",
+			BizType: "group",
+			UserId:  "user-" + strconv.Itoa(i),
+			AckSeq:  0,
 		}))
 	}
 }
 
-func TestGetGroupMembers(t *testing.T) {
-	members, err := manager.GetObjectMembers("group", "group-1")
+func TestGetBizMembers(t *testing.T) {
+	members, err := manager.GetBizMembers("group", "group-1")
 	t.Log(len(members), members, err)
 }
 
-func BenchmarkGetGroupMembers(b *testing.B) {
+func BenchmarkGetBizMembers(b *testing.B) {
 	b.N = 100000
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = manager.GetObjectMembers("group", "group-1")
+			_, _ = manager.GetBizMembers("group", "group-1")
 		}
 	})
 }
@@ -112,19 +112,19 @@ func TestGetGateways(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
-	users, err := manager.getAll(fmt.Sprintf("%s*", "user-*:device:"))
+	all, err := manager.getAll(fmt.Sprintf("%s*", "user-"), 5000)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log("Redis总设备数:", len(users))
+	t.Log("count:", len(all))
 }
 
 func TestGetAllGateway(t *testing.T) {
-	gateways, err := manager.getAll(fmt.Sprintf("%v:*", "gateway"))
+	gateways, err := manager.getAll(fmt.Sprintf("%v:*", "gateway"), 5000)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log("Gateway节点数:", len(gateways), gateways)
+	t.Log("Gateway节点数:", len(gateways))
 }

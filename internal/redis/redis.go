@@ -10,7 +10,7 @@ import (
 )
 
 type Manager struct {
-	redisClient *redis.ClusterClient
+	redisClient redis.UniversalClient
 	cache       cmap.ConcurrentMap[string, string]
 }
 
@@ -33,26 +33,69 @@ func NewManager(redisEndpoints []string, redisPassword string) (*Manager, error)
 	return &Manager{redisClient: redisClient, cache: cmap.New[string]()}, nil
 }
 
-func (its *Manager) GetRedisClient() *redis.ClusterClient {
+func (its *Manager) GetRedisClient() redis.UniversalClient {
 	return its.redisClient
 }
 
-func (its *Manager) getAll(key string) ([]string, error) {
-	var locker sync.RWMutex
-	var result []string
+func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 	var cursor uint64
-	err := its.redisClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
-		iter := client.Scan(ctx, cursor, key, 1000).Iterator()
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var scanErr error
+
+	var scan = func(ctx context.Context, client redis.UniversalClient) ([]string, error) {
+		var keys []string
+		var result []string
+		iter := client.Scan(ctx, cursor, key, limit).Iterator()
 		for iter.Next(ctx) {
-			val, err := client.Get(context.Background(), iter.Val()).Result()
-			if err != nil {
-				return err
-			}
-			locker.Lock()
-			result = append(result, val)
-			locker.Unlock()
+			keys = append(keys, iter.Val())
 		}
-		return iter.Err()
-	})
-	return result, err
+		if err := iter.Err(); err != nil {
+			return nil, err
+		}
+		pipe := client.Pipeline()
+		cmds := make([]redis.Cmder, len(keys))
+		for i, key := range keys {
+			cmds[i] = pipe.Get(ctx, key)
+		}
+		_, err := pipe.Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, cmd := range cmds {
+			result = append(result, cmd.(*redis.StringCmd).Val())
+		}
+		return result, nil
+	}
+
+	results := make([]string, 0)
+	if clusterClient, isOk := its.redisClient.(*redis.ClusterClient); isOk {
+		clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				res, err := scan(ctx, client)
+				if err != nil {
+					scanErr = err
+					return
+				}
+				mu.Lock()
+				results = append(results, res...)
+				mu.Unlock()
+			}()
+			return nil
+		})
+		wg.Wait()
+		if scanErr != nil {
+			return nil, scanErr
+		}
+	} else {
+		res, err := scan(context.Background(), its.redisClient)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, res...)
+	}
+
+	return results, nil
 }

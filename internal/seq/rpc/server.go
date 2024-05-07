@@ -2,14 +2,15 @@ package rpc
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
 	"go.uber.org/zap"
 
-	"eim/internal/redis"
-	"eim/internal/seq/medis"
+	"eim/internal/database"
+	"eim/pkg/idgenerator"
 	"eim/pkg/log"
 )
 
@@ -19,24 +20,18 @@ const (
 )
 
 type Config struct {
-	Ip             string
-	Port           int
-	EtcdEndpoints  []string
-	RedisEndpoints []string
-	RedisPassword  string
+	Ip                 string
+	Port               int
+	DatabaseDriver     database.Driver
+	DatabaseConnection string
+	DatabaseName       string
+	EtcdEndpoints      []string
+	RedisEndpoints     []string
+	RedisPassword      string
 }
 
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
-
-	//client, err := clientv3.New(clientv3.Config{
-	//	Endpoints:   cfg.EtcdEndpoints,
-	//	DialTimeout: 5 * time.Second,
-	//})
-	//if err != nil {
-	//	log.Error("Error connecting etcd cluster", zap.Error(err))
-	//	return err
-	//}
 
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
 		ServiceAddress: fmt.Sprintf("tcp@%v:%v", cfg.Ip, cfg.Port),
@@ -51,19 +46,15 @@ func StartServer(cfg Config) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	redisManager, err := redis.NewManager(cfg.RedisEndpoints, cfg.RedisPassword)
+	idgenerator.Init(cfg.RedisEndpoints, cfg.RedisPassword)
+
+	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
 	if err != nil {
-		log.Error("Error connecting redis cluster", zap.Strings("endpoints", cfg.RedisEndpoints), zap.Error(err))
+		log.Error("Error connecting database", zap.String("endpoint", cfg.DatabaseConnection), zap.Error(err))
 		return err
 	}
 
-	instance, err := medis.NewInstance(redisManager.GetRedisClient())
-	if err != nil {
-		log.Error("Error creating medis instance", zap.Error(err))
-		return err
-	}
-
-	err = svr.RegisterName(servicePath, &medisSeq{instance: instance}, "")
+	err = svr.RegisterName(servicePath, &segmentSeq{db: db, cache: sync.Map{}}, "")
 	if err != nil {
 		return err
 	}

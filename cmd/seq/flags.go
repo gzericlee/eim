@@ -9,6 +9,10 @@ import (
 const (
 	RpcPort = "RPC_PORT"
 
+	DatabaseDriver     = "DATABASE_DRIVER"
+	DatabaseName       = "DATABASE_NAME"
+	DatabaseConnection = "DATABASE_CONNECTION"
+
 	RedisEndpoints = "REDIS_ENDPOINTS"
 	RedisPassword  = "REDIS_PASSWORD"
 
@@ -25,6 +29,27 @@ func ParseFlags(app *cli.App) {
 			Usage:       "Rpc port",
 			EnvVars:     []string{RpcPort},
 			Destination: &config.SystemConfig.SeqSvr.RpcPort,
+		},
+		&cli.StringFlag{
+			Name:        "database-driver",
+			Value:       "mongodb",
+			Usage:       "database driver",
+			EnvVars:     []string{DatabaseDriver},
+			Destination: &config.SystemConfig.Database.Driver,
+		},
+		&cli.StringFlag{
+			Name:        "database-name",
+			Value:       "eim",
+			Usage:       "database name",
+			EnvVars:     []string{DatabaseName},
+			Destination: &config.SystemConfig.Database.Name,
+		},
+		&cli.StringFlag{
+			Name:        "database-connection",
+			Value:       "mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct",
+			Usage:       "database connection",
+			EnvVars:     []string{DatabaseConnection},
+			Destination: &config.SystemConfig.Database.Connection,
 		},
 		&cli.StringSliceFlag{
 			Name:        "redis-endpoints",

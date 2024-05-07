@@ -25,12 +25,12 @@ type User struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId     string `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	LoginId    string `protobuf:"bytes,2,opt,name=loginId,proto3" json:"loginId,omitempty"`
-	UserName   string `protobuf:"bytes,3,opt,name=userName,proto3" json:"userName,omitempty"`
-	Password   string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
-	TenantId   string `protobuf:"bytes,5,opt,name=tenantId,proto3" json:"tenantId,omitempty"`
-	TenantName string `protobuf:"bytes,6,opt,name=tenantName,proto3" json:"tenantName,omitempty"`
+	UserId     string `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty" bson:"user_id"`
+	LoginId    string `protobuf:"bytes,2,opt,name=loginId,proto3" json:"loginId,omitempty" bson:"login_id"`
+	UserName   string `protobuf:"bytes,3,opt,name=userName,proto3" json:"userName,omitempty" bson:"user_name"`
+	Password   string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty" bson:"password"`
+	TenantId   string `protobuf:"bytes,5,opt,name=tenantId,proto3" json:"tenantId,omitempty" bson:"tenant_id"`
+	TenantName string `protobuf:"bytes,6,opt,name=tenantName,proto3" json:"tenantName,omitempty" bson:"tenant_name"`
 }
 
 func (x *User) Reset() {

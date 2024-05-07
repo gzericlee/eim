@@ -26,15 +26,15 @@ type Device struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DeviceId      string                 `protobuf:"bytes,1,opt,name=deviceId,proto3" json:"deviceId,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
-	DeviceType    string                 `protobuf:"bytes,3,opt,name=deviceType,proto3" json:"deviceType,omitempty"`
-	DeviceVersion string                 `protobuf:"bytes,4,opt,name=deviceVersion,proto3" json:"deviceVersion,omitempty"`
-	GatewayIp     string                 `protobuf:"bytes,5,opt,name=gatewayIp,proto3" json:"gatewayIp,omitempty"`
-	FromId        string                 `protobuf:"bytes,6,opt,name=fromId,proto3" json:"fromId,omitempty"`
-	OnlineAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=onlineAt,proto3" json:"onlineAt,omitempty"`
-	OfflineAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=offlineAt,proto3" json:"offlineAt,omitempty"`
-	State         int32                  `protobuf:"varint,9,opt,name=state,proto3" json:"state,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=deviceId,proto3" json:"deviceId,omitempty" bson:"device_id"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty" bson:"user_id"`
+	DeviceType    string                 `protobuf:"bytes,3,opt,name=deviceType,proto3" json:"deviceType,omitempty" bson:"device_type"`
+	DeviceVersion string                 `protobuf:"bytes,4,opt,name=deviceVersion,proto3" json:"deviceVersion,omitempty" bson:"device_version"`
+	GatewayIp     string                 `protobuf:"bytes,5,opt,name=gatewayIp,proto3" json:"gatewayIp,omitempty" bson:"gateway_ip"`
+	FromId        string                 `protobuf:"bytes,6,opt,name=fromId,proto3" json:"fromId,omitempty" bson:"from_id"`
+	OnlineAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=onlineAt,proto3" json:"onlineAt,omitempty" bson:"online_at"`
+	OfflineAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=offlineAt,proto3" json:"offlineAt,omitempty" bson:"offline_at"`
+	State         int32                  `protobuf:"varint,9,opt,name=state,proto3" json:"state,omitempty" bson:"state"`
 }
 
 func (x *Device) Reset() {

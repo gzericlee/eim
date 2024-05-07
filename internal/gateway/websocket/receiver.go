@@ -9,10 +9,9 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
+	"eim/internal/gateway/protocol"
 	"eim/internal/model"
 	"eim/internal/mq"
-	"eim/internal/protocol"
-	"eim/pkg/idgenerator"
 	"eim/pkg/log"
 )
 
@@ -42,14 +41,19 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 				id = msg.ToId
 			}
 
-			msg.SeqId, err = its.seqRpc.Number(id)
+			msg.SeqId, err = its.seqRpc.IncrementId(id)
 			if err != nil {
 				log.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
 				atomic.AddInt64(&its.errorTotal, 1)
 				return
 			}
 
-			msgId := idgenerator.NextId()
+			msgId, err := its.seqRpc.SnowflakeId()
+			if err != nil {
+				log.Error("Error getting snowflake id", zap.Error(err))
+				atomic.AddInt64(&its.errorTotal, 1)
+				return
+			}
 			msg.MsgId = msgId
 			msg.SendTime = time.Now().UnixNano()
 

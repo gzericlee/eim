@@ -16,7 +16,7 @@ var rpcClient *rpc.Client
 
 func init() {
 	go func() {
-		fmt.Println(rpc.StartServer(rpc.Config{Ip: "0.0.0.0", Port: 10000, EtcdEndpoints: []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}, DatabaseConnection: "mongodb://admin:pass@word1@127.0.0.1:27017", DatabaseDriver: database.DriverMongoDB}))
+		fmt.Println(rpc.StartServer(rpc.Config{Ip: "0.0.0.0", Port: 10000, EtcdEndpoints: []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}, DatabaseConnection: "mongodb://admin:pass@word1@127.0.0.1:27017", DatabaseDriver: database.MongoDBDriver}))
 	}()
 
 	time.Sleep(time.Second)

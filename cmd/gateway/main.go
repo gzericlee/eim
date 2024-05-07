@@ -18,7 +18,6 @@ import (
 	"eim/internal/gateway/websocket"
 	"eim/internal/mq"
 	"eim/internal/version"
-	"eim/pkg/idgenerator"
 	"eim/pkg/log"
 )
 
@@ -50,7 +49,7 @@ func newCliApp() *cli.App {
 				RedisPassword:  config.SystemConfig.Redis.Password,
 			})
 			if err != nil {
-				log.Error("GatewaySvr server startup error", zap.Error(err))
+				log.Error("WebSocket server startup error", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
@@ -81,15 +80,13 @@ func newCliApp() *cli.App {
 
 		log.Info("Created mq consumers successfully")
 
-		idgenerator.Init(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
-
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
 			return err
 		}
 		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
 
-		log.Info(fmt.Sprintf("%v Service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
 
 		return http.Serve(l, nil)
 

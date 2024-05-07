@@ -18,7 +18,7 @@ func (its *Manager) SaveDevice(device *model.Device) error {
 }
 
 func (its *Manager) GetUserDevices(userId string) ([]*model.Device, error) {
-	values, err := its.getAll(fmt.Sprintf("%v:device:*", userId))
+	values, err := its.getAll(fmt.Sprintf("%v:device:*", userId), 5000)
 	if err != nil {
 		return nil, err
 	}

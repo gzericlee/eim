@@ -9,6 +9,7 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
 
+	"eim/pkg/idgenerator"
 	"eim/pkg/log"
 )
 
@@ -16,9 +17,10 @@ type etcdSeq struct {
 	etcdClient *clientv3.Client
 }
 
-func (its *etcdSeq) Number(ctx context.Context, req *Request, reply *Reply) error {
-	if req.Id == "" {
-		return fmt.Errorf("id is empty")
+func (its *etcdSeq) IncrementId(ctx context.Context, req *Request, reply *Reply) error {
+	bizId := req.BizId
+	if bizId == "" {
+		return fmt.Errorf("bizId can't be empty")
 	}
 
 	session, err := concurrency.NewSession(its.etcdClient, concurrency.WithTTL(10))
@@ -27,7 +29,7 @@ func (its *etcdSeq) Number(ctx context.Context, req *Request, reply *Reply) erro
 	}
 	defer session.Close()
 
-	mutex := concurrency.NewMutex(session, fmt.Sprintf("%s/%s", basePath, req.Id))
+	mutex := concurrency.NewMutex(session, fmt.Sprintf("%s/%s", basePath, bizId))
 	for i := 0; i < 3; i++ {
 		err = mutex.Lock(ctx)
 		if err == nil {
@@ -40,7 +42,7 @@ func (its *etcdSeq) Number(ctx context.Context, req *Request, reply *Reply) erro
 	}
 	defer mutex.Unlock(ctx)
 
-	resp, err := its.etcdClient.Get(ctx, fmt.Sprintf("%s/%s", basePath, req.Id))
+	resp, err := its.etcdClient.Get(ctx, fmt.Sprintf("%s/%s", basePath, bizId))
 	if err != nil {
 		return fmt.Errorf("failed to get seq: %v", err)
 	}
@@ -52,14 +54,19 @@ func (its *etcdSeq) Number(ctx context.Context, req *Request, reply *Reply) erro
 		seq = resp.Kvs[0].Version + 1
 	}
 
-	_, err = its.etcdClient.Put(ctx, fmt.Sprintf("%s/%s", basePath, req.Id), "")
+	_, err = its.etcdClient.Put(ctx, fmt.Sprintf("%s/%s", basePath, bizId), "")
 	if err != nil {
 		return fmt.Errorf("failed to update seq: %v", err)
 	}
 
 	reply.Number = seq
 
-	log.Debug("Get seq", zap.String("id", req.Id), zap.Int64("seq", seq))
+	log.Debug("Get seq", zap.String("bizId", bizId), zap.Int64("seq", seq))
 
+	return nil
+}
+
+func (its *etcdSeq) SnowflakeId(ctx context.Context, req *Request, reply *Reply) error {
+	reply.Number = idgenerator.NextId()
 	return nil
 }
