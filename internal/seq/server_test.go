@@ -43,7 +43,7 @@ func TestID_Get(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			seq, err := rpcClient.SnowflakeId("user_2")
+			seq, err := rpcClient.SnowflakeId()
 			if err != nil {
 				t.Log(err)
 			}
