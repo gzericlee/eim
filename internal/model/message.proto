@@ -3,7 +3,7 @@ package model;
 option go_package = "../model";
 
 message Message {
-  int64 msgId = 1;
+  string msgId = 1;
   int64 seqId = 2;
   int64 msgType = 3;
   string content = 4;

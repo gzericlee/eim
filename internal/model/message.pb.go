@@ -25,7 +25,7 @@ type Message struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MsgId      int64  `protobuf:"varint,1,opt,name=msgId,proto3" json:"msgId,omitempty" bson:"msg_id"`
+	MsgId      string `protobuf:"bytes,1,opt,name=msgId,proto3" json:"msgId,omitempty" bson:"msg_id"`
 	SeqId      int64  `protobuf:"varint,2,opt,name=seqId,proto3" json:"seqId,omitempty" bson:"seq_id"`
 	MsgType    int64  `protobuf:"varint,3,opt,name=msgType,proto3" json:"msgType,omitempty" bson:"msg_type"`
 	Content    string `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty" bson:"content"`
@@ -36,7 +36,7 @@ type Message struct {
 	ToId       string `protobuf:"bytes,9,opt,name=toId,proto3" json:"toId,omitempty" bson:"to_id"`
 	ToDevice   string `protobuf:"bytes,10,opt,name=toDevice,proto3" json:"toDevice,omitempty" bson:"to_device"`
 	SendTime   int64  `protobuf:"varint,11,opt,name=sendTime,proto3" json:"sendTime,omitempty" bson:"send_time"`
-	UserId     string `protobuf:"bytes,12,opt,name=userId,proto3" json:"userId,omitempty" bson:"user_id"`
+	UserId     string `protobuf:"bytes,12,opt,name=userId,proto3" json:"-" bson:"-"`
 }
 
 func (x *Message) Reset() {
@@ -71,11 +71,11 @@ func (*Message) Descriptor() ([]byte, []int) {
 	return file_internal_model_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Message) GetMsgId() int64 {
+func (x *Message) GetMsgId() string {
 	if x != nil {
 		return x.MsgId
 	}
-	return 0
+	return ""
 }
 
 func (x *Message) GetSeqId() int64 {

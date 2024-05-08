@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/binary"
 	"sync/atomic"
 	"time"
 
@@ -48,13 +47,6 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 				return
 			}
 
-			msgId, err := its.seqRpc.SnowflakeId()
-			if err != nil {
-				log.Error("Error getting snowflake id", zap.Error(err))
-				atomic.AddInt64(&its.errorTotal, 1)
-				return
-			}
-			msg.MsgId = msgId
 			msg.SendTime = time.Now().UnixNano()
 
 			err = its.workerPool.Submit(func(sess *session, pbMsg *model.Message) func() {
@@ -72,9 +64,7 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 						atomic.AddInt64(&its.errorTotal, 1)
 						return
 					}
-					idBody := make([]byte, binary.MaxVarintLen64)
-					binary.PutVarint(idBody, pbMsg.MsgId)
-					sess.send(protocol.Ack, idBody)
+					sess.send(protocol.Ack, []byte(msg.MsgId))
 				}
 			}(sess, msg))
 

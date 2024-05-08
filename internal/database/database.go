@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -63,38 +62,7 @@ func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
 
 			db := client.Database(name)
 
-			_, err = db.Collection("device").Indexes().CreateOne(ctx, mongo.IndexModel{
-				Keys:    bson.M{"device_id": 1},
-				Options: options.Index().SetUnique(true),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
-				Keys:    bson.M{"msg_id": 1},
-				Options: options.Index().SetUnique(true),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = db.Collection("segment").Indexes().CreateOne(ctx, mongo.IndexModel{
-				Keys:    bson.M{"biz_id": 1},
-				Options: options.Index().SetUnique(true),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
-				Keys: bson.M{"seq_id": 1},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			return mongodb.NewRepository(db), err
+			return mongodb.NewRepository(db)
 		}
 	}
 	return nil, fmt.Errorf("unsupported driver: %s", driver)

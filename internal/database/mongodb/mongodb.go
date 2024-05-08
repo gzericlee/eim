@@ -8,6 +8,8 @@ type Repository struct {
 	db *mongo.Database
 }
 
-func NewRepository(db *mongo.Database) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *mongo.Database) (*Repository, error) {
+	repository := &Repository{db: db}
+	err := repository.initIndexes()
+	return repository, err
 }

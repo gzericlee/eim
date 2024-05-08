@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/lesismal/nbio/extension/tls"
 	"github.com/lesismal/nbio/logging"
@@ -200,6 +201,7 @@ func Do() {
 				var msgTotal = config.SystemConfig.Mock.MessageCount
 				for {
 					msg := &model.Message{
+						MsgId:      uuid.NewString(),
 						MsgType:    model.TextMessage,
 						Content:    time.Now().String(),
 						FromType:   model.FromUser,
