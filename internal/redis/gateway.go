@@ -15,11 +15,11 @@ func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Dura
 	if err != nil {
 		return err
 	}
-	return its.redisClient.Set(context.Background(), fmt.Sprintf("gateway:%v", gateway.Ip), body, expiration).Err()
+	return its.redisClient.Set(context.Background(), fmt.Sprintf("gateway.%v", gateway.Ip), body, expiration).Err()
 }
 
 func (its *Manager) GetGateways() ([]*model.Gateway, error) {
-	values, err := its.getAll(fmt.Sprintf("gateway:*"), 5000)
+	values, err := its.getAll(fmt.Sprintf("gateway.*"), 5000)
 	if err != nil {
 		return nil, err
 	}

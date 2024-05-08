@@ -45,9 +45,9 @@ func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Produce
 	}
 
 	for _, device := range devices {
-		//if msg.FromDevice == device.DeviceId {
-		//	continue
-		//}
+		if msg.FromDevice == device.DeviceId {
+			continue
+		}
 		key := fmt.Sprintf("%v:offline:%v:%v", msg.UserId, msg.ToId, device.DeviceId)
 		offlineCount, err := redisManager.Incr(key)
 		if err != nil {

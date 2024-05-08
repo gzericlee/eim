@@ -29,7 +29,7 @@ func (its *Message) Save(ctx context.Context, req *MessageRequest, reply *Messag
 		return err
 	}
 
-	log.Debug("Store message", zap.Int64("msgId", req.Message.MsgId), zap.Int64("seqId", req.Message.SeqId))
+	log.Debug("Store message", zap.String("msgId", req.Message.MsgId), zap.Int64("seqId", req.Message.SeqId))
 
 	return nil
 }

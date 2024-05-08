@@ -3,6 +3,7 @@ package mock
 import (
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -74,7 +75,7 @@ func Do() {
 					t.Render()
 
 					if config.SystemConfig.Mock.MessageCount > 0 {
-						if sendCount.Load() == msgCount.Load()/2 && sendCount.Load() == int64(config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
+						if sendCount.Load() == msgCount.Load() && sendCount.Load() == int64(config.SystemConfig.Mock.ClientCount*config.SystemConfig.Mock.MessageCount) && msgCount.Load() != 0 {
 							log.Info(fmt.Sprintf("Mock completed，Connection %v : %v，Send %v : %v",
 								config.SystemConfig.Mock.ClientCount,
 								connectedConsume,
@@ -200,6 +201,12 @@ func Do() {
 			go func(cli *client) {
 				var msgTotal = config.SystemConfig.Mock.MessageCount
 				for {
+					id := rand.Int31n(int32(config.SystemConfig.Mock.ClientCount)) + 1
+					toId := fmt.Sprintf("user-%d", id)
+					toDevice := fmt.Sprintf("device-%d", id)
+					if cli.userId == toId {
+						continue
+					}
 					msg := &model.Message{
 						MsgId:      uuid.NewString(),
 						MsgType:    model.TextMessage,
@@ -208,8 +215,8 @@ func Do() {
 						FromId:     cli.userId,
 						FromDevice: cli.deviceId,
 						ToType:     model.ToUser,
-						ToId:       cli.userId,
-						ToDevice:   cli.deviceId,
+						ToId:       toId,
+						ToDevice:   toDevice,
 					}
 					body, _ := proto.Marshal(msg)
 					err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))

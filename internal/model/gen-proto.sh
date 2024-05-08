@@ -2,5 +2,7 @@
 
 dir=$(dirname "$0")
 
-protoc --go_out=${dir} ${dir}/*.proto
-protoc --go-grpc_out=${dir} ${dir}/*.proto
+name=$1
+
+protoc --go_out=${dir} ${dir}/${name}.proto
+protoc --go-grpc_out=${dir} ${dir}/${name}.proto

@@ -10,7 +10,7 @@ import (
 )
 
 func (its *Manager) SaveUser(user *model.User) error {
-	key := fmt.Sprintf("%s@%s:info", user.LoginId, user.TenantId)
+	key := fmt.Sprintf("%s.%s.info", user.LoginId, user.TenantId)
 	body, err := proto.Marshal(user)
 	if err != nil {
 		return err
@@ -19,7 +19,7 @@ func (its *Manager) SaveUser(user *model.User) error {
 }
 
 func (its *Manager) GetUser(loginId, tenantId string) (*model.User, error) {
-	key := fmt.Sprintf("%s@%s:info", loginId, tenantId)
+	key := fmt.Sprintf("%s.%s.info", loginId, tenantId)
 	result, err := its.redisClient.Get(context.Background(), key).Result()
 	if err != nil {
 		return nil, err

@@ -68,7 +68,6 @@ func TestSaveGroupMember(t *testing.T) {
 			BizId:   "group-1",
 			BizType: "group",
 			UserId:  "user-" + strconv.Itoa(i),
-			AckSeq:  0,
 		}))
 	}
 }
@@ -121,7 +120,7 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestGetAllGateway(t *testing.T) {
-	gateways, err := manager.getAll(fmt.Sprintf("%v:*", "gateway"), 5000)
+	gateways, err := manager.getAll(fmt.Sprintf("gateway.*"), 5000)
 	if err != nil {
 		t.Error(err)
 		return

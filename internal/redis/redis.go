@@ -37,6 +37,14 @@ func (its *Manager) GetRedisClient() redis.UniversalClient {
 	return its.redisClient
 }
 
+func (its *Manager) Incr(key string) (int64, error) {
+	return its.redisClient.Incr(context.Background(), key).Result()
+}
+
+func (its *Manager) Decr(key string) (int64, error) {
+	return its.redisClient.Decr(context.Background(), key).Result()
+}
+
 func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 	var cursor uint64
 	var wg sync.WaitGroup
@@ -70,7 +78,7 @@ func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 
 	results := make([]string, 0)
 	if clusterClient, isOk := its.redisClient.(*redis.ClusterClient); isOk {
-		clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
+		err := clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -85,6 +93,9 @@ func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 			}()
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
 		wg.Wait()
 		if scanErr != nil {
 			return nil, scanErr
