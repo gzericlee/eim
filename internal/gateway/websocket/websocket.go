@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"eim/internal/model"
+	"eim/util/log"
 
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
@@ -22,7 +23,6 @@ import (
 	"eim/internal/redis"
 	seqrpc "eim/internal/seq/rpc"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
 )
 
 type Server struct {
@@ -54,7 +54,7 @@ func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrp
 
 	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new worker pool -> %w", err)
 	}
 
 	keepaliveTime := time.Minute * 5
@@ -114,8 +114,18 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 	ws.OnMessage(its.receiverHandler)
 
 	ws.SetPingHandler(func(conn *websocket.Conn, s string) {
-		_ = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
-		_ = conn.WriteMessage(websocket.PongMessage, []byte(time.Now().String()))
+		err = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
+		if err != nil {
+			log.Error("Error set read deadline", zap.Error(err))
+			_ = conn.Close()
+			return
+		}
+		err = conn.WriteMessage(websocket.PongMessage, []byte(time.Now().String()))
+		if err != nil {
+			log.Error("Error send pong message", zap.Error(err))
+			_ = conn.Close()
+			return
+		}
 		atomic.AddInt64(&its.heartbeatTotal, 1)
 	})
 
@@ -136,14 +146,14 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 
 		err = its.storageRpc.SaveDevice(sess.device)
 		if err != nil {
-			log.Error("Error saving device", zap.Error(err))
+			log.Error("Error save device", zap.Error(err))
 			return
 		}
 	})
 
 	conn, err := ws.Upgrade(w, r, nil)
 	if err != nil {
-		log.Error("Error upgrading websocket protocol", zap.Error(err))
+		log.Error("Error upgrade websocket protocol", zap.Error(err))
 		return
 	}
 
@@ -172,7 +182,7 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 	err = its.storageRpc.SaveDevice(sess.device)
 	if err != nil {
 		_ = sess.conn.Close()
-		log.Error("Error saving device", zap.Error(err))
+		log.Error("Error save device", zap.Error(err))
 		return
 	}
 	atomic.AddInt64(&its.clientTotal, 1)

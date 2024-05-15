@@ -53,16 +53,21 @@ func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
 
 			client, err := mongo.Connect(ctx, options.Client().ApplyURI(connection))
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("connect mongodb -> %w", err)
 			}
 
 			if err := client.Ping(ctx, readpref.Primary()); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("ping mongodb -> %w", err)
 			}
 
 			db := client.Database(name)
 
-			return mongodb.NewRepository(db)
+			repo, err := mongodb.NewRepository(db)
+			if err != nil {
+				return nil, fmt.Errorf("new mongodb repository -> %w", err)
+			}
+
+			return repo, nil
 		}
 	}
 	return nil, fmt.Errorf("unsupported driver: %s", driver)

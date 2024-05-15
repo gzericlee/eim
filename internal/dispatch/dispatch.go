@@ -8,24 +8,23 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/model"
+	"eim/util/log"
 
 	"eim/internal/mq"
 	"eim/internal/redis"
-	"eim/pkg/log"
 )
 
 func toGroup(msg *model.Message, redisManager *redis.Manager, producer mq.Producer) error {
 	members, err := redisManager.GetBizMembers(model.BizGroup, msg.ToId)
 	if err != nil {
-		log.Error("Error getting group members", zap.String("groupId", msg.ToId), zap.Error(err))
-		return err
+		return fmt.Errorf("get group members -> %w", err)
 	}
 	members = append(members, msg.FromId)
 	for _, userId := range members {
 		msg.UserId = userId
 		err = toUser(msg, redisManager, producer)
 		if err != nil {
-			return err
+			return fmt.Errorf("send message to user -> %w", err)
 		}
 	}
 
@@ -35,13 +34,11 @@ func toGroup(msg *model.Message, redisManager *redis.Manager, producer mq.Produc
 func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Producer) error {
 	devices, err := redisManager.GetUserDevices(msg.UserId)
 	if err != nil {
-		log.Error("Error getting from user devices", zap.String("userId", msg.FromId), zap.Error(err))
-		return err
+		return fmt.Errorf("get user devices -> %w", err)
 	}
 	body, err := proto.Marshal(msg)
 	if err != nil {
-		log.Error("Error marshalling message", zap.Error(err))
-		return err
+		return fmt.Errorf("marshal message -> %w", err)
 	}
 
 	for _, device := range devices {
@@ -51,14 +48,12 @@ func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Produce
 		key := fmt.Sprintf("%v:offline:%v:%v", msg.UserId, msg.ToId, device.DeviceId)
 		offlineCount, err := redisManager.Incr(key)
 		if err != nil {
-			log.Error("Error increasing offline count", zap.String("userId", device.UserId), zap.String("deviceId", device.DeviceId), zap.Error(err))
-			return err
+			return fmt.Errorf("incr offline count -> %w", err)
 		}
 		if device.State == model.OnlineState {
 			err = producer.Publish(fmt.Sprintf(mq.MessageSendSubject, strings.Replace(device.GatewayIp, ".", "-", -1)), body)
 			if err != nil {
-				log.Error("Error publishing message", zap.Error(err))
-				return err
+				return fmt.Errorf("publish message -> %w", err)
 			}
 			log.Debug("Online message", zap.String("gateway", device.GatewayIp), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
 		} else {

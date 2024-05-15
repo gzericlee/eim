@@ -2,16 +2,18 @@ package config
 
 import (
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
-	"eim/util"
+	"eim/util/log"
+	"eim/util/net"
 )
 
 var SystemConfig *systemConfig
 
 func init() {
-	ip, err := util.GetLocalIpV4()
+	ip, err := net.GetLocalIPv4()
 	if err != nil {
-		panic(err)
+		log.Panic("get local ip error -> %v", zap.Error(err))
 	}
 	SystemConfig = &systemConfig{
 		LocalIp: ip,

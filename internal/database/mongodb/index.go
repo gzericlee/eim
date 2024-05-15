@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,7 +17,7 @@ func (its *Repository) initIndexes() error {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create device(device_id) index -> %w", err)
 	}
 
 	_, err = its.db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
@@ -24,7 +25,7 @@ func (its *Repository) initIndexes() error {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create message(msg_id) index -> %w", err)
 	}
 
 	_, err = its.db.Collection("segment").Indexes().CreateOne(ctx, mongo.IndexModel{
@@ -32,14 +33,14 @@ func (its *Repository) initIndexes() error {
 		Options: options.Index().SetUnique(true),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create segment(biz_id) index -> %w", err)
 	}
 
 	_, err = its.db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.M{"seq_id": 1},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create message(seq_id) index -> %w", err)
 	}
 
 	return nil

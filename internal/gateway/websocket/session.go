@@ -8,7 +8,7 @@ import (
 
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type session struct {

@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"eim/pkg/idgenerator"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type etcdSeq struct {
@@ -25,7 +25,7 @@ func (its *etcdSeq) IncrementId(ctx context.Context, req *Request, reply *Reply)
 
 	session, err := concurrency.NewSession(its.etcdClient, concurrency.WithTTL(10))
 	if err != nil {
-		return fmt.Errorf("failed to create etcd session: %v", err)
+		return fmt.Errorf("new etcd session -> %w", err)
 	}
 	defer session.Close()
 
@@ -38,13 +38,13 @@ func (its *etcdSeq) IncrementId(ctx context.Context, req *Request, reply *Reply)
 		time.Sleep(time.Second)
 	}
 	if err != nil {
-		return fmt.Errorf("failed to acquire lock: %v", err)
+		return fmt.Errorf("new etcd locker -> %w", err)
 	}
 	defer mutex.Unlock(ctx)
 
 	resp, err := its.etcdClient.Get(ctx, fmt.Sprintf("%s/%s", basePath, bizId))
 	if err != nil {
-		return fmt.Errorf("failed to get seq: %v", err)
+		return fmt.Errorf("etcd get -> %w", err)
 	}
 
 	var seq int64
@@ -56,7 +56,7 @@ func (its *etcdSeq) IncrementId(ctx context.Context, req *Request, reply *Reply)
 
 	_, err = its.etcdClient.Put(ctx, fmt.Sprintf("%s/%s", basePath, bizId), "")
 	if err != nil {
-		return fmt.Errorf("failed to update seq: %v", err)
+		return fmt.Errorf("etcd put -> %w", err)
 	}
 
 	reply.Number = seq

@@ -1,14 +1,14 @@
 package dispatch
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/proto"
-	"go.uber.org/zap"
 
 	"eim/internal/model"
 	"eim/internal/mq"
 	"eim/internal/redis"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
 )
 
 type UserMessageHandler struct {
@@ -25,30 +25,26 @@ func (its *UserMessageHandler) HandleMessage(data []byte) error {
 	msg := &model.Message{}
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
-		log.Error("Error deserializing message", zap.Error(err))
-		return nil
+		return fmt.Errorf("unmarshal message -> %w", err)
 	}
 
 	//发送者多端同步
 	msg.UserId = msg.FromId
 	err = toUser(msg, its.RedisManager, its.Producer)
 	if err != nil {
-		log.Error("Error dispatching user message to user", zap.String("userId", msg.UserId), zap.Error(err))
-		return err
+		return fmt.Errorf("dispatch user message to send user -> %w", err)
 	}
 
 	//接收者多端推送
 	msg.UserId = msg.ToId
 	err = toUser(msg, its.RedisManager, its.Producer)
 	if err != nil {
-		log.Error("Error dispatching user message to user", zap.String("userId", msg.UserId), zap.Error(err))
-		return err
+		return fmt.Errorf("dispatch user message to receive user -> %w", err)
 	}
 
 	err = its.StorageRpc.SaveMessage(msg)
 	if err != nil {
-		log.Error("Error saving message", zap.Error(err))
-		return err
+		return fmt.Errorf("save message -> %w", err)
 	}
 
 	return nil

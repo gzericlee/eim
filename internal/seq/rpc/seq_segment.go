@@ -9,7 +9,7 @@ import (
 
 	"eim/internal/database"
 	"eim/pkg/idgenerator"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type segmentSeq struct {

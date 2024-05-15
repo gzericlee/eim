@@ -14,7 +14,7 @@ import (
 	"eim/internal/config"
 	"eim/internal/mock"
 	"eim/internal/version"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -55,7 +55,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

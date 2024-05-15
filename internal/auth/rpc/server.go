@@ -6,10 +6,8 @@ import (
 
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
-	"go.uber.org/zap"
 
 	"eim/internal/redis"
-	"eim/pkg/log"
 )
 
 const (
@@ -30,8 +28,7 @@ func StartServer(cfg Config) error {
 
 	redisManager, err := redis.NewManager(cfg.RedisEndpoints, cfg.RedisPassword)
 	if err != nil {
-		log.Error("Error connection redis cluster", zap.Error(err))
-		return err
+		return fmt.Errorf("new redis manager -> %w", err)
 	}
 
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
@@ -42,16 +39,19 @@ func StartServer(cfg Config) error {
 	}
 	err = plugin.Start()
 	if err != nil {
-		log.Error("Error registering etcd plugin", zap.Error(err))
-		return err
+		return fmt.Errorf("start etcd v3 register plugin -> %w", err)
 	}
 	svr.Plugins.Add(plugin)
 
 	err = svr.RegisterName(servicePath, &Authentication{RedisManager: redisManager}, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("register auth service -> %w", err)
 	}
 
 	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
-	return err
+	if err != nil {
+		return fmt.Errorf("start server -> %w", err)
+	}
+
+	return nil
 }

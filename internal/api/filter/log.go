@@ -7,7 +7,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func NCSALogFormat() restful.FilterFunction {

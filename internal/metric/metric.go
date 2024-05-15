@@ -1,6 +1,7 @@
 package metric
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -15,11 +16,11 @@ type Metric struct {
 func GetMachineMetric() (*Metric, error) {
 	vm, err := mem.VirtualMemory()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get virtual memory -> %w", err)
 	}
 	totalPercent, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get cpu percent -> %w", err)
 	}
 	return &Metric{
 		MemUsed: vm.UsedPercent,

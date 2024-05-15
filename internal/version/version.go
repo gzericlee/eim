@@ -8,7 +8,7 @@ import (
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable"
 
 	"eim/internal/config"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 
 func initLogger() {
 	//初始化日志
-	log.InitLogger(log.Config{
+	log.SetConfig(log.Config{
 		ConsoleEnabled: true,
 		ConsoleLevel:   config.SystemConfig.LogLevel,
 		ConsoleJson:    false,

@@ -9,10 +9,18 @@ import (
 
 func (its *Manager) SaveBizMember(member *model.BizMember) error {
 	key := fmt.Sprintf("%s.%s.members", member.BizType, member.BizId)
-	return its.redisClient.SAdd(context.Background(), key, member.UserId).Err()
+	err := its.redisClient.SAdd(context.Background(), key, member.UserId).Err()
+	if err != nil {
+		return fmt.Errorf("save biz member -> %w", err)
+	}
+	return nil
 }
 
 func (its *Manager) GetBizMembers(bizType, bizId string) ([]string, error) {
 	key := fmt.Sprintf("%s.%s.members", bizType, bizId)
-	return its.redisClient.SMembers(context.Background(), key).Result()
+	result, err := its.redisClient.SMembers(context.Background(), key).Result()
+	if err != nil {
+		return nil, fmt.Errorf("get biz members -> %w", err)
+	}
+	return result, nil
 }

@@ -9,10 +9,10 @@ import (
 
 	"eim/internal/api/filter"
 	"eim/internal/redis"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
-func RegisterAPIRoute(redisManager *redis.Manager) error {
+func RegisterAPIRoutes(redisManager *redis.Manager) error {
 	restful.DefaultContainer.Add(regGatewayAPIs(redisManager))
 
 	config := restfulspec.Config{

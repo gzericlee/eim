@@ -8,7 +8,7 @@ import (
 	"github.com/yitter/idgenerator-go/idgen"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func Init(redisEndpoints []string, password string) {

@@ -15,7 +15,7 @@ import (
 	"eim/internal/redis"
 	storagerpc "eim/internal/storage/rpc"
 	"eim/internal/version"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -38,26 +38,26 @@ func newCliApp() *cli.App {
 		for {
 			storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				log.Error("Error creating storage rpc client", zap.Strings("endpoints", config.SystemConfig.Etcd.Endpoints.Value()), zap.Error(err))
+				log.Error("Error new storage rpc client", zap.Strings("endpoints", config.SystemConfig.Etcd.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
 			redisManager, err := redis.NewManager(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
 			if err != nil {
-				log.Error("Error creating redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+				log.Error("Error new redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
 			producer, err := mq.NewProducer(config.SystemConfig.Mq.Endpoints.Value())
 			if err != nil {
-				log.Error("Error creating mq producer", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
+				log.Error("Error new mq producer", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			log.Info("Created mq producers successfully")
+			log.Info("New mq producers successfully")
 
 			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
 
@@ -67,12 +67,12 @@ func newCliApp() *cli.App {
 				Producer:     producer,
 			})
 			if err != nil {
-				log.Error("Error creating mq consumers", zap.Error(err))
+				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			log.Info("Created mq consumers successfully")
+			log.Info("New mq consumers successfully")
 
 			break
 		}
@@ -89,7 +89,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

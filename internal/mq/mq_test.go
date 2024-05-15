@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 
 	"eim/internal/model"
 	"eim/pkg/idgenerator"
@@ -33,7 +34,7 @@ func init() {
 func BenchmarkPublish(b *testing.B) {
 	for i := 0; i < 1; i++ {
 		msg := &model.Message{
-			MsgId:      idgenerator.NextId(),
+			MsgId:      uuid.New().String(),
 			SeqId:      1,
 			MsgType:    1,
 			Content:    time.Now().String(),

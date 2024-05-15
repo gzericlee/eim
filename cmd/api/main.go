@@ -16,7 +16,7 @@ import (
 	"eim/internal/config"
 	"eim/internal/redis"
 	"eim/internal/version"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -41,14 +41,16 @@ func newCliApp() *cli.App {
 			for {
 				redisManager, err := redis.NewManager(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
 				if err != nil {
-					log.Error("Error creating redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
+					log.Error("Error new redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 					time.Sleep(time.Second * 5)
 					continue
 				}
 
+				log.Info("New redis manager successfully")
+
 				err = httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort, RedisManager: redisManager})
 				if err != nil {
-					log.Error("ApiSvr server startup error", zap.Error(err))
+					log.Error("Error start api server", zap.Error(err))
 					time.Sleep(time.Second * 5)
 					continue
 				}
@@ -74,7 +76,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

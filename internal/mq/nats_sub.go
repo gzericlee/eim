@@ -13,7 +13,7 @@ import (
 	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type natsConsumer struct {
@@ -32,12 +32,12 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 		nats.MaxPingsOutstanding(3),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect nats server -> %w", err)
 	}
 
 	jsContext, err := conn.JetStream(nats.PublishAsyncMaxPending(1024))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get jetstream context -> %w", err)
 	}
 
 	for _, name := range strings.Split(streams, ",") {
@@ -49,13 +49,13 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 			})
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("add stream -> %w", err)
 		}
 	}
 
 	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new task pool -> %w", err)
 	}
 
 	consumer := &natsConsumer{conn: conn, jsContext: jsContext, taskPool: taskPool}
@@ -66,20 +66,19 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 }
 
 func (its *natsConsumer) Subscribe(subj string, queue string, handler Handler) error {
-	var err error
-
 	var doFunc = func(msg *nats.Msg) {
 		err := its.taskPool.Submit(func(msg *nats.Msg) func() {
 			return func() {
 				if err := handler.HandleMessage(msg.Data); err == nil {
-					err := msg.Ack()
+					err = msg.Ack()
 					if err != nil {
-						log.Error("Error acking message", zap.Error(err))
+						log.Error("Error ack message", zap.Error(err))
 					}
 				} else {
-					err := msg.Nak()
+					log.Error("Error handle message", zap.Error(err))
+					err = msg.Nak()
 					if err != nil {
-						log.Error("Error nacking message", zap.Error(err))
+						log.Error("Error nak message", zap.Error(err))
 					}
 				}
 			}
@@ -92,11 +91,17 @@ func (its *natsConsumer) Subscribe(subj string, queue string, handler Handler) e
 	name := strings.ReplaceAll(subj, ".", "-")
 
 	if queue == "" {
-		_, err = its.jsContext.Subscribe(subj, doFunc, nats.ManualAck(), nats.Durable(name))
+		_, err := its.jsContext.Subscribe(subj, doFunc, nats.ManualAck(), nats.Durable(name))
+		if err != nil {
+			return fmt.Errorf("subscribe message -> %w", err)
+		}
 	} else {
-		_, err = its.jsContext.QueueSubscribe(subj, queue, doFunc, nats.ManualAck(), nats.Durable(name))
+		_, err := its.jsContext.QueueSubscribe(subj, queue, doFunc, nats.ManualAck(), nats.Durable(name))
+		if err != nil {
+			return fmt.Errorf("queue subscribe message -> %w", err)
+		}
 	}
-	return err
+	return nil
 }
 
 func (its *natsConsumer) printDetails() {

@@ -18,7 +18,7 @@ import (
 	"eim/internal/gateway/websocket"
 	"eim/internal/mq"
 	"eim/internal/version"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -49,7 +49,7 @@ func newCliApp() *cli.App {
 				RedisPassword:  config.SystemConfig.Redis.Password,
 			})
 			if err != nil {
-				log.Error("WebSocket server startup error", zap.Error(err))
+				log.Error("Error start webSocket server", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
@@ -72,13 +72,13 @@ func newCliApp() *cli.App {
 			break
 
 		ERROR:
-			log.Error("Error creating mq consumers", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
+			log.Error("Error new mq consumers", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
 			time.Sleep(time.Second * 5)
 			continue
 
 		}
 
-		log.Info("Created mq consumers successfully")
+		log.Info("New mq consumers successfully")
 
 		l, err := net.Listen("tcp", ":0")
 		if err != nil {
@@ -98,7 +98,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

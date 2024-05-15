@@ -2,13 +2,14 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/zap"
 
 	"eim/internal/model"
+	"eim/util/log"
 
 	"eim/internal/database"
-	"eim/pkg/log"
 )
 
 type Message struct {
@@ -25,8 +26,7 @@ type MessageReply struct {
 func (its *Message) Save(ctx context.Context, req *MessageRequest, reply *MessageReply) error {
 	err := its.Database.SaveMessage(req.Message)
 	if err != nil {
-		log.Error("Error inserting into database", zap.Error(err))
-		return err
+		return fmt.Errorf("save db message -> %w", err)
 	}
 
 	log.Debug("Store message", zap.String("msgId", req.Message.MsgId), zap.Int64("seqId", req.Message.SeqId))

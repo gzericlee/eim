@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type natsProducer struct {
@@ -34,12 +34,12 @@ func newNatsProducer(endpoints []string) (Producer, error) {
 		nats.MaxPingsOutstanding(3),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect nats server -> %w", err)
 	}
 
 	jsContext, err := conn.JetStream(nats.PublishAsyncMaxPending(1024))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get jetstream context -> %w", err)
 	}
 
 	for _, name := range strings.Split(streams, ",") {
@@ -51,7 +51,7 @@ func newNatsProducer(endpoints []string) (Producer, error) {
 			})
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("add stream -> %w", err)
 		}
 	}
 
@@ -67,7 +67,7 @@ func (its *natsProducer) Publish(subj string, body []byte) error {
 
 	ack, err := its.jsContext.Publish(subj, body)
 	if err != nil {
-		return err
+		return fmt.Errorf("publish message -> %w", err)
 	}
 
 	log.Debug("Published successfully", zap.String("subject", subj), zap.Any("ack", ack))

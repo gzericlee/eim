@@ -57,30 +57,30 @@ type Logger struct {
 	*zap.Logger
 }
 
-var defaultZapLogger *Logger
+var logger *Logger
 
 func Debug(msg string, fields ...Field) {
-	defaultZapLogger.Debug(msg, fields...)
+	logger.Debug(msg, fields...)
 }
 
 func Info(msg string, fields ...Field) {
-	defaultZapLogger.Info(msg, fields...)
+	logger.Info(msg, fields...)
 }
 
 func Warn(msg string, fields ...Field) {
-	defaultZapLogger.Warn(msg, fields...)
+	logger.Warn(msg, fields...)
 }
 
 func Error(msg string, fields ...Field) {
-	defaultZapLogger.Error(msg, fields...)
+	logger.Error(msg, fields...)
 }
 
 func Panic(msg string, fields ...Field) {
-	defaultZapLogger.Panic(msg, fields...)
+	logger.Panic(msg, fields...)
 }
 
 func Fatal(msg string, fields ...Field) {
-	defaultZapLogger.Fatal(msg, fields...)
+	logger.Fatal(msg, fields...)
 }
 
 // Configure sets up the logging framework
@@ -93,8 +93,8 @@ func Fatal(msg string, fields ...Field) {
 // will be rolled according to configuration set.
 func Configure(config Config) *Logger {
 	logger := newZapLogger(config)
-	defaultZapLogger = logger
-	zap.RedirectStdLog(defaultZapLogger.Logger)
+	logger = logger
+	zap.RedirectStdLog(logger.Logger)
 	return logger
 }
 

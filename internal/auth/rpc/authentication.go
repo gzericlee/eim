@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 
 	"eim/internal/config"
 	"eim/internal/model"
@@ -23,6 +24,9 @@ type Authentication struct {
 func (its *Authentication) CheckToken(ctx context.Context, req *Request, reply *Reply) error {
 	authenticator := NewAuthenticator(Mode(config.SystemConfig.AuthSvr.Mode), its.RedisManager)
 	user, err := authenticator.CheckToken(req.Token)
+	if err != nil {
+		return fmt.Errorf("check token -> %w", err)
+	}
 	reply.User = user
-	return err
+	return nil
 }

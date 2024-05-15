@@ -11,7 +11,7 @@ import (
 
 	"eim/internal/api/router"
 	"eim/internal/redis"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type Config struct {
@@ -24,9 +24,9 @@ type HttpServer struct {
 }
 
 func (its *HttpServer) Run(cfg Config) error {
-	err := router.RegisterAPIRoute(cfg.RedisManager)
+	err := router.RegisterAPIRoutes(cfg.RedisManager)
 	if err != nil {
-		return err
+		return fmt.Errorf("register api routes -> %w", err)
 	}
 
 	its.server = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: restful.DefaultContainer}

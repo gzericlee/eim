@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,7 +27,7 @@ func (its *Repository) GetSegment(bizId string) (*model.Segment, error) {
 	err := its.db.Collection("segment").FindOne(context.Background(), bson.M{"biz_id": bizId}).Decode(seg)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, err
+			return nil, fmt.Errorf("find segment -> %w", err)
 		}
 		seg.BizId = bizId
 		seg.MaxId = 0
@@ -38,5 +39,8 @@ func (its *Repository) GetSegment(bizId string) (*model.Segment, error) {
 		seg.UpdateAt = timestamppb.Now()
 	}
 	_, err = its.db.Collection("segment").ReplaceOne(context.Background(), bson.M{"biz_id": bizId}, seg, &options.ReplaceOptions{Upsert: &isTrue})
-	return seg, err
+	if err != nil {
+		return nil, fmt.Errorf("upsert segment -> %w", err)
+	}
+	return seg, nil
 }

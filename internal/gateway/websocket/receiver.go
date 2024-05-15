@@ -11,7 +11,7 @@ import (
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
 	"eim/internal/mq"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
@@ -29,7 +29,7 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			err := proto.Unmarshal(frame, msg)
 			if err != nil {
 				atomic.AddInt64(&its.invalidMsgTotal, 1)
-				log.Error("Illegal message", zap.ByteString("body", frame), zap.Error(err))
+				log.Error("Error illegal message", zap.ByteString("body", frame), zap.Error(err))
 				return
 			}
 
@@ -49,18 +49,18 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 
 			msg.SendTime = time.Now().UnixNano()
 
-			err = its.workerPool.Submit(func(sess *session, pbMsg *model.Message) func() {
+			err = its.workerPool.Submit(func(sess *session, msg *model.Message) func() {
 				return func() {
-					body, err := proto.Marshal(pbMsg)
+					body, err := proto.Marshal(msg)
 					if err != nil {
-						log.Error("Error serializing message", zap.Error(err))
+						log.Error("Error marshal message", zap.Error(err))
 						atomic.AddInt64(&its.errorTotal, 1)
 						return
 					}
 
 					err = its.producer.Publish(mq.MessageDispatchSubject, body)
 					if err != nil {
-						log.Error("Error publishing message", zap.Error(err))
+						log.Error("Error publish message", zap.Error(err))
 						atomic.AddInt64(&its.errorTotal, 1)
 						return
 					}

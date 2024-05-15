@@ -2,6 +2,8 @@ package redis
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,7 +29,7 @@ func NewManager(redisEndpoints []string, redisPassword string) (*Manager, error)
 
 	err := redisClient.Ping(context.Background()).Err()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("redis ping -> %w", err)
 	}
 
 	return &Manager{redisClient: redisClient, cache: cmap.New[string]()}, nil
@@ -38,11 +40,19 @@ func (its *Manager) GetRedisClient() redis.UniversalClient {
 }
 
 func (its *Manager) Incr(key string) (int64, error) {
-	return its.redisClient.Incr(context.Background(), key).Result()
+	result, err := its.redisClient.Incr(context.Background(), key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("redis incr -> %w", err)
+	}
+	return result, nil
 }
 
 func (its *Manager) Decr(key string) (int64, error) {
-	return its.redisClient.Decr(context.Background(), key).Result()
+	result, err := its.redisClient.Decr(context.Background(), key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("redis decr -> %w", err)
+	}
+	return result, nil
 }
 
 func (its *Manager) getAll(key string, limit int64) ([]string, error) {
@@ -59,7 +69,7 @@ func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 			keys = append(keys, iter.Val())
 		}
 		if err := iter.Err(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("redis scan -> %w", err)
 		}
 		pipe := client.Pipeline()
 		cmds := make([]redis.Cmder, len(keys))
@@ -68,7 +78,7 @@ func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 		}
 		_, err := pipe.Exec(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("redis pipeline exec -> %w", err)
 		}
 		for _, cmd := range cmds {
 			result = append(result, cmd.(*redis.StringCmd).Val())
@@ -84,7 +94,7 @@ func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 				defer wg.Done()
 				res, err := scan(ctx, client)
 				if err != nil {
-					scanErr = err
+					scanErr = errors.Join(scanErr, err)
 					return
 				}
 				mu.Lock()
@@ -94,16 +104,16 @@ func (its *Manager) getAll(key string, limit int64) ([]string, error) {
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("redis forEachMaster -> %w", err)
 		}
 		wg.Wait()
 		if scanErr != nil {
-			return nil, scanErr
+			return nil, fmt.Errorf("redis scan error -> %w", scanErr)
 		}
 	} else {
 		res, err := scan(context.Background(), its.redisClient)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("redis scan -> %w", err)
 		}
 		results = append(results, res...)
 	}

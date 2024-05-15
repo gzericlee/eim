@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 var ctx = context.Background()

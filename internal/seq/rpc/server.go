@@ -7,11 +7,9 @@ import (
 
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
-	"go.uber.org/zap"
 
 	"eim/internal/database"
 	"eim/pkg/idgenerator"
-	"eim/pkg/log"
 )
 
 const (
@@ -41,8 +39,7 @@ func StartServer(cfg Config) error {
 	}
 	err := plugin.Start()
 	if err != nil {
-		log.Error("Error registering etcd plugin", zap.Error(err))
-		return err
+		return fmt.Errorf("start etcd v3 register plugin -> %w", err)
 	}
 	svr.Plugins.Add(plugin)
 
@@ -50,15 +47,18 @@ func StartServer(cfg Config) error {
 
 	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
 	if err != nil {
-		log.Error("Error connecting database", zap.String("endpoint", cfg.DatabaseConnection), zap.Error(err))
-		return err
+		return fmt.Errorf("new database -> %w", err)
 	}
 
 	err = svr.RegisterName(servicePath, &segmentSeq{db: db, cache: sync.Map{}}, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("register seq service -> %w", err)
 	}
 
 	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
-	return err
+	if err != nil {
+		return fmt.Errorf("start server -> %w", err)
+	}
+
+	return nil
 }

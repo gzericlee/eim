@@ -1,6 +1,8 @@
 package dispatch
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
@@ -8,7 +10,7 @@ import (
 	"eim/internal/mq"
 	"eim/internal/redis"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 type GroupMessageHandler struct {
@@ -25,20 +27,18 @@ func (its *GroupMessageHandler) HandleMessage(data []byte) error {
 	msg := &model.Message{}
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
-		log.Error("Error deserializing message", zap.Error(err))
+		log.Error("Error unmarshal message. Drop it", zap.Error(err))
 		return nil
 	}
 
 	err = toGroup(msg, its.RedisManager, its.Producer)
 	if err != nil {
-		log.Error("Error dispatching group message to user", zap.String("userId", msg.UserId), zap.Error(err))
-		return err
+		return fmt.Errorf("send message to group -> %w", err)
 	}
 
 	err = its.StorageRpc.SaveMessage(msg)
 	if err != nil {
-		log.Error("Error saving message", zap.Error(err))
-		return err
+		return fmt.Errorf("save message -> %w", err)
 	}
 
 	return nil

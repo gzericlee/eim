@@ -1,14 +1,13 @@
 package websocket
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/golang/protobuf/proto"
-	"go.uber.org/zap"
 
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
-	"eim/pkg/log"
 )
 
 type SendHandler struct {
@@ -24,15 +23,14 @@ func (its *SendHandler) HandleMessage(data []byte) error {
 	msg := &model.Message{}
 	err := proto.Unmarshal(data, msg)
 	if err != nil {
-		log.Error("Error deserializing message", zap.Error(err))
-		return nil
+		return fmt.Errorf("unmarshal message -> %w", err)
 	}
 
 	var allSession []*session
 
 	sessions := its.Server.sessionManager.Get(msg.UserId)
-	for _, session := range sessions {
-		allSession = append(allSession, session)
+	for _, sess := range sessions {
+		allSession = append(allSession, sess)
 	}
 
 	for _, s := range allSession {

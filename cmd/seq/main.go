@@ -14,7 +14,7 @@ import (
 	"eim/internal/database"
 	seqrpc "eim/internal/seq/rpc"
 	"eim/internal/version"
-	"eim/pkg/log"
+	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -47,7 +47,7 @@ func newCliApp() *cli.App {
 					RedisPassword:      config.SystemConfig.Redis.Password,
 				})
 				if err != nil {
-					log.Error("Error starting rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+					log.Error("Error start seq rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
 					time.Sleep(time.Second * 5)
 					continue
 				}
@@ -67,7 +67,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server startup error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
 		os.Exit(1)
 	}
 }

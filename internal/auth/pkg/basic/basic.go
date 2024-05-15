@@ -16,7 +16,7 @@ type Authenticator struct {
 func (its *Authenticator) CheckToken(token string) (*model.User, error) {
 	c, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode token -> %w", err)
 	}
 	cs := string(c)
 	s := strings.IndexByte(cs, ':')
@@ -36,7 +36,7 @@ func (its *Authenticator) CheckToken(token string) (*model.User, error) {
 
 	user, err := its.RedisManager.GetUser(loginId, tenantId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get user -> %w", err)
 	}
 
 	if user.Password != passwd {
