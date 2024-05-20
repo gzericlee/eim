@@ -39,7 +39,10 @@ func newCliApp() *cli.App {
 			httpServer := api.HttpServer{}
 			//开启Http服务
 			for {
-				redisManager, err := redis.NewManager(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
+				redisManager, err := redis.NewManager(redis.Config{
+					RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
+					RedisPassword:  config.SystemConfig.Redis.Password,
+				})
 				if err != nil {
 					log.Error("Error new redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 					time.Sleep(time.Second * 5)

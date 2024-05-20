@@ -24,8 +24,10 @@ type systemConfig struct {
 	LogLevel string
 	LocalIp  string
 	Redis    struct {
-		Endpoints cli.StringSlice
-		Password  string
+		Endpoints            cli.StringSlice
+		Password             string
+		OfflineMessageExpire int
+		OfflineDeviceExpire  int
 	}
 	Etcd struct {
 		Endpoints cli.StringSlice

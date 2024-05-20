@@ -16,7 +16,12 @@ var manager *Manager
 
 func init() {
 	var err error
-	manager, err = NewManager([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"}, "pass@word1")
+	manager, err = NewManager(Config{
+		RedisEndpoints:       []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"},
+		RedisPassword:        "pass@word1",
+		OfflineMessageExpire: time.Minute * 2,
+		OfflineDeviceExpire:  time.Minute * 2,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -111,7 +116,7 @@ func TestGetGateways(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
-	all, err := manager.getAll(fmt.Sprintf("%s*", "user-"), 5000)
+	all, err := manager.getAllValues(fmt.Sprintf("%s*", "user-"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -120,10 +125,13 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestGetAllGateway(t *testing.T) {
-	gateways, err := manager.getAll(fmt.Sprintf("gateway.*"), 5000)
+	gateways, err := manager.getAllValues(fmt.Sprintf("gateway.*"))
 	if err != nil {
 		t.Error(err)
 		return
+	}
+	for _, gateway := range gateways {
+		t.Log(gateway)
 	}
 	t.Log("Gateway节点数:", len(gateways))
 }

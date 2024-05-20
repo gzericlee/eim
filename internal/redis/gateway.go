@@ -13,21 +13,23 @@ import (
 )
 
 func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Duration) error {
+	key := fmt.Sprintf("gateway.%s", gateway.Ip)
 	body, err := proto.Marshal(gateway)
 	if err != nil {
 		return fmt.Errorf("proto marshal -> %w", err)
 	}
-	err = its.redisClient.Set(context.Background(), fmt.Sprintf("gateway.%v", gateway.Ip), body, expiration).Err()
+	err = its.redisClient.Set(context.Background(), key, body, expiration).Err()
 	if err != nil {
-		return fmt.Errorf("redis set -> %w", err)
+		return fmt.Errorf("redis set(%s) -> %w", key, err)
 	}
 	return nil
 }
 
 func (its *Manager) GetGateways() ([]*model.Gateway, error) {
-	values, err := its.getAll(fmt.Sprintf("gateway.*"), 5000)
+	key := fmt.Sprintf("gateway.*")
+	values, err := its.getAllValues(key)
 	if err != nil {
-		return nil, fmt.Errorf("redis getAll -> %w", err)
+		return nil, fmt.Errorf("redis getAllValues(%s) -> %w", key, err)
 	}
 	var gateways []*model.Gateway
 	for _, value := range values {

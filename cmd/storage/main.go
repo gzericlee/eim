@@ -36,14 +36,16 @@ func newCliApp() *cli.App {
 		go func() {
 			for {
 				err := storagerpc.StartServer(storagerpc.Config{
-					Ip:                 config.SystemConfig.LocalIp,
-					Port:               config.SystemConfig.StorageSvr.RpcPort,
-					DatabaseName:       config.SystemConfig.Database.Name,
-					EtcdEndpoints:      config.SystemConfig.Etcd.Endpoints.Value(),
-					DatabaseDriver:     database.Driver(config.SystemConfig.Database.Driver),
-					DatabaseConnection: config.SystemConfig.Database.Connection,
-					RedisEndpoints:     config.SystemConfig.Redis.Endpoints.Value(),
-					RedisPassword:      config.SystemConfig.Redis.Password,
+					Ip:                   config.SystemConfig.LocalIp,
+					Port:                 config.SystemConfig.StorageSvr.RpcPort,
+					DatabaseName:         config.SystemConfig.Database.Name,
+					EtcdEndpoints:        config.SystemConfig.Etcd.Endpoints.Value(),
+					DatabaseDriver:       database.Driver(config.SystemConfig.Database.Driver),
+					DatabaseConnection:   config.SystemConfig.Database.Connection,
+					RedisEndpoints:       config.SystemConfig.Redis.Endpoints.Value(),
+					RedisPassword:        config.SystemConfig.Redis.Password,
+					OfflineMessageExpire: config.SystemConfig.Redis.OfflineMessageExpire,
+					OfflineDeviceExpire:  config.SystemConfig.Redis.OfflineDeviceExpire,
 				})
 				if err != nil {
 					log.Error("Error start storage rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))

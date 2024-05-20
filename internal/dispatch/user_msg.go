@@ -28,6 +28,11 @@ func (its *UserMessageHandler) HandleMessage(data []byte) error {
 		return fmt.Errorf("unmarshal message -> %w", err)
 	}
 
+	err = its.StorageRpc.SaveMessage(msg)
+	if err != nil {
+		return fmt.Errorf("save message -> %w", err)
+	}
+
 	//发送者多端同步
 	msg.UserId = msg.FromId
 	err = toUser(msg, its.RedisManager, its.Producer)
@@ -40,11 +45,6 @@ func (its *UserMessageHandler) HandleMessage(data []byte) error {
 	err = toUser(msg, its.RedisManager, its.Producer)
 	if err != nil {
 		return fmt.Errorf("dispatch user message to receive user -> %w", err)
-	}
-
-	err = its.StorageRpc.SaveMessage(msg)
-	if err != nil {
-		return fmt.Errorf("save message -> %w", err)
 	}
 
 	return nil

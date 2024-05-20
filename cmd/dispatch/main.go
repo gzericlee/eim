@@ -43,7 +43,12 @@ func newCliApp() *cli.App {
 				continue
 			}
 
-			redisManager, err := redis.NewManager(config.SystemConfig.Redis.Endpoints.Value(), config.SystemConfig.Redis.Password)
+			redisManager, err := redis.NewManager(redis.Config{
+				RedisEndpoints:       config.SystemConfig.Redis.Endpoints.Value(),
+				RedisPassword:        config.SystemConfig.Redis.Password,
+				OfflineMessageExpire: time.Hour * 24 * time.Duration(config.SystemConfig.Redis.OfflineMessageExpire),
+				OfflineDeviceExpire:  time.Hour * 24 * time.Duration(config.SystemConfig.Redis.OfflineDeviceExpire),
+			})
 			if err != nil {
 				log.Error("Error new redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
 				time.Sleep(time.Second * 5)

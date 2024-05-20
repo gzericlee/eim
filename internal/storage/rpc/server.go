@@ -18,14 +18,16 @@ const (
 )
 
 type Config struct {
-	Ip                 string
-	Port               int
-	EtcdEndpoints      []string
-	DatabaseDriver     database.Driver
-	DatabaseConnection string
-	DatabaseName       string
-	RedisEndpoints     []string
-	RedisPassword      string
+	Ip                   string
+	Port                 int
+	EtcdEndpoints        []string
+	DatabaseDriver       database.Driver
+	DatabaseConnection   string
+	DatabaseName         string
+	RedisEndpoints       []string
+	RedisPassword        string
+	OfflineMessageExpire int
+	OfflineDeviceExpire  int
 }
 
 func StartServer(cfg Config) error {
@@ -36,7 +38,12 @@ func StartServer(cfg Config) error {
 		return fmt.Errorf("new database -> %w", err)
 	}
 
-	redisManager, err := redis.NewManager(cfg.RedisEndpoints, cfg.RedisPassword)
+	redisManager, err := redis.NewManager(redis.Config{
+		RedisEndpoints:       cfg.RedisEndpoints,
+		RedisPassword:        cfg.RedisPassword,
+		OfflineMessageExpire: time.Hour * 24 * time.Duration(cfg.OfflineMessageExpire),
+		OfflineDeviceExpire:  time.Hour * 24 * time.Duration(cfg.OfflineDeviceExpire),
+	})
 	if err != nil {
 		return fmt.Errorf("new redis manager -> %w", err)
 	}

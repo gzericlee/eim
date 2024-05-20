@@ -26,7 +26,10 @@ type Config struct {
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
 
-	redisManager, err := redis.NewManager(cfg.RedisEndpoints, cfg.RedisPassword)
+	redisManager, err := redis.NewManager(redis.Config{
+		RedisEndpoints: cfg.RedisEndpoints,
+		RedisPassword:  cfg.RedisPassword,
+	})
 	if err != nil {
 		return fmt.Errorf("new redis manager -> %w", err)
 	}

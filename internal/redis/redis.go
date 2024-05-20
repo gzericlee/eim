@@ -2,24 +2,33 @@ package redis
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/errgroup"
 )
 
-type Manager struct {
-	redisClient redis.UniversalClient
-	cache       cmap.ConcurrentMap[string, string]
+type Config struct {
+	RedisEndpoints       []string
+	RedisPassword        string
+	OfflineMessageExpire time.Duration
+	OfflineDeviceExpire  time.Duration
 }
 
-func NewManager(redisEndpoints []string, redisPassword string) (*Manager, error) {
+type Manager struct {
+	redisClient          redis.UniversalClient
+	cache                cmap.ConcurrentMap[string, string]
+	offlineMessageExpire time.Duration
+	offlineDeviceExpire  time.Duration
+}
+
+func NewManager(cfg Config) (*Manager, error) {
 	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:        redisEndpoints,
-		Password:     redisPassword,
+		Addrs:        cfg.RedisEndpoints,
+		Password:     cfg.RedisPassword,
 		DialTimeout:  10 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -32,7 +41,12 @@ func NewManager(redisEndpoints []string, redisPassword string) (*Manager, error)
 		return nil, fmt.Errorf("redis ping -> %w", err)
 	}
 
-	return &Manager{redisClient: redisClient, cache: cmap.New[string]()}, nil
+	return &Manager{
+		redisClient:          redisClient,
+		offlineDeviceExpire:  cfg.OfflineDeviceExpire,
+		offlineMessageExpire: cfg.OfflineMessageExpire,
+		cache:                cmap.New[string](),
+	}, nil
 }
 
 func (its *Manager) GetRedisClient() redis.UniversalClient {
@@ -55,68 +69,115 @@ func (its *Manager) Decr(key string) (int64, error) {
 	return result, nil
 }
 
-func (its *Manager) getAll(key string, limit int64) ([]string, error) {
-	var cursor uint64
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var scanErr error
+func (its *Manager) getAllKeys(pattern string) ([]string, error) {
+	var errGroup errgroup.Group
+	keys := &sync.Map{}
 
-	var scan = func(ctx context.Context, client redis.UniversalClient) ([]string, error) {
-		var keys []string
-		var result []string
-		iter := client.Scan(ctx, cursor, key, limit).Iterator()
-		for iter.Next(ctx) {
-			keys = append(keys, iter.Val())
+	var scan = func(ctx context.Context, client redis.UniversalClient) error {
+		var cursor uint64
+		for {
+			var keysSlice []string
+			var err error
+			keysSlice, cursor, err = client.Scan(ctx, cursor, pattern, 1000).Result()
+			if err != nil {
+				return fmt.Errorf("redis scan -> %w", err)
+			}
+			for _, key := range keysSlice {
+				keys.Store(key, struct{}{})
+			}
+			if cursor == 0 {
+				break
+			}
 		}
-		if err := iter.Err(); err != nil {
-			return nil, fmt.Errorf("redis scan -> %w", err)
-		}
-		pipe := client.Pipeline()
-		cmds := make([]redis.Cmder, len(keys))
-		for i, key := range keys {
-			cmds[i] = pipe.Get(ctx, key)
-		}
-		_, err := pipe.Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("redis pipeline exec -> %w", err)
-		}
-		for _, cmd := range cmds {
-			result = append(result, cmd.(*redis.StringCmd).Val())
-		}
-		return result, nil
+		return nil
 	}
 
-	results := make([]string, 0)
 	if clusterClient, isOk := its.redisClient.(*redis.ClusterClient); isOk {
 		err := clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res, err := scan(ctx, client)
-				if err != nil {
-					scanErr = errors.Join(scanErr, err)
-					return
-				}
-				mu.Lock()
-				results = append(results, res...)
-				mu.Unlock()
-			}()
+			errGroup.Go(func() error {
+				return scan(ctx, client)
+			})
 			return nil
 		})
 		if err != nil {
 			return nil, fmt.Errorf("redis forEachMaster -> %w", err)
 		}
-		wg.Wait()
-		if scanErr != nil {
-			return nil, fmt.Errorf("redis scan error -> %w", scanErr)
-		}
 	} else {
-		res, err := scan(context.Background(), its.redisClient)
-		if err != nil {
-			return nil, fmt.Errorf("redis scan -> %w", err)
-		}
-		results = append(results, res...)
+		errGroup.Go(func() error {
+			return scan(context.Background(), its.redisClient)
+		})
 	}
 
-	return results, nil
+	if err := errGroup.Wait(); err != nil {
+		return nil, fmt.Errorf("redis scan error -> %w", err)
+	}
+
+	var allKeys []string
+	keys.Range(func(key, _ interface{}) bool {
+		allKeys = append(allKeys, key.(string))
+		return true
+	})
+
+	return allKeys, nil
+}
+
+func (its *Manager) getAllValues(pattern string) ([]string, error) {
+	var errGroup errgroup.Group
+	results := &sync.Map{}
+
+	var scan = func(ctx context.Context, client redis.UniversalClient) error {
+		var cursor uint64
+		for {
+			var keys []string
+			var err error
+			keys, cursor, err = client.Scan(ctx, cursor, pattern, 1000).Result()
+			if err != nil {
+				return fmt.Errorf("redis scan -> %w", err)
+			}
+			pipe := client.Pipeline()
+			cmds := make([]redis.Cmder, len(keys))
+			for i, key := range keys {
+				cmds[i] = pipe.Get(ctx, key)
+			}
+			_, err = pipe.Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("redis pipeline exec -> %w", err)
+			}
+			for _, cmd := range cmds {
+				results.Store(cmd.(*redis.StringCmd).Val(), struct{}{})
+			}
+			if cursor == 0 {
+				break
+			}
+		}
+		return nil
+	}
+
+	if clusterClient, isOk := its.redisClient.(*redis.ClusterClient); isOk {
+		err := clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
+			errGroup.Go(func() error {
+				return scan(ctx, client)
+			})
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("redis forEachMaster -> %w", err)
+		}
+	} else {
+		errGroup.Go(func() error {
+			return scan(context.Background(), its.redisClient)
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return nil, fmt.Errorf("redis scan error -> %w", err)
+	}
+
+	var allValues []string
+	results.Range(func(key, _ interface{}) bool {
+		allValues = append(allValues, key.(string))
+		return true
+	})
+
+	return allValues, nil
 }

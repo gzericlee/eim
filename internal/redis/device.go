@@ -12,21 +12,23 @@ import (
 )
 
 func (its *Manager) SaveDevice(device *model.Device) error {
+	key := fmt.Sprintf("%s.device.%s", device.UserId, device.DeviceId)
 	body, err := proto.Marshal(device)
 	if err != nil {
 		return fmt.Errorf("proto marshal -> %w", err)
 	}
-	err = its.redisClient.Set(context.Background(), fmt.Sprintf("%v.device.%v", device.UserId, device.DeviceId), body, 0).Err()
+	err = its.redisClient.Set(context.Background(), key, body, 0).Err()
 	if err != nil {
-		return fmt.Errorf("redis set -> %w", err)
+		return fmt.Errorf("redis set(%s) -> %w", key, err)
 	}
 	return nil
 }
 
 func (its *Manager) GetUserDevices(userId string) ([]*model.Device, error) {
-	values, err := its.getAll(fmt.Sprintf("%v.device.*", userId), 5000)
+	key := fmt.Sprintf("%s.device.*", userId)
+	values, err := its.getAllValues(key)
 	if err != nil {
-		return nil, fmt.Errorf("redis getAll -> %w", err)
+		return nil, fmt.Errorf("redis getAllValues(%s) -> %w", key, err)
 	}
 	var devices []*model.Device
 	for _, value := range values {
@@ -42,9 +44,10 @@ func (its *Manager) GetUserDevices(userId string) ([]*model.Device, error) {
 }
 
 func (its *Manager) GetUserDevice(userId, deviceId string) (*model.Device, error) {
-	value, err := its.redisClient.Get(context.Background(), fmt.Sprintf("%v.device.%v", userId, deviceId)).Result()
+	key := fmt.Sprintf("%s.device.%s", userId, deviceId)
+	value, err := its.redisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		return nil, fmt.Errorf("redis get -> %w", err)
+		return nil, fmt.Errorf("redis get(%s) -> %w", key, err)
 	}
 	device := &model.Device{}
 	err = proto.Unmarshal([]byte(value), device)

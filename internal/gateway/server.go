@@ -42,7 +42,10 @@ func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
 		return nil, fmt.Errorf("new storage rpc client -> %w", err)
 	}
 
-	redisManager, err := redis.NewManager(cfg.RedisEndpoints, cfg.RedisPassword)
+	redisManager, err := redis.NewManager(redis.Config{
+		RedisEndpoints: cfg.RedisEndpoints,
+		RedisPassword:  cfg.RedisPassword,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("new redis manager -> %w", err)
 	}
