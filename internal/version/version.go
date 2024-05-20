@@ -53,7 +53,8 @@ func Printf() {
 
 	template := `
 {{ .Title "` + ServiceName + `" "" 0 }}
-{{ .AnsiColor.BrightCyan }}OpenSource Instant Messaging Server{{ .AnsiColor.Default }}
+{{ .AnsiColor.BrightCyan }}Enterprise Instant Messaging{{ .AnsiColor.Default }}
+
 Branch: ` + Branch + `
 Commit: ` + Commit + `
 Date:   ` + strings.Replace(Date, "T", " ", -1) + `

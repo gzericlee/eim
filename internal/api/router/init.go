@@ -44,7 +44,7 @@ func RegisterAPIRoutes(redisManager *redis.Manager) error {
 func enrichSwaggerObject(swo *spec.Swagger) {
 	swo.Info = &spec.Info{
 		InfoProps: spec.InfoProps{
-			Title:       "OpenSource Instant Messaging Server",
+			Title:       "Enterprise Instant Messaging",
 			Description: "EIM Api服务",
 			Version:     "1.0.0",
 		},

@@ -67,7 +67,7 @@ func newCliApp() *cli.App {
 		}
 		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName), zap.Int("port", config.SystemConfig.ApiSvr.HttpPort))
 
 		return http.Serve(l, nil)
 

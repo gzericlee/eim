@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
-	"strconv"
 
 	"github.com/emicklei/go-restful/v3"
-	"go.uber.org/zap"
 
 	"eim/internal/api/router"
 	"eim/internal/redis"
-	"eim/util/log"
 )
 
 type Config struct {
@@ -30,8 +27,6 @@ func (its *HttpServer) Run(cfg Config) error {
 	}
 
 	its.server = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: restful.DefaultContainer}
-
-	log.Info("ApiServer starting", zap.String("port", strconv.Itoa(cfg.Port)))
 
 	return its.server.ListenAndServe()
 }
