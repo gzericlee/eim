@@ -40,6 +40,13 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 				id = msg.ToId
 			}
 
+			msg.MsgId, err = its.seqRpc.SnowflakeId()
+			if err != nil {
+				log.Error("Error getting snowflake id: %v，%v", zap.String("id", id), zap.Error(err))
+				atomic.AddInt64(&its.errorTotal, 1)
+				return
+			}
+
 			msg.SeqId, err = its.seqRpc.IncrementId(id)
 			if err != nil {
 				log.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
@@ -64,7 +71,8 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 						atomic.AddInt64(&its.errorTotal, 1)
 						return
 					}
-					sess.send(protocol.Ack, []byte(msg.MsgId))
+
+					sess.send(protocol.Ack, []byte(msg.AckId))
 				}
 			}(sess, msg))
 

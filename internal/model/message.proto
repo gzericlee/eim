@@ -3,7 +3,7 @@ package model;
 option go_package = "../model";
 
 message Message {
-  string msgId = 1;
+  int64 msgId = 1;
   int64 seqId = 2;
   int64 msgType = 3;
   string content = 4;
@@ -15,4 +15,5 @@ message Message {
   string toDevice = 10;
   int64 sendTime = 11;
   string userId = 12;
+  string ackId = 13;
 }

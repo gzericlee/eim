@@ -53,7 +53,7 @@ func (its *Manager) GetRedisClient() redis.UniversalClient {
 	return its.redisClient
 }
 
-func (its *Manager) Incr(key string) (int64, error) {
+func (its *Manager) incr(key string) (int64, error) {
 	result, err := its.redisClient.Incr(context.Background(), key).Result()
 	if err != nil {
 		return 0, fmt.Errorf("redis incr -> %w", err)
@@ -61,7 +61,7 @@ func (its *Manager) Incr(key string) (int64, error) {
 	return result, nil
 }
 
-func (its *Manager) Decr(key string) (int64, error) {
+func (its *Manager) decr(key string) (int64, error) {
 	result, err := its.redisClient.Decr(context.Background(), key).Result()
 	if err != nil {
 		return 0, fmt.Errorf("redis decr -> %w", err)
