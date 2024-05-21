@@ -2,38 +2,57 @@ package idgenerator
 
 import (
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
-	"github.com/yitter/idgenerator-go/idgen"
+	"github.com/bwmarrin/snowflake"
 	"go.uber.org/zap"
 
 	"eim/util/log"
 )
 
+var node *snowflake.Node
+
 func Init(redisEndpoints []string, password string) {
-	id := registry(config{
+	id, err := registry(config{
 		redisEndpoints: redisEndpoints,
 		redisPassword:  password,
 		maxWorkerId:    1023,
 		minWorkerId:    1,
 	})
-	log.Info("IdGenerator worker id", zap.Any("id", id))
+	if err != nil {
+		log.Error("IdGenerator registry error", zap.Error(err))
+		os.Exit(1)
+	}
 
-	var options = idgen.NewIdGeneratorOptions(uint16(id))
-	options.WorkerIdBitLength = 10
-	options.SeqBitLength = 10
-	idgen.SetIdGenerator(options)
+	log.Info("IdGenerator registry node", zap.Int64("workerId", id))
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigs
-		unRegistry()
-		os.Exit(0)
-	}()
+	node, err = snowflake.NewNode(workerId)
+	if err != nil {
+		log.Error("IdGenerator new node error", zap.Error(err))
+		os.Exit(1)
+	}
 }
 
 func NextId() int64 {
-	return idgen.NextId()
+	var id int64
+	var previousTimestamp int64
+
+	for {
+		id = node.Generate().Int64()
+		if id == 0 {
+			log.Warn("IdGenerator generate id is 0")
+			continue
+		}
+
+		currentTimestamp := time.Now().UnixNano() / int64(time.Millisecond)
+		if currentTimestamp < previousTimestamp {
+			//TODO 更好的处理方式
+			panic("IdGenerator generate id is not monotonic")
+		}
+		previousTimestamp = currentTimestamp
+
+		break
+	}
+
+	return id
 }

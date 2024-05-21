@@ -3,10 +3,12 @@ module eim
 go 1.22
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/dimiro1/banner v1.1.0
 	github.com/emicklei/go-restful-openapi/v2 v2.10.2
 	github.com/emicklei/go-restful/v3 v3.12.0
 	github.com/go-openapi/spec v0.21.0
+	github.com/godruoyi/go-snowflake v0.0.2
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.5.8
@@ -20,11 +22,11 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.3
 	github.com/smallnest/rpcx v1.8.30
 	github.com/urfave/cli/v2 v2.27.1
-	github.com/yitter/idgenerator-go v1.3.3
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.mongodb.org/mongo-driver v1.15.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
+	golang.org/x/sync v0.7.0
 	google.golang.org/protobuf v1.33.1-0.20240423095020-c2b76eee36e7
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/gorm v1.25.10
@@ -125,7 +127,6 @@ require (
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.20.0 // indirect
