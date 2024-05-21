@@ -1,72 +1,85 @@
 #!/bin/bash
 
-BRANCH=$(git symbolic-ref --short -q HEAD)
-COMMIT=$(git rev-parse --verify HEAD)
-NOW=$(date '+%Y-%m-%dT%H:%M:%S')
+cd ${0%/*}/..
 
-echo "Branch: ${BRANCH}，Commit: ${COMMIT}，Date: ${NOW}"
+rm -rf build/dist
+mkdir build/dist
+
+VERSION=$(cat VERSION)
+COMMIT=$(git rev-parse --verify HEAD)
+BRANCH=`eval echo $(git branch -r --contains ${COMMIT})`
+NOW=$(TZ=UTC-8 date '+%Y-%m-%d %H:%M:%S')
+
+echo "Version: ${VERSION}，Branch: ${BRANCH}，Commit: ${COMMIT}，Date: ${NOW}"
 
 echo "Compiling eim_api service..."
 go build -o build/dist/eim_api -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Api
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Api'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/api
 
 echo "Compiling eim_gateway service..."
 go build -o build/dist/eim_gateway -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Gateway
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Gateway'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/gateway
 
 echo "Compiling eim_storage service..."
 go build -o build/dist/eim_storage -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Storage
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Storage'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/storage
 
 echo "Compiling eim_dispatch service..."
 go build -o build/dist/eim_dispatch -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Dispatch
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Dispatch'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/dispatch
 
 echo "Compiling eim_seq service..."
 go build -o build/dist/eim_seq -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Seq
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Seq'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/seq
 
 echo "Compiling eim_auth service..."
 go build -o build/dist/eim_auth -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Auth
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Auth'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/auth
 
 echo "Compiling eim_mock service..."
 go build -o build/dist/eim_mock -tags netgo -ldflags \
 "-s -w
--X eim/internal/version.ServiceName=EIM-Mock
--X eim/internal/version.Branch=${BRANCH:-master}
--X eim/internal/version.Commit=${COMMIT:-dev}
--X eim/internal/version.Date=${NOW}" \
+-X 'eim/internal/version.ServiceName=EIM-Mock'
+-X 'eim/internal/version.Version=${VERSION:-dev}'
+-X 'eim/internal/version.Branch=${BRANCH:-master}'
+-X 'eim/internal/version.Commit=${COMMIT:-dev}'
+-X 'eim/internal/version.Date=${NOW}'" \
 ./cmd/mock
 
 echo "Compiled..."

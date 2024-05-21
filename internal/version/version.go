@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	Version     string
 	ServiceName string
 	Branch      string
 	Commit      string
@@ -36,6 +37,9 @@ func initLogger() {
 }
 
 func Printf() {
+	if Version == "" {
+		Version = "dev"
+	}
 	if ServiceName == "" {
 		ServiceName = "EIM-?"
 	}
@@ -55,9 +59,10 @@ func Printf() {
 {{ .Title "` + ServiceName + `" "" 0 }}
 {{ .AnsiColor.BrightCyan }}Enterprise Instant Messaging{{ .AnsiColor.Default }}
 
-Branch: ` + Branch + `
-Commit: ` + Commit + `
-Date:   ` + strings.Replace(Date, "T", " ", -1) + `
+Version: ` + Version + `
+Branch:  ` + Branch + `
+Commit:  ` + Commit + `
+Date:    ` + strings.Replace(Date, "T", " ", -1) + `
 
 `
 	banner.InitString(colorable.NewColorableStdout(), true, true, template)
