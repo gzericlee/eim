@@ -9,7 +9,7 @@ import (
 	"github.com/smallnest/rpcx/server"
 
 	"eim/internal/database"
-	"eim/pkg/idgenerator"
+	"eim/pkg/snowflake"
 )
 
 const (
@@ -43,14 +43,23 @@ func StartServer(cfg Config) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	idgenerator.Init(cfg.RedisEndpoints, cfg.RedisPassword)
+	generator, err := snowflake.NewGenerator(snowflake.GeneratorConfig{
+		RedisEndpoints: cfg.RedisEndpoints,
+		RedisPassword:  cfg.RedisPassword,
+		MaxWorkerId:    1023,
+		MinWorkerId:    1,
+		NodeCount:      5,
+	})
+	if err != nil {
+		return fmt.Errorf("new snowflake id incrementer -> %w", err)
+	}
 
 	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
 	if err != nil {
 		return fmt.Errorf("new database -> %w", err)
 	}
 
-	err = svr.RegisterName(servicePath, &segmentSeq{db: db, cache: sync.Map{}}, "")
+	err = svr.RegisterName(servicePath, &segmentSeq{db: db, cache: sync.Map{}, generator: generator}, "")
 	if err != nil {
 		return fmt.Errorf("register seq service -> %w", err)
 	}

@@ -8,33 +8,34 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/database"
-	"eim/pkg/idgenerator"
+	"eim/pkg/snowflake"
 	"eim/util/log"
 )
 
 type segmentSeq struct {
-	db    database.IDatabase
-	cache sync.Map
+	generator *snowflake.Generator
+	db        database.IDatabase
+	cache     sync.Map
 }
 
 func (its *segmentSeq) IncrementId(ctx context.Context, req *Request, reply *Reply) error {
-	var gen *generator
+	var incr *incrementer
 	if obj, exist := its.cache.Load(req.BizId); exist {
-		gen = obj.(*generator)
+		incr = obj.(*incrementer)
 	} else {
-		gen = newGenerator(req.BizId, its.db)
-		its.cache.Store(req.BizId, gen)
+		incr = newIncrementer(req.BizId, its.db)
+		its.cache.Store(req.BizId, incr)
 	}
-	reply.Number = gen.Get()
+	reply.Number = incr.Get()
 	return nil
 }
 
 func (its *segmentSeq) SnowflakeId(ctx context.Context, req *Request, reply *Reply) error {
-	reply.Number = idgenerator.NextId()
+	reply.Number = its.generator.NextId()
 	return nil
 }
 
-type generator struct {
+type incrementer struct {
 	bizId    string
 	ch       chan int64
 	min, max int64
@@ -42,8 +43,8 @@ type generator struct {
 	db       database.IDatabase
 }
 
-func newGenerator(bizId string, db database.IDatabase) *generator {
-	var gen = &generator{}
+func newIncrementer(bizId string, db database.IDatabase) *incrementer {
+	var gen = &incrementer{}
 
 	gen.bizId = bizId
 	gen.db = db
@@ -53,14 +54,14 @@ func newGenerator(bizId string, db database.IDatabase) *generator {
 	return gen
 }
 
-func (its *generator) Get() int64 {
+func (its *incrementer) Get() int64 {
 	select {
 	case id := <-its.ch:
 		return id
 	}
 }
 
-func (its *generator) generate() {
+func (its *incrementer) generate() {
 	_ = its.reload()
 	for {
 		if its.min >= its.max {
@@ -71,7 +72,7 @@ func (its *generator) generate() {
 	}
 }
 
-func (its *generator) reload() error {
+func (its *incrementer) reload() error {
 	its.locker.Lock()
 	defer its.locker.Unlock()
 	for {

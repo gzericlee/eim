@@ -9,7 +9,6 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
 
-	"eim/pkg/idgenerator"
 	"eim/util/log"
 )
 
@@ -67,6 +66,5 @@ func (its *etcdSeq) IncrementId(ctx context.Context, req *Request, reply *Reply)
 }
 
 func (its *etcdSeq) SnowflakeId(ctx context.Context, req *Request, reply *Reply) error {
-	reply.Number = idgenerator.NextId()
 	return nil
 }

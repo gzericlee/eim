@@ -10,14 +10,14 @@ import (
 	"github.com/google/uuid"
 
 	"eim/internal/model"
-	"eim/pkg/idgenerator"
+	"eim/pkg/snowflake"
 )
 
 var producer Producer
 var consumer Consumer
 
 func init() {
-	idgenerator.Init([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"}, "pass@word1")
+	snowflake.Init([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"}, "pass@word1")
 
 	var err error
 	producer, err = NewProducer([]string{"127.0.0.1:4222"})
