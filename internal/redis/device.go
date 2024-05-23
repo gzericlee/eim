@@ -27,16 +27,16 @@ func (its *Manager) SaveDevice(device *model.Device) error {
 	return nil
 }
 
-func (its *Manager) IncrDeviceOfflineCount(userId, deviceId string) (int64, error) {
-	key := fmt.Sprintf("%s.offline.count.%s", userId, deviceId)
-
-	count, err := its.incr(key)
-	if err != nil {
-		return 0, fmt.Errorf("redis incr(%s) -> %w", key, err)
-	}
-
-	return count, nil
-}
+//func (its *Manager) IncrDeviceOfflineCount(userId, deviceId string) (int64, error) {
+//	key := fmt.Sprintf("%s.offline.count.%s", userId, deviceId)
+//
+//	count, err := its.incr(key)
+//	if err != nil {
+//		return 0, fmt.Errorf("redis incr(%s) -> %w", key, err)
+//	}
+//
+//	return count, nil
+//}
 
 func (its *Manager) GetUserDevices(userId string) ([]*model.Device, error) {
 	key := fmt.Sprintf("%s.device.*", userId)

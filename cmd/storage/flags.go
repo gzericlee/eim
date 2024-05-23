@@ -18,6 +18,9 @@ const (
 	RedisEndpoint = "REDIS_ENDPOINT"
 	RedisPassword = "REDIS_PASSWORD"
 
+	OfflineDeviceExpire  = "OFFLINE_DEVICE_EXPIRE"
+	OfflineMessageExpire = "OFFLINE_MESSAGE_EXPIRE"
+
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
 	LogLevel = "LOG_LEVEL"
@@ -73,6 +76,20 @@ func ParseFlags(app *cli.App) {
 			Usage:       "Redis passwd",
 			EnvVars:     []string{RedisPassword},
 			Destination: &config.SystemConfig.Redis.Password,
+		},
+		&cli.IntFlag{
+			Name:        "offline-message-expire",
+			Value:       30,
+			Usage:       "Offline message expire",
+			EnvVars:     []string{OfflineMessageExpire},
+			Destination: &config.SystemConfig.Redis.OfflineMessageExpire,
+		},
+		&cli.IntFlag{
+			Name:        "offline-device-expire",
+			Value:       30,
+			Usage:       "Offline device expire",
+			EnvVars:     []string{OfflineDeviceExpire},
+			Destination: &config.SystemConfig.Redis.OfflineDeviceExpire,
 		},
 		&cli.StringSliceFlag{
 			Name:        "etcd-endpoint",

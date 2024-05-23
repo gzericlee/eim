@@ -208,7 +208,7 @@ func Do() {
 						continue
 					}
 					msg := &model.Message{
-						MsgId:      uuid.NewString(),
+						AckId:      uuid.NewString(),
 						MsgType:    model.TextMessage,
 						Content:    time.Now().String(),
 						FromType:   model.FromUser,

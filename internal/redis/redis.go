@@ -19,8 +19,9 @@ type Config struct {
 }
 
 type Manager struct {
-	redisClient          redis.UniversalClient
-	cache                cmap.ConcurrentMap[string, string]
+	redisClient  redis.UniversalClient
+	msgIdsBuffer cmap.ConcurrentMap[string, []interface{}]
+
 	offlineMessageExpire time.Duration
 	offlineDeviceExpire  time.Duration
 }
@@ -41,12 +42,16 @@ func NewManager(cfg Config) (*Manager, error) {
 		return nil, fmt.Errorf("redis ping -> %w", err)
 	}
 
-	return &Manager{
+	manager := &Manager{
 		redisClient:          redisClient,
 		offlineDeviceExpire:  cfg.OfflineDeviceExpire,
 		offlineMessageExpire: cfg.OfflineMessageExpire,
-		cache:                cmap.New[string](),
-	}, nil
+		msgIdsBuffer:         cmap.New[[]interface{}](),
+	}
+
+	go manager.checkSignal()
+
+	return manager, nil
 }
 
 func (its *Manager) GetRedisClient() redis.UniversalClient {
@@ -176,6 +181,128 @@ func (its *Manager) getAllValues(pattern string) ([]string, error) {
 	var allValues []string
 	results.Range(func(key, _ interface{}) bool {
 		allValues = append(allValues, key.(string))
+		return true
+	})
+
+	return allValues, nil
+}
+
+func (its *Manager) lLenAll(pattern string) (int64, error) {
+	var errGroup errgroup.Group
+	results := &sync.Map{}
+
+	var scan = func(ctx context.Context, client redis.UniversalClient) error {
+		var cursor uint64
+		for {
+			var keys []string
+			var err error
+			keys, cursor, err = client.Scan(ctx, cursor, pattern, 1000).Result()
+			if err != nil {
+				return fmt.Errorf("redis scan -> %w", err)
+			}
+			pipe := client.Pipeline()
+			cmds := make([]redis.Cmder, len(keys))
+			for i, key := range keys {
+				cmds[i] = pipe.LLen(ctx, key)
+			}
+			_, err = pipe.Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("redis pipeline exec -> %w", err)
+			}
+			for _, cmd := range cmds {
+				results.Store(cmd.(*redis.IntCmd).Val(), struct{}{})
+			}
+			if cursor == 0 {
+				break
+			}
+		}
+		return nil
+	}
+
+	if clusterClient, isOk := its.redisClient.(*redis.ClusterClient); isOk {
+		err := clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
+			errGroup.Go(func() error {
+				return scan(ctx, client)
+			})
+			return nil
+		})
+		if err != nil {
+			return 0, fmt.Errorf("redis forEachMaster -> %w", err)
+		}
+	} else {
+		errGroup.Go(func() error {
+			return scan(context.Background(), its.redisClient)
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return 0, fmt.Errorf("redis scan error -> %w", err)
+	}
+
+	var total int64
+	results.Range(func(key, _ interface{}) bool {
+		total += key.(int64)
+		return true
+	})
+
+	return total, nil
+}
+
+func (its *Manager) lRangeAll(pattern string) (map[string][]string, error) {
+	var errGroup errgroup.Group
+	results := &sync.Map{}
+
+	var scan = func(ctx context.Context, client redis.UniversalClient) error {
+		var cursor uint64
+		for {
+			var keys []string
+			var err error
+			keys, cursor, err = client.Scan(ctx, cursor, pattern, 1000).Result()
+			if err != nil {
+				return fmt.Errorf("redis scan -> %w", err)
+			}
+			pipe := client.Pipeline()
+			cmds := make(map[string]*redis.StringSliceCmd, len(keys))
+			for _, key := range keys {
+				cmds[key] = pipe.LRange(ctx, key, 0, -1)
+			}
+			_, err = pipe.Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("redis pipeline exec -> %w", err)
+			}
+			for key, cmd := range cmds {
+				results.Store(key, cmd.Val())
+			}
+			if cursor == 0 {
+				break
+			}
+		}
+		return nil
+	}
+
+	if clusterClient, isOk := its.redisClient.(*redis.ClusterClient); isOk {
+		err := clusterClient.ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
+			errGroup.Go(func() error {
+				return scan(ctx, client)
+			})
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("redis forEachMaster -> %w", err)
+		}
+	} else {
+		errGroup.Go(func() error {
+			return scan(context.Background(), its.redisClient)
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return nil, fmt.Errorf("redis scan error -> %w", err)
+	}
+
+	allValues := make(map[string][]string)
+	results.Range(func(key, value interface{}) bool {
+		allValues[key.(string)] = value.([]string)
 		return true
 	})
 

@@ -42,9 +42,19 @@ func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Produce
 		return fmt.Errorf("marshal message -> %w", err)
 	}
 
+	bizId := msg.FromId
+	if msg.ToType == model.ToGroup {
+		bizId = msg.ToId
+	}
+
 	for _, device := range devices {
 		if msg.FromDevice == device.DeviceId {
 			continue
+		}
+
+		err = redisManager.SaveOfflineMessageIds([]interface{}{msg.MsgId}, msg.UserId, device.DeviceId, bizId)
+		if err != nil {
+			return fmt.Errorf("save device offline message ids -> %w", err)
 		}
 
 		switch device.State {
@@ -59,19 +69,18 @@ func toUser(msg *model.Message, redisManager *redis.Manager, producer mq.Produce
 			}
 		case model.OfflineState:
 			{
-				count, err := redisManager.IncrDeviceOfflineCount(msg.UserId, device.DeviceId)
+				//count, err := redisManager.IncrDeviceOfflineCount(msg.UserId, device.DeviceId)
+				//if err != nil {
+				//	return fmt.Errorf("incr device offline count -> %w", err)
+				//}
+				offlineMsgCount, err := redisManager.GetOfflineMessageCount(msg.UserId, device.DeviceId)
 				if err != nil {
-					return fmt.Errorf("incr device offline count -> %w", err)
+					return fmt.Errorf("get offline message count -> %w", err)
 				}
 
-				err = redisManager.SaveOfflineMessageIds([]int64{msg.MsgId}, msg.UserId, device.DeviceId, msg.ToId)
-				if err != nil {
-					return fmt.Errorf("save device offline message ids -> %w", err)
-				}
+				//TODO Push notification
 
-				log.Debug("Offline message", zap.Int64("count", count), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId))
-
-				//TODO Push apns
+				log.Debug("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
 			}
 		}
 	}

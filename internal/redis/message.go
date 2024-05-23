@@ -3,35 +3,58 @@ package redis
 import (
 	"context"
 	"fmt"
-	"sync"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
+
+	"eim/util/log"
 )
 
 const (
 	batchSize = 100
 )
 
-var (
-	msgIdsBuffer = make(map[string][]int64)
-	bufferLock   = &sync.Mutex{}
-)
+func (its *Manager) checkSignal() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-func (its *Manager) SaveOfflineMessageIds(msgIds []int64, userId, deviceId, bizId string) error {
-	bufferLock.Lock()
-	defer bufferLock.Unlock()
+	go func() {
+		<-sigs
+		for item := range its.msgIdsBuffer.IterBuffered() {
+			err := its.flushMessageIds(item.Key)
+			if err != nil {
+				log.Error("Error flushing message ids", zap.Error(err))
+				continue
+			}
+			log.Info("Flush message ids", zap.String("key", item.Key), zap.Any("count", len(item.Val)))
+		}
+		os.Exit(0)
+	}()
+}
 
+func (its *Manager) SaveOfflineMessageIds(msgIds []interface{}, userId, deviceId, bizId string) error {
 	key := fmt.Sprintf("%s.offline.messages.%s.%s", userId, deviceId, bizId)
-	msgIdsBuffer[key] = append(msgIdsBuffer[key], msgIds...)
 
-	if len(msgIdsBuffer[key]) >= batchSize {
-		return its.flushMessageIds(key)
+	its.msgIdsBuffer.Upsert(key, msgIds, func(exist bool, valueInMap, newValue []interface{}) []interface{} {
+		if !exist {
+			return newValue
+		}
+		return append(valueInMap, newValue...)
+	})
+
+	if msgIds, exist := its.msgIdsBuffer.Get(key); exist {
+		if len(msgIds) >= batchSize {
+			return its.flushMessageIds(key)
+		}
 	}
 
 	return nil
 }
 
-func (its *Manager) RemoveOfflineMessageIds(msgIds []int64, userId, deviceId, bizId string) error {
+func (its *Manager) RemoveOfflineMessageIds(msgIds []interface{}, userId, deviceId, bizId string) error {
 	key := fmt.Sprintf("%s.offline.messages.%s.%s", userId, deviceId, bizId)
 
 	ctx := context.Background()
@@ -50,6 +73,17 @@ func (its *Manager) RemoveOfflineMessageIds(msgIds []int64, userId, deviceId, bi
 	return nil
 }
 
+func (its *Manager) GetOfflineMessageCount(userId, deviceId string) (int64, error) {
+	key := fmt.Sprintf("%s.offline.messages.%s.*", userId, deviceId)
+
+	total, err := its.lLenAll(key)
+	if err != nil {
+		return 0, fmt.Errorf("redis foreachmaster llen(%s) -> %w", key, err)
+	}
+
+	return total, nil
+}
+
 func (its *Manager) GetOfflineMessagesByBiz(userId, deviceId, bizId string) ([]string, error) {
 	key := fmt.Sprintf("%s.offline.messages.%s.%s", userId, deviceId, bizId)
 
@@ -66,7 +100,7 @@ func (its *Manager) GetOfflineMessagesByBiz(userId, deviceId, bizId string) ([]s
 	return result, nil
 }
 
-func (its *Manager) GetOfflineMessagesByDevice(userId, deviceId string) ([]string, error) {
+func (its *Manager) GetOfflineMessagesByDevice(userId, deviceId string) (map[string][]string, error) {
 	key := fmt.Sprintf("%s.offline.messages.%s.*", userId, deviceId)
 
 	keys, err := its.getAllKeys(key)
@@ -81,7 +115,7 @@ func (its *Manager) GetOfflineMessagesByDevice(userId, deviceId string) ([]strin
 		}
 	}
 
-	result, err := its.getAllValues(key)
+	result, err := its.lRangeAll(key)
 	if err != nil {
 		return nil, fmt.Errorf("rediss lrange(%s) -> %w", key, err)
 	}
@@ -90,13 +124,19 @@ func (its *Manager) GetOfflineMessagesByDevice(userId, deviceId string) ([]strin
 }
 
 func (its *Manager) flushMessageIds(key string) error {
-	if len(msgIdsBuffer) == 0 {
+	msgIds, exist := its.msgIdsBuffer.Get(key)
+	if !exist || msgIds == nil || len(msgIds) == 0 {
 		return nil
 	}
 
 	ctx := context.Background()
 
-	err := its.redisClient.LPush(ctx, key, msgIdsBuffer[key]).Err()
+	interfaceMsgIds := make([]interface{}, len(msgIds))
+	for i, v := range msgIds {
+		interfaceMsgIds[i] = v
+	}
+
+	err := its.redisClient.LPush(ctx, key, interfaceMsgIds...).Err()
 	if err != nil {
 		return fmt.Errorf("redis lpush(%s) -> %w", key, err)
 	}
@@ -106,7 +146,7 @@ func (its *Manager) flushMessageIds(key string) error {
 		return fmt.Errorf("redis set(%s) offline device key expiry -> %w", key, err)
 	}
 
-	delete(msgIdsBuffer, key)
+	its.msgIdsBuffer.Remove(key)
 
 	return nil
 }

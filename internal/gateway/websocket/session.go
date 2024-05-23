@@ -26,6 +26,10 @@ func (its *session) send(cmd int, body []byte) {
 	log.Debug("Send message successfully", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId))
 }
 
+func (its *session) sendOfflineMessages() {
+
+}
+
 type manager struct {
 	sync.Map
 }

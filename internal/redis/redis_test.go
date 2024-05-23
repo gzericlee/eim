@@ -135,3 +135,21 @@ func TestGetAllGateway(t *testing.T) {
 	}
 	t.Log("Gateway节点数:", len(gateways))
 }
+
+func TestManager_GetOfflineMessageCount(t *testing.T) {
+	count, err := manager.GetOfflineMessageCount("user-1", "device-1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(count)
+}
+
+func TestManager_GetOfflineMessagesByDevice(t *testing.T) {
+	messages, err := manager.GetOfflineMessagesByDevice("user-1", "device-1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(messages)
+}
