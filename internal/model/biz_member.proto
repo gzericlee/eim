@@ -3,7 +3,7 @@ package model;
 option go_package = "../model";
 
 message BizMember {
-  string bizId = 1;
-  string bizType = 2;
-  string userId = 3;
+  string biz_id = 1;
+  string biz_type = 2;
+  string user_id = 3;
 }

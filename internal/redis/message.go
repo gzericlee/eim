@@ -17,7 +17,7 @@ const (
 	batchSize = 100
 )
 
-func (its *Manager) checkSignal() {
+func (its *Manager) checkProcessExit() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -35,8 +35,8 @@ func (its *Manager) checkSignal() {
 	}()
 }
 
-func (its *Manager) SaveOfflineMessageIds(msgIds []interface{}, userId, deviceId, bizId string) error {
-	key := fmt.Sprintf("%s.offline.messages.%s.%s", userId, deviceId, bizId)
+func (its *Manager) SaveOfflineMessageIds(msgIds []interface{}, userId, deviceId string) error {
+	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
 
 	its.msgIdsBuffer.Upsert(key, msgIds, func(exist bool, valueInMap, newValue []interface{}) []interface{} {
 		if !exist {
@@ -54,12 +54,17 @@ func (its *Manager) SaveOfflineMessageIds(msgIds []interface{}, userId, deviceId
 	return nil
 }
 
-func (its *Manager) RemoveOfflineMessageIds(msgIds []interface{}, userId, deviceId, bizId string) error {
-	key := fmt.Sprintf("%s.offline.messages.%s.%s", userId, deviceId, bizId)
+func (its *Manager) RemoveOfflineMessageIds(msgIds []interface{}, userId, deviceId string) error {
+	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
+
+	err := its.flushMessageIds(key)
+	if err != nil {
+		return fmt.Errorf("flush message ids -> %w", err)
+	}
 
 	ctx := context.Background()
 
-	_, err := its.redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+	_, err = its.redisClient.Pipelined(ctx, func(pipe redis.Pipeliner) error {
 		for _, msgId := range msgIds {
 			pipe.LRem(ctx, key, 0, msgId)
 		}
@@ -73,8 +78,8 @@ func (its *Manager) RemoveOfflineMessageIds(msgIds []interface{}, userId, device
 	return nil
 }
 
-func (its *Manager) GetOfflineMessageCount(userId, deviceId string) (int64, error) {
-	key := fmt.Sprintf("%s.offline.messages.%s.*", userId, deviceId)
+func (its *Manager) GetOfflineMessagesCount(userId, deviceId string) (int64, error) {
+	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
 
 	total, err := its.lLenAll(key)
 	if err != nil {
@@ -84,35 +89,12 @@ func (its *Manager) GetOfflineMessageCount(userId, deviceId string) (int64, erro
 	return total, nil
 }
 
-func (its *Manager) GetOfflineMessagesByBiz(userId, deviceId, bizId string) ([]string, error) {
-	key := fmt.Sprintf("%s.offline.messages.%s.%s", userId, deviceId, bizId)
+func (its *Manager) GetOfflineMessages(userId, deviceId string) (map[string][]string, error) {
+	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
 
 	err := its.flushMessageIds(key)
 	if err != nil {
-		return nil, fmt.Errorf("flush message ids -> %w", err)
-	}
-
-	result, err := its.getAllValues(key)
-	if err != nil {
-		return nil, fmt.Errorf("rediss lrange(%s) -> %w", key, err)
-	}
-
-	return result, nil
-}
-
-func (its *Manager) GetOfflineMessagesByDevice(userId, deviceId string) (map[string][]string, error) {
-	key := fmt.Sprintf("%s.offline.messages.%s.*", userId, deviceId)
-
-	keys, err := its.getAllKeys(key)
-	if err != nil {
-		return nil, fmt.Errorf("redis getAllKeys(%s) -> %w", key, err)
-	}
-
-	for _, key := range keys {
-		err := its.flushMessageIds(key)
-		if err != nil {
-			return nil, fmt.Errorf("flush message seq ids -> %w", err)
-		}
+		return nil, fmt.Errorf("flush message seq ids -> %w", err)
 	}
 
 	result, err := its.lRangeAll(key)

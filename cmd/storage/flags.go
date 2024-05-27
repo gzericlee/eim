@@ -23,6 +23,8 @@ const (
 
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
+	RegistryServices = "REGISTRY_SERVICES"
+
 	LogLevel = "LOG_LEVEL"
 )
 
@@ -92,11 +94,18 @@ func ParseFlags(app *cli.App) {
 			Destination: &config.SystemConfig.Redis.OfflineDeviceExpire,
 		},
 		&cli.StringSliceFlag{
-			Name:        "etcd-endpoint",
+			Name:        "etcd-endpoints",
 			Value:       cli.NewStringSlice("127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"),
 			Usage:       "Redis cluster endpoints",
 			EnvVars:     []string{EtcdEndpoints},
 			Destination: &config.SystemConfig.Etcd.Endpoints,
+		},
+		&cli.StringSliceFlag{
+			Name:        "registry-services",
+			Value:       cli.NewStringSlice("device", "message", "user", "biz_member", "gateway", "segment"),
+			Usage:       "Registry services",
+			EnvVars:     []string{RegistryServices},
+			Destination: &config.SystemConfig.StorageSvr.RegistryServices,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",

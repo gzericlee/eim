@@ -17,3 +17,25 @@ func (its *Repository) SaveDevice(device *model.Device) error {
 	}
 	return nil
 }
+
+func (its *Repository) GetDevice(userId, deviceId string) (*model.Device, error) {
+	var device *model.Device
+	err := its.db.Collection("device").FindOne(context.TODO(), bson.M{"user_id": userId, "device_id": deviceId}).Decode(&device)
+	if err != nil {
+		return nil, fmt.Errorf("find one device -> %w", err)
+	}
+	return device, nil
+}
+
+func (its *Repository) GetDevices(userId string) ([]*model.Device, error) {
+	var devices []*model.Device
+	result, err := its.db.Collection("device").Find(context.TODO(), bson.M{"user_id": userId})
+	if err != nil {
+		return nil, fmt.Errorf("find user devices -> %w", err)
+	}
+	err = result.All(context.Background(), &devices)
+	if err != nil {
+		return nil, fmt.Errorf("find user devices -> %w", err)
+	}
+	return devices, nil
+}

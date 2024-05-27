@@ -60,10 +60,6 @@ func NewGenerator(cfg GeneratorConfig) (*Generator, error) {
 					continue
 				}
 
-				if id != 0 {
-					generator.idChan <- id
-				}
-
 				currentTimestamp := time.Now().UnixNano() / int64(time.Millisecond)
 				if currentTimestamp < previousTimestamp {
 					log.Error("IdGenerator generate id is not monotonic")
@@ -71,6 +67,10 @@ func NewGenerator(cfg GeneratorConfig) (*Generator, error) {
 					continue
 				}
 				previousTimestamp = currentTimestamp
+
+				if id != 0 {
+					generator.idChan <- id
+				}
 			}
 		}(node)
 	}

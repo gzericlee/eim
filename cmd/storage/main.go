@@ -13,6 +13,7 @@ import (
 	"eim/internal/database"
 	storagerpc "eim/internal/storage/rpc"
 	"eim/internal/version"
+	"eim/pkg/pprof"
 	"eim/util/log"
 )
 
@@ -32,6 +33,9 @@ func newCliApp() *cli.App {
 		//打印版本信息
 		version.Printf()
 
+		//开启PProf服务
+		pprof.EnablePProf()
+
 		//开启Storage服务
 		go func() {
 			for {
@@ -46,6 +50,7 @@ func newCliApp() *cli.App {
 					RedisPassword:        config.SystemConfig.Redis.Password,
 					OfflineMessageExpire: config.SystemConfig.Redis.OfflineMessageExpire,
 					OfflineDeviceExpire:  config.SystemConfig.Redis.OfflineDeviceExpire,
+					RegistryServices:     config.SystemConfig.StorageSvr.RegistryServices.Value(),
 				})
 				if err != nil {
 					log.Error("Error start storage rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))

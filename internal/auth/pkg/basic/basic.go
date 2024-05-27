@@ -4,16 +4,23 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	"eim/internal/model"
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
+	"eim/util/log"
 )
 
 type Authenticator struct {
-	RedisManager *redis.Manager
+	StorageRpc *storagerpc.Client
 }
 
 func (its *Authenticator) CheckToken(token string) (*model.User, error) {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
 	c, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		return nil, fmt.Errorf("decode token -> %w", err)
@@ -34,7 +41,7 @@ func (its *Authenticator) CheckToken(token string) (*model.User, error) {
 		tenantId = cs[:s][uc+1:]
 	}
 
-	user, err := its.RedisManager.GetUser(loginId, tenantId)
+	user, err := its.StorageRpc.GetUser(loginId, tenantId)
 	if err != nil {
 		return nil, fmt.Errorf("get user -> %w", err)
 	}

@@ -9,19 +9,16 @@ import (
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/gateway/websocket"
 	"eim/internal/mq"
-	"eim/internal/redis"
 	seqrpc "eim/internal/seq/rpc"
 	storagerpc "eim/internal/storage/rpc"
 	"eim/util/log"
 )
 
 type Config struct {
-	Ip             string
-	Ports          []string
-	MqEndpoints    []string
-	EtcdEndpoints  []string
-	RedisEndpoints []string
-	RedisPassword  string
+	Ip            string
+	Ports         []string
+	MqEndpoints   []string
+	EtcdEndpoints []string
 }
 
 func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
@@ -42,20 +39,12 @@ func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
 		return nil, fmt.Errorf("new storage rpc client -> %w", err)
 	}
 
-	redisManager, err := redis.NewManager(redis.Config{
-		RedisEndpoints: cfg.RedisEndpoints,
-		RedisPassword:  cfg.RedisPassword,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("new redis manager -> %w", err)
-	}
-
 	producer, err := mq.NewProducer(cfg.MqEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("new mq producer -> %w", err)
 	}
 
-	server, err := websocket.NewServer(cfg.Ip, cfg.Ports, seqRpc, authRpc, storageRpc, redisManager, producer)
+	server, err := websocket.NewServer(cfg.Ip, cfg.Ports, seqRpc, authRpc, storageRpc, producer)
 	if err != nil {
 		return nil, fmt.Errorf("new websocket server -> %w", err)
 	}

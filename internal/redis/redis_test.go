@@ -1,12 +1,13 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/redis/go-redis/v9"
 
 	"eim/internal/metric"
 	"eim/internal/model"
@@ -27,49 +28,9 @@ func init() {
 	}
 }
 
-func TestGetDeviceByDeviceId(t *testing.T) {
-	device, err := manager.GetUserDevice("user-1000", "device-1000")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	body, _ := proto.Marshal(device)
-	t.Log(string(body), err)
-}
-
-func TestGetDevicesById(t *testing.T) {
-	devices, err := manager.GetUserDevices("user-1")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	body, _ := proto.Marshal(devices[0])
-	t.Log(len(devices), string(body), err)
-}
-
-func TestSaveUser(t *testing.T) {
-	t.Log(manager.SaveUser(&model.User{
-		UserId:     "1",
-		LoginId:    "lirui",
-		UserName:   "李锐",
-		Password:   "pass@word1",
-		TenantId:   "bingo",
-		TenantName: "品高软件",
-	}))
-}
-
-func TestGetUser(t *testing.T) {
-	user, err := manager.GetUser("lirui", "bingo")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(user.UserId, user.LoginId, user.UserName)
-}
-
 func TestSaveGroupMember(t *testing.T) {
 	for i := 1; i <= 1000; i++ {
-		t.Log(manager.SaveBizMember(&model.BizMember{
+		t.Log(manager.AppendBizMember(&model.BizMember{
 			BizId:   "group-1",
 			BizType: "group",
 			UserId:  "user-" + strconv.Itoa(i),
@@ -116,7 +77,7 @@ func TestGetGateways(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
-	all, err := manager.getAllValues(fmt.Sprintf("%s*", "user-"))
+	all, err := manager.getAllValues(fmt.Sprintf("%s:device:*", "user-1000"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -125,7 +86,7 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestGetAllGateway(t *testing.T) {
-	gateways, err := manager.getAllValues(fmt.Sprintf("gateway.*"))
+	gateways, err := manager.GetGateways()
 	if err != nil {
 		t.Error(err)
 		return
@@ -136,20 +97,13 @@ func TestGetAllGateway(t *testing.T) {
 	t.Log("Gateway节点数:", len(gateways))
 }
 
-func TestManager_GetOfflineMessageCount(t *testing.T) {
-	count, err := manager.GetOfflineMessageCount("user-1", "device-1")
+func TestClearAll(t *testing.T) {
+	err := manager.redisClient.(*redis.ClusterClient).ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
+		_, err := client.FlushAll(ctx).Result()
+		return err
+	})
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("清空redis失败: %v", err)
 		return
 	}
-	t.Log(count)
-}
-
-func TestManager_GetOfflineMessagesByDevice(t *testing.T) {
-	messages, err := manager.GetOfflineMessagesByDevice("user-1", "device-1")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(messages)
 }

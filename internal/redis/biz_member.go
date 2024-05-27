@@ -7,8 +7,8 @@ import (
 	"eim/internal/model"
 )
 
-func (its *Manager) SaveBizMember(member *model.BizMember) error {
-	key := fmt.Sprintf("%s.%s.members", member.BizType, member.BizId)
+func (its *Manager) AppendBizMember(member *model.BizMember) error {
+	key := fmt.Sprintf("%s:%s:members", member.BizType, member.BizId)
 
 	err := its.redisClient.SAdd(context.Background(), key, member.UserId).Err()
 	if err != nil {
@@ -19,7 +19,7 @@ func (its *Manager) SaveBizMember(member *model.BizMember) error {
 }
 
 func (its *Manager) GetBizMembers(bizType, bizId string) ([]string, error) {
-	key := fmt.Sprintf("%s.%s.members", bizType, bizId)
+	key := fmt.Sprintf("%s:%s:members", bizType, bizId)
 
 	result, err := its.redisClient.SMembers(context.Background(), key).Result()
 	if err != nil {

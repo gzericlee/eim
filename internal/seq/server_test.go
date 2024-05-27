@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"eim/internal/database"
 	"eim/internal/seq/rpc"
 )
 
@@ -16,14 +15,11 @@ var etcdEndpoints = []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579
 func init() {
 	go func() {
 		err := rpc.StartServer(rpc.Config{
-			Ip:                 "127.0.0.1",
-			Port:               18080,
-			DatabaseDriver:     database.MongoDBDriver,
-			DatabaseConnection: "mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct",
-			DatabaseName:       "eim",
-			EtcdEndpoints:      etcdEndpoints,
-			RedisEndpoints:     []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"},
-			RedisPassword:      "pass@word1",
+			Ip:             "127.0.0.1",
+			Port:           18080,
+			EtcdEndpoints:  etcdEndpoints,
+			RedisEndpoints: []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"},
+			RedisPassword:  "pass@word1",
 		})
 		log.Println(err)
 	}()

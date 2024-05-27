@@ -6,7 +6,7 @@ import (
 
 	"eim/internal/config"
 	"eim/internal/model"
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
 )
 
 type Request struct {
@@ -18,11 +18,11 @@ type Reply struct {
 }
 
 type Authentication struct {
-	RedisManager *redis.Manager
+	StorageRpc *storagerpc.Client
 }
 
 func (its *Authentication) CheckToken(ctx context.Context, req *Request, reply *Reply) error {
-	authenticator := NewAuthenticator(Mode(config.SystemConfig.AuthSvr.Mode), its.RedisManager)
+	authenticator := NewAuthenticator(Mode(config.SystemConfig.AuthSvr.Mode), its.StorageRpc)
 	user, err := authenticator.CheckToken(req.Token)
 	if err != nil {
 		return fmt.Errorf("check token -> %w", err)

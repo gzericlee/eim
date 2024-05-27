@@ -2,22 +2,27 @@ package dispatch
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 
 	"eim/internal/model"
 	"eim/internal/mq"
-	"eim/internal/redis"
 	storagerpc "eim/internal/storage/rpc"
+	"eim/util/log"
 )
 
 type UserMessageHandler struct {
-	StorageRpc   *storagerpc.Client
-	RedisManager *redis.Manager
-	Producer     mq.Producer
+	StorageRpc *storagerpc.Client
+	Producer   mq.Producer
 }
 
 func (its *UserMessageHandler) HandleMessage(data []byte) error {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
 	if data == nil || len(data) == 0 {
 		return nil
 	}
@@ -35,14 +40,14 @@ func (its *UserMessageHandler) HandleMessage(data []byte) error {
 
 	//发送者多端同步
 	msg.UserId = msg.FromId
-	err = toUser(msg, its.RedisManager, its.Producer)
+	err = toUser(msg, its.StorageRpc, its.Producer)
 	if err != nil {
 		return fmt.Errorf("dispatch user message to send user -> %w", err)
 	}
 
 	//接收者多端推送
 	msg.UserId = msg.ToId
-	err = toUser(msg, its.RedisManager, its.Producer)
+	err = toUser(msg, its.StorageRpc, its.Producer)
 	if err != nil {
 		return fmt.Errorf("dispatch user message to receive user -> %w", err)
 	}

@@ -11,6 +11,8 @@ const (
 	ClientCount  = "CLIENT_COUNT"
 	MessageCount = "MESSAGE_COUNT"
 
+	EtcdEndpoints = "ETCD_ENDPOINTS"
+
 	LogLevel = "LOG_LEVEL"
 )
 
@@ -22,6 +24,13 @@ func ParseFlags(app *cli.App) {
 			Usage:       "EIM endpoints",
 			EnvVars:     []string{EimEndpoints},
 			Destination: &config.SystemConfig.Mock.EimEndpoints,
+		},
+		&cli.StringSliceFlag{
+			Name:        "etcd-endpoints",
+			Value:       cli.NewStringSlice("127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"),
+			Usage:       "Redis cluster endpoints",
+			EnvVars:     []string{EtcdEndpoints},
+			Destination: &config.SystemConfig.Etcd.Endpoints,
 		},
 		&cli.IntFlag{
 			Name:        "client-count",

@@ -8,13 +8,14 @@ require (
 	github.com/emicklei/go-restful-openapi/v2 v2.10.2
 	github.com/emicklei/go-restful/v3 v3.12.0
 	github.com/go-openapi/spec v0.21.0
-	github.com/godruoyi/go-snowflake v0.0.2
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.5.8
 	github.com/lesismal/nbio v1.5.8
 	github.com/nats-io/nats.go v1.34.1
 	github.com/onsi/ginkgo v1.16.5
+	github.com/orca-zhang/ecache v1.1.1
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/panjf2000/ants v1.2.1
 	github.com/redis/go-redis/v9 v9.5.1

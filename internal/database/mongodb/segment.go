@@ -23,8 +23,8 @@ const (
 )
 
 func (its *Repository) GetSegment(bizId string) (*model.Segment, error) {
-	seg := &model.Segment{}
-	err := its.db.Collection("segment").FindOne(context.Background(), bson.M{"biz_id": bizId}).Decode(seg)
+	var seg *model.Segment
+	err := its.db.Collection("segment").FindOne(context.Background(), bson.M{"biz_id": bizId}).Decode(&seg)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("find segment -> %w", err)

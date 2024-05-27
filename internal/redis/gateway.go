@@ -13,7 +13,7 @@ import (
 )
 
 func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Duration) error {
-	key := fmt.Sprintf("gateway.%s", gateway.Ip)
+	key := fmt.Sprintf("gateway:%s", gateway.Ip)
 
 	body, err := proto.Marshal(gateway)
 	if err != nil {
@@ -29,7 +29,7 @@ func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Dura
 }
 
 func (its *Manager) GetGateways() ([]*model.Gateway, error) {
-	key := fmt.Sprintf("gateway.*")
+	key := fmt.Sprintf("gateway:*")
 
 	values, err := its.getAllValues(key)
 	if err != nil {

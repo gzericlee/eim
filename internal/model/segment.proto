@@ -5,9 +5,9 @@ option go_package = "../model";
 import "google/protobuf/timestamp.proto";
 
 message Segment {
-  string bizId = 1;
-  int64 maxId = 2;
+  string biz_id = 1;
+  int64 max_id = 2;
   int32 step = 3;
-  google.protobuf.Timestamp createAt = 4;
-  google.protobuf.Timestamp updateAt = 5;
+  google.protobuf.Timestamp create_at = 4;
+  google.protobuf.Timestamp update_at = 5;
 }

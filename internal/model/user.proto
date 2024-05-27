@@ -3,10 +3,10 @@ package model;
 option go_package = "../model";
 
 message User {
-  string userId = 1;
-  string loginId = 2;
-  string userName = 3;
+  string user_id = 1;
+  string login_id = 2;
+  string user_name = 3;
   string password = 4;
-  string tenantId = 5;
-  string tenantName = 6;
+  string tenant_id = 5;
+  string tenant_name = 6;
 }

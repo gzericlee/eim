@@ -8,7 +8,7 @@ import (
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
 
-	"eim/internal/database"
+	storagerpc "eim/internal/storage/rpc"
 	"eim/pkg/snowflake"
 )
 
@@ -18,14 +18,11 @@ const (
 )
 
 type Config struct {
-	Ip                 string
-	Port               int
-	DatabaseDriver     database.Driver
-	DatabaseConnection string
-	DatabaseName       string
-	EtcdEndpoints      []string
-	RedisEndpoints     []string
-	RedisPassword      string
+	Ip             string
+	Port           int
+	EtcdEndpoints  []string
+	RedisEndpoints []string
+	RedisPassword  string
 }
 
 func StartServer(cfg Config) error {
@@ -54,12 +51,12 @@ func StartServer(cfg Config) error {
 		return fmt.Errorf("new snowflake id incrementer -> %w", err)
 	}
 
-	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
+	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
 	if err != nil {
-		return fmt.Errorf("new database -> %w", err)
+		return fmt.Errorf("new storage rpc client -> %w", err)
 	}
 
-	err = svr.RegisterName(servicePath, &segmentSeq{db: db, cache: sync.Map{}, generator: generator}, "")
+	err = svr.RegisterName(servicePath, &segmentSeq{storageRpc: storageRpc, cache: sync.Map{}, generator: generator}, "")
 	if err != nil {
 		return fmt.Errorf("register seq service -> %w", err)
 	}

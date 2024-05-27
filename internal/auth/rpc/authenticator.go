@@ -4,7 +4,7 @@ import (
 	"eim/internal/auth/pkg/basic"
 	"eim/internal/auth/pkg/sso"
 	"eim/internal/model"
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
 )
 
 type Mode string
@@ -18,7 +18,7 @@ type Authenticator interface {
 	CheckToken(token string) (*model.User, error)
 }
 
-func NewAuthenticator(mode Mode, redisManager *redis.Manager) Authenticator {
+func NewAuthenticator(mode Mode, storageRpc *storagerpc.Client) Authenticator {
 	//TODO 参数
 	switch mode {
 	case SSOMode:
@@ -27,7 +27,7 @@ func NewAuthenticator(mode Mode, redisManager *redis.Manager) Authenticator {
 		}
 	case BasicMode:
 		{
-			return &basic.Authenticator{RedisManager: redisManager}
+			return &basic.Authenticator{StorageRpc: storageRpc}
 		}
 	default:
 		{

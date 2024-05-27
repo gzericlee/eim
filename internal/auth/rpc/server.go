@@ -7,7 +7,7 @@ import (
 	"github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
 
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
 )
 
 const (
@@ -16,22 +16,17 @@ const (
 )
 
 type Config struct {
-	Ip             string
-	Port           int
-	EtcdEndpoints  []string
-	RedisEndpoints []string
-	RedisPassword  string
+	Ip            string
+	Port          int
+	EtcdEndpoints []string
 }
 
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
 
-	redisManager, err := redis.NewManager(redis.Config{
-		RedisEndpoints: cfg.RedisEndpoints,
-		RedisPassword:  cfg.RedisPassword,
-	})
+	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
 	if err != nil {
-		return fmt.Errorf("new redis manager -> %w", err)
+		return fmt.Errorf("new storage rpc client -> %w", err)
 	}
 
 	plugin := &serverplugin.EtcdV3RegisterPlugin{
@@ -46,7 +41,7 @@ func StartServer(cfg Config) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	err = svr.RegisterName(servicePath, &Authentication{RedisManager: redisManager}, "")
+	err = svr.RegisterName(servicePath, &Authentication{StorageRpc: storageRpc}, "")
 	if err != nil {
 		return fmt.Errorf("register auth service -> %w", err)
 	}

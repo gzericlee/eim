@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/lesismal/nbio/extension/tls"
 	"github.com/lesismal/nbio/logging"
@@ -26,6 +25,7 @@ import (
 	"eim/internal/config"
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
+	seqrpc "eim/internal/seq/rpc"
 	"eim/util/log"
 )
 
@@ -33,6 +33,7 @@ var connectedCount = &atomic.Int64{}
 var sendCount = &atomic.Int64{}
 var ackCount = &atomic.Int64{}
 var msgCount = &atomic.Int64{}
+var invalidCount = &atomic.Int64{}
 var hbCount = &atomic.Int64{}
 var conns sync.Map
 var connectedConsume time.Duration
@@ -40,6 +41,12 @@ var connectedConsume time.Duration
 func Do() {
 	var connectionStart, sendStart time.Time
 	logging.SetLevel(logging.LevelNone)
+
+	seqRpc, err := seqrpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+	if err != nil {
+		log.Error("Error creating seq rpc client", zap.Error(err))
+		return
+	}
 
 	go func() {
 		var ticker = time.NewTicker(time.Second)
@@ -67,9 +74,9 @@ func Do() {
 
 					t := table.NewWriter()
 					t.SetOutputMirror(os.Stdout)
-					t.AppendHeader(table.Row{"Devices", "Send", "Send Tps", "Received", "Received Tps", "Ack", "Heartbeat", "Goroutines"})
+					t.AppendHeader(table.Row{"devices", "Send", "Send Tps", "Received", "Invalid", "Received Tps", "Ack", "Heartbeat", "Goroutines"})
 					t.AppendRows([]table.Row{{
-						connectedCount.Load(), sendCount.Load(), so, msgCount.Load(), ro, ackCount.Load(), hbCount.Load(), runtime.NumGoroutine(),
+						connectedCount.Load(), sendCount.Load(), so, msgCount.Load(), invalidCount.Load(), ro, ackCount.Load(), hbCount.Load(), runtime.NumGoroutine(),
 					}})
 					t.AppendSeparator()
 					t.Render()
@@ -84,12 +91,12 @@ func Do() {
 							return
 						}
 					} else {
-						if connectedCount.Load() == int64(config.SystemConfig.Mock.ClientCount) {
-							log.Info(fmt.Sprintf("Mock completed，Connection %v : %v",
-								config.SystemConfig.Mock.ClientCount,
-								connectedConsume))
-							return
-						}
+						//if connectedCount.Load() == int64(config.SystemConfig.Mock.ClientCount) {
+						//	log.Info(fmt.Sprintf("Mock completed，Connection %v : %v",
+						//		config.SystemConfig.Mock.ClientCount,
+						//		connectedConsume))
+						//	return
+						//}
 					}
 				}
 			}
@@ -97,7 +104,7 @@ func Do() {
 	}()
 
 	engine := nbhttp.NewEngine(nbhttp.Config{})
-	err := engine.Start()
+	err = engine.Start()
 	if err != nil {
 		log.Error("nbio.Start failed: %v\n", zap.Error(err))
 		return
@@ -120,7 +127,6 @@ func Do() {
 				id := strconv.Itoa(i)
 				u := url.URL{Scheme: "ws", Host: config.SystemConfig.Mock.EimEndpoints.Value()[i%len(config.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
 
-				token := base64.StdEncoding.EncodeToString([]byte("lirui@bingo:pass@word1"))
 				userId := "user-" + id
 				deviceId := "device-" + id
 				deviceName := "linux-" + id
@@ -135,12 +141,14 @@ func Do() {
 					},
 				}
 
+				auth := base64.StdEncoding.EncodeToString([]byte(userId + "@bingo:" + "pass@word1"))
+				token := "Basic " + auth
+
 				var conn *websocket.Conn
 				for {
 					conn, _, err = dialer.Dial(u.String(), http.Header{
-						"UserId":        []string{userId},
-						"Token":         []string{token},
-						"DeviceId":      []string{deviceId},
+						"Authorization": []string{token},
+						"deviceId":      []string{deviceId},
 						"DeviceName":    []string{deviceName},
 						"DeviceVersion": []string{deviceVersion},
 						"DeviceType":    []string{deviceType},
@@ -207,8 +215,13 @@ func Do() {
 					if cli.userId == toId {
 						continue
 					}
+					msgId, err := seqRpc.SnowflakeId()
+					if err != nil {
+						log.Error("Error getting snowflake id: %v，%v", zap.String("id", cli.userId), zap.Error(err))
+						continue
+					}
 					msg := &model.Message{
-						AckId:      uuid.NewString(),
+						MsgId:      msgId,
 						MsgType:    model.TextMessage,
 						Content:    time.Now().String(),
 						FromType:   model.FromUser,
@@ -219,7 +232,7 @@ func Do() {
 						ToDevice:   toDevice,
 					}
 					body, _ := proto.Marshal(msg)
-					err := cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))
+					err = cli.conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Message, body))
 					if err != nil {
 						log.Warn("Error sending message", zap.Error(err))
 						return

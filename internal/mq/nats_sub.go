@@ -53,14 +53,14 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 		}
 	}
 
-	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 1000)
+	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 2)
 	if err != nil {
 		return nil, fmt.Errorf("new task pool -> %w", err)
 	}
 
 	consumer := &natsConsumer{conn: conn, jsContext: jsContext, taskPool: taskPool}
 
-	go consumer.printDetails()
+	//go consumer.printDetails()
 
 	return consumer, nil
 }

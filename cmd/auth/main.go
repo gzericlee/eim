@@ -12,6 +12,7 @@ import (
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
 	"eim/internal/version"
+	"eim/pkg/pprof"
 	"eim/util/log"
 )
 
@@ -31,15 +32,16 @@ func newCliApp() *cli.App {
 		//打印版本信息
 		version.Printf()
 
+		//开启PProf服务
+		pprof.EnablePProf()
+
 		//开启Rpc服务
 		go func() {
 			for {
 				err := authrpc.StartServer(authrpc.Config{
-					Ip:             config.SystemConfig.LocalIp,
-					Port:           config.SystemConfig.AuthSvr.RpcPort,
-					EtcdEndpoints:  config.SystemConfig.Etcd.Endpoints.Value(),
-					RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
-					RedisPassword:  config.SystemConfig.Redis.Password,
+					Ip:            config.SystemConfig.LocalIp,
+					Port:          config.SystemConfig.AuthSvr.RpcPort,
+					EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
 				})
 				if err != nil {
 					log.Error("Error start auth rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))

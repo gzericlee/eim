@@ -3,17 +3,16 @@ package model;
 option go_package = "../model";
 
 message Message {
-  int64 msgId = 1;
-  int64 seqId = 2;
-  int64 msgType = 3;
+  int64 msg_id = 1;
+  int64 seq_id = 2;
+  int64 msg_type = 3;
   string content = 4;
-  int64 fromType = 5;
-  string fromId = 6;
-  string fromDevice = 7;
-  int64 toType = 8;
-  string toId = 9;
-  string toDevice = 10;
-  int64 sendTime = 11;
-  string userId = 12;
-  string ackId = 13;
+  int64 from_type = 5;
+  string from_id = 6;
+  string from_device = 7;
+  int64 to_type = 8;
+  string to_id = 9;
+  string to_device = 10;
+  int64 send_time = 11;
+  string user_id = 12;
 }

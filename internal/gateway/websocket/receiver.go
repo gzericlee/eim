@@ -1,6 +1,8 @@
 package websocket
 
 import (
+	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -15,14 +17,29 @@ import (
 )
 
 func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
 	_ = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
 
-	start := time.Now()
 	cmd, frame := protocol.WebsocketCodec.Decode(data)
 
 	sess := conn.Session().(*session)
 
 	switch cmd {
+	case protocol.Ack:
+		{
+			msgId := string(frame)
+			err := its.storageRpc.RemoveOfflineMessageIds([]interface{}{msgId}, sess.user.UserId, sess.device.DeviceId)
+			if err != nil {
+				atomic.AddInt64(&its.errorTotal, 1)
+				log.Error("Error remove offline message id", zap.Error(err))
+				return
+			}
+			atomic.AddInt64(&its.ackTotal, 1)
+		}
 	case protocol.Message:
 		{
 			msg := &model.Message{}
@@ -33,23 +50,16 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 				return
 			}
 
-			id := ""
+			bizId := ""
 			if msg.ToType == model.ToUser {
-				id = msg.FromId
+				bizId = msg.FromId
 			} else {
-				id = msg.ToId
+				bizId = msg.ToId
 			}
 
-			msg.MsgId, err = its.seqRpc.SnowflakeId()
+			msg.SeqId, err = its.seqRpc.IncrementId(bizId)
 			if err != nil {
-				log.Error("Error getting snowflake id: %v，%v", zap.String("id", id), zap.Error(err))
-				atomic.AddInt64(&its.errorTotal, 1)
-				return
-			}
-
-			msg.SeqId, err = its.seqRpc.IncrementId(id)
-			if err != nil {
-				log.Error("Error getting seq id: %v，%v", zap.String("id", id), zap.Error(err))
+				log.Error("Error getting seq bizId: %v，%v", zap.String("bizId", bizId), zap.Error(err))
 				atomic.AddInt64(&its.errorTotal, 1)
 				return
 			}
@@ -72,7 +82,7 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 						return
 					}
 
-					sess.send(protocol.Ack, []byte(msg.AckId))
+					sess.send(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10)))
 				}
 			}(sess, msg))
 
@@ -83,8 +93,6 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			}
 
 			atomic.AddInt64(&its.receivedMsgTotal, 1)
-
-			log.Debug("Time consuming to process messages", zap.Duration("duration", time.Since(start)))
 		}
 	}
 }

@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"sort"
@@ -18,6 +16,7 @@ import (
 	"eim/internal/gateway/websocket"
 	"eim/internal/mq"
 	"eim/internal/version"
+	"eim/pkg/pprof"
 	"eim/util/log"
 )
 
@@ -37,16 +36,17 @@ func newCliApp() *cli.App {
 		//打印版本信息
 		version.Printf()
 
+		//开启PProf服务
+		pprof.EnablePProf()
+
 		//开启WS服务
 		var err error
 		var server *websocket.Server
 		for {
 			server, err = gateway.StartWebsocketServer(gateway.Config{
-				Ports:          config.SystemConfig.GatewaySvr.WebSocketPorts.Value(),
-				MqEndpoints:    config.SystemConfig.Mq.Endpoints.Value(),
-				EtcdEndpoints:  config.SystemConfig.Etcd.Endpoints.Value(),
-				RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
-				RedisPassword:  config.SystemConfig.Redis.Password,
+				Ports:         config.SystemConfig.GatewaySvr.WebSocketPorts.Value(),
+				MqEndpoints:   config.SystemConfig.Mq.Endpoints.Value(),
+				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
 			})
 			if err != nil {
 				log.Error("Error start webSocket server", zap.Error(err))
@@ -80,15 +80,9 @@ func newCliApp() *cli.App {
 
 		log.Info("New mq consumers successfully")
 
-		l, err := net.Listen("tcp", ":0")
-		if err != nil {
-			return err
-		}
-		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
-
 		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
 
-		return http.Serve(l, nil)
+		select {}
 
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))

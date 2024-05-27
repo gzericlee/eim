@@ -53,7 +53,8 @@ type systemConfig struct {
 		RpcPort int
 	}
 	StorageSvr struct {
-		RpcPort int
+		RpcPort          int
+		RegistryServices cli.StringSlice
 	}
 	AuthSvr struct {
 		RpcPort int

@@ -4,13 +4,13 @@ option go_package = "../model";
 import "google/protobuf/timestamp.proto";
 
 message Device {
-  string deviceId = 1;
-  string userId = 2;
-  string deviceType = 3;
-  string deviceVersion = 4;
-  string gatewayIp = 5;
-  string fromId = 6;
-  google.protobuf.Timestamp onlineAt = 7;
-  google.protobuf.Timestamp offlineAt = 8;
+  string device_id = 1;
+  string user_id = 2;
+  string device_type = 3;
+  string device_version = 4;
+  string gateway_ip = 5;
+  string from_id = 6;
+  google.protobuf.Timestamp online_at = 7;
+  google.protobuf.Timestamp offline_at = 8;
   int32 state = 9;
 }

@@ -1,8 +1,9 @@
 package protocol
 
 const (
-	Message = 10
-	Ack     = 200
+	Message        = 10
+	OfflineMessage = 20
+	Ack            = 200
 )
 
 var WebsocketCodec *websocketCodec

@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/lesismal/nbio/nbhttp/websocket"
@@ -12,8 +13,10 @@ import (
 )
 
 type session struct {
+	user   *model.User
 	device *model.Device
 	conn   *websocket.Conn
+	server *Server
 }
 
 func (its *session) send(cmd int, body []byte) {
@@ -26,8 +29,18 @@ func (its *session) send(cmd int, body []byte) {
 	log.Debug("Send message successfully", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId))
 }
 
-func (its *session) sendOfflineMessages() {
-
+func (its *session) sendOfflineMessage() {
+	messages, err := its.server.storageRpc.GetOfflineMessages(its.user.UserId, its.device.DeviceId)
+	if err != nil {
+		log.Error("Error get offline messages", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId), zap.Error(err))
+		return
+	}
+	body, err := json.Marshal(messages)
+	if err != nil {
+		log.Error("Error marshal offline messages", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId), zap.Error(err))
+		return
+	}
+	its.send(protocol.OfflineMessage, body)
 }
 
 type manager struct {

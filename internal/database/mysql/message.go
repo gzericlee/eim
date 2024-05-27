@@ -13,3 +13,8 @@ func (its *Repository) SaveMessage(message *model.Message) error {
 	}
 	return nil
 }
+
+func (its *Repository) GetMessagesByIds(msgIds []int64) ([]*model.Message, error) {
+	//TODO implement me
+	panic("implement me")
+}

@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
 	"eim/internal/database/mongodb"
+	"eim/internal/database/mysql"
 	"eim/internal/model"
 )
 
@@ -20,10 +21,21 @@ const (
 	MongoDBDriver Driver = "mongodb"
 )
 
+var _ IDatabase = &mongodb.Repository{}
+var _ IDatabase = &mysql.Repository{}
+
 type IDatabase interface {
 	SaveDevice(device *model.Device) error
+	GetDevices(userId string) ([]*model.Device, error)
+	GetDevice(userId, deviceId string) (*model.Device, error)
+
+	SaveUser(user *model.User) error
+	GetUser(userId, tenantId string) (*model.User, error)
+
 	SaveMessage(msg *model.Message) error
-	GetSegment(id string) (*model.Segment, error)
+	GetMessagesByIds(msgIds []int64) ([]*model.Message, error)
+
+	GetSegment(bizId string) (*model.Segment, error)
 }
 
 func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
@@ -42,7 +54,7 @@ func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {
 	//		db.SetMaxIdleConns(100)
 	//		db.SetMaxOpenConns(200)
 	//
-	//		_ = orm.AutoMigrate(&model.Device{}, &model.Message{})
+	//		_ = orm.AutoMigrate(&model.device{}, &model.message{})
 	//
 	//		return mysqldb.NewRepository(orm), nil
 	//	}

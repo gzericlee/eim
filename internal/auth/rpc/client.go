@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"runtime"
 
-	rpcx_etcd_client "github.com/rpcxio/rpcx-etcd/client"
-	rpcx_client "github.com/smallnest/rpcx/client"
+	rpcxetcdclient "github.com/rpcxio/rpcx-etcd/client"
+	rpcxclient "github.com/smallnest/rpcx/client"
 
 	"eim/internal/model"
 )
 
 type Client struct {
-	pool *rpcx_client.XClientPool
+	pool *rpcxclient.XClientPool
 }
 
 func NewClient(etcdEndpoints []string) (*Client, error) {
-	d, err := rpcx_etcd_client.NewEtcdV3Discovery(basePath, servicePath, etcdEndpoints, false, nil)
+	d, err := rpcxetcdclient.NewEtcdV3Discovery(basePath, servicePath, etcdEndpoints, false, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new etcd v3 discovery -> %w", err)
 	}
-	pool := rpcx_client.NewXClientPool(runtime.NumCPU(), servicePath, rpcx_client.Failover, rpcx_client.RoundRobin, d, rpcx_client.DefaultOption)
+	pool := rpcxclient.NewXClientPool(runtime.NumCPU()*2, servicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d, rpcxclient.DefaultOption)
 	return &Client{pool: pool}, nil
 }
 

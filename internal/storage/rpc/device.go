@@ -3,40 +3,112 @@ package rpc
 import (
 	"context"
 	"fmt"
-
-	"go.uber.org/zap"
-
-	"eim/internal/model"
-	"eim/util/log"
+	"time"
 
 	"eim/internal/database"
-	"eim/internal/redis"
+	"eim/internal/model"
+	"eim/pkg/cache"
+	"eim/pkg/cache/notify"
+	"eim/util/log"
 )
 
-type DeviceRequest struct {
+type SaveDeviceArgs struct {
 	Device *model.Device
 }
 
+type GetDevicesArgs struct {
+	UserId string
+}
+
+type GetDeviceArgs struct {
+	UserId   string
+	DeviceId string
+}
+
+type DevicesReply struct {
+	Devices []*model.Device
+}
+
 type DeviceReply struct {
+	Device *model.Device
 }
 
 type Device struct {
-	Database     database.IDatabase
-	RedisManager *redis.Manager
+	storageCache *cache.Cache
+	database     database.IDatabase
 }
 
-func (its *Device) Save(ctx context.Context, req *DeviceRequest, reply *DeviceReply) error {
-	err := its.Database.SaveDevice(req.Device)
+func (its *Device) SaveDevice(ctx context.Context, args *SaveDeviceArgs, reply *DeviceReply) error {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
+	err := its.database.SaveDevice(args.Device)
 	if err != nil {
-		return fmt.Errorf("save db device -> %w", err)
+		return fmt.Errorf("save device -> %w", err)
 	}
 
-	err = its.RedisManager.SaveDevice(req.Device)
+	key := fmt.Sprintf("%s:%s", deviceCachePool, args.Device.DeviceId)
+	err = notify.Del(deviceCachePool, key)
 	if err != nil {
-		return fmt.Errorf("save redis device -> %w", err)
+		return fmt.Errorf("del device(%s) cache -> %w", key, err)
 	}
-
-	log.Debug("Store device", zap.String("userId", req.Device.UserId), zap.String("deviceId", req.Device.DeviceId), zap.String("gatewayIp", req.Device.GatewayIp), zap.Int32("state", req.Device.State))
 
 	return nil
+}
+
+func (its *Device) GetDevices(ctx context.Context, args *GetDevicesArgs, reply *DevicesReply) error {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
+	key := fmt.Sprintf("%s:%s", deviceCachePool, args.UserId)
+
+	if cacheItem, exist := its.storageCache.Get(key); exist {
+		reply.Devices = cacheItem.([]*model.Device)
+		return nil
+	}
+
+	result, err, _ := group.Do(key, func() (interface{}, error) {
+		devices, err := its.database.GetDevices(args.UserId)
+		if err != nil {
+			return nil, fmt.Errorf("get user devices -> %w", err)
+		}
+		return devices, nil
+	})
+	if err != nil {
+		return fmt.Errorf("group do -> %w", err)
+	}
+
+	devices := result.([]*model.Device)
+	its.storageCache.Put(key, devices)
+
+	reply.Devices = devices
+
+	return nil
+}
+
+func (its *Device) GetDevice(ctx context.Context, args *GetDeviceArgs, reply *DeviceReply) error {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
+	result := &DevicesReply{}
+
+	err := its.GetDevices(ctx, &GetDevicesArgs{UserId: args.UserId}, result)
+	if err != nil {
+		return fmt.Errorf("get user devices -> %w", err)
+	}
+
+	for _, device := range result.Devices {
+		if device.DeviceId == args.DeviceId {
+			reply.Device = device
+			return nil
+		}
+	}
+
+	return fmt.Errorf("device not found")
 }

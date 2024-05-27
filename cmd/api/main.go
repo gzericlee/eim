@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"sort"
@@ -16,6 +14,7 @@ import (
 	"eim/internal/config"
 	"eim/internal/redis"
 	"eim/internal/version"
+	"eim/pkg/pprof"
 	"eim/util/log"
 )
 
@@ -34,6 +33,9 @@ func newCliApp() *cli.App {
 
 		//打印版本信息
 		version.Printf()
+
+		//开启PProf服务
+		pprof.EnablePProf()
 
 		go func() {
 			httpServer := api.HttpServer{}
@@ -61,15 +63,9 @@ func newCliApp() *cli.App {
 			}
 		}()
 
-		l, err := net.Listen("tcp", ":0")
-		if err != nil {
-			return err
-		}
-		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
-
 		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName), zap.Int("port", config.SystemConfig.ApiSvr.HttpPort))
 
-		return http.Serve(l, nil)
+		select {}
 
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))

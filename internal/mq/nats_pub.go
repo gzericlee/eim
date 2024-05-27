@@ -57,7 +57,7 @@ func newNatsProducer(endpoints []string) (Producer, error) {
 
 	producer := &natsProducer{conn: conn, jsContext: jsContext}
 
-	go producer.printDetails()
+	//go producer.printDetails()
 
 	return producer, nil
 }

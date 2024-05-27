@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
@@ -20,6 +21,11 @@ type GroupMessageHandler struct {
 }
 
 func (its *GroupMessageHandler) HandleMessage(data []byte) error {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
 	if data == nil || len(data) == 0 {
 		return nil
 	}
@@ -31,7 +37,7 @@ func (its *GroupMessageHandler) HandleMessage(data []byte) error {
 		return nil
 	}
 
-	err = toGroup(msg, its.RedisManager, its.Producer)
+	err = toGroup(msg, its.StorageRpc, its.Producer)
 	if err != nil {
 		return fmt.Errorf("send message to group -> %w", err)
 	}
