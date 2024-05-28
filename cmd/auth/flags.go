@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	RpcPort = "RPC_PORT"
-
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
 	AuthMode = "AUTH_MODE"
@@ -18,13 +16,6 @@ const (
 
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
-		&cli.IntFlag{
-			Name:        "rpc-port",
-			Value:       12000,
-			Usage:       "Rpc port",
-			EnvVars:     []string{RpcPort},
-			Destination: &config.SystemConfig.AuthSvr.RpcPort,
-		},
 		&cli.StringSliceFlag{
 			Name:        "etcd-endpoints",
 			Value:       cli.NewStringSlice("127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"),

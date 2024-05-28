@@ -15,6 +15,7 @@ import (
 	"eim/internal/version"
 	"eim/pkg/pprof"
 	"eim/util/log"
+	"eim/util/net"
 )
 
 func newCliApp() *cli.App {
@@ -36,6 +37,18 @@ func newCliApp() *cli.App {
 		//开启PProf服务
 		pprof.EnablePProf()
 
+		//获取随机端口
+		for {
+			port, err := net.GetRandomPort()
+			if err != nil {
+				log.Error("Error get random port", zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+			config.SystemConfig.StorageSvr.RpcPort = port
+			break
+		}
+
 		//开启Storage服务
 		go func() {
 			for {
@@ -53,7 +66,7 @@ func newCliApp() *cli.App {
 					RegistryServices:     config.SystemConfig.StorageSvr.RegistryServices.Value(),
 				})
 				if err != nil {
-					log.Error("Error start storage rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+					log.Error("Error start storage rpc server", zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.StorageSvr.RpcPort)), zap.Error(err))
 					time.Sleep(time.Second * 5)
 					continue
 				}
@@ -61,7 +74,7 @@ func newCliApp() *cli.App {
 			}
 		}()
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName), zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.StorageSvr.RpcPort)))
 
 		select {}
 

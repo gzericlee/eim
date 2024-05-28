@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	RpcPort = "RPC_PORT"
-
 	RedisEndpoints = "REDIS_ENDPOINTS"
 	RedisPassword  = "REDIS_PASSWORD"
 
@@ -19,13 +17,6 @@ const (
 
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
-		&cli.IntFlag{
-			Name:        "rpc-port",
-			Value:       10000,
-			Usage:       "Rpc port",
-			EnvVars:     []string{RpcPort},
-			Destination: &config.SystemConfig.SeqSvr.RpcPort,
-		},
 		&cli.StringSliceFlag{
 			Name:        "redis-endpoints",
 			Value:       cli.NewStringSlice("127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"),

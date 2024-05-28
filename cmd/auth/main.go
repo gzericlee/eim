@@ -14,6 +14,7 @@ import (
 	"eim/internal/version"
 	"eim/pkg/pprof"
 	"eim/util/log"
+	"eim/util/net"
 )
 
 func newCliApp() *cli.App {
@@ -35,6 +36,18 @@ func newCliApp() *cli.App {
 		//开启PProf服务
 		pprof.EnablePProf()
 
+		//获取随机端口
+		for {
+			port, err := net.GetRandomPort()
+			if err != nil {
+				log.Error("Error get random port", zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+			config.SystemConfig.AuthSvr.RpcPort = port
+			break
+		}
+
 		//开启Rpc服务
 		go func() {
 			for {
@@ -44,7 +57,7 @@ func newCliApp() *cli.App {
 					EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
 				})
 				if err != nil {
-					log.Error("Error start auth rpc server", zap.Int("port", config.SystemConfig.SeqSvr.RpcPort), zap.Error(err))
+					log.Error("Error start auth rpc server", zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.AuthSvr.RpcPort)), zap.Error(err))
 					time.Sleep(time.Second * 5)
 					continue
 				}
@@ -52,7 +65,7 @@ func newCliApp() *cli.App {
 			}
 		}()
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName), zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.AuthSvr.RpcPort)))
 
 		select {}
 

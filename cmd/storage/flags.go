@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	RpcPort = "RPC_PORT"
-
 	MqEndpoints = "MQ_ENDPOINTS"
 
 	DatabaseDriver     = "DATABASE_DRIVER"
@@ -30,13 +28,6 @@ const (
 
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
-		&cli.IntFlag{
-			Name:        "rpc-port",
-			Value:       11000,
-			Usage:       "Rpc port",
-			EnvVars:     []string{RpcPort},
-			Destination: &config.SystemConfig.StorageSvr.RpcPort,
-		},
 		&cli.StringSliceFlag{
 			Name:        "mq-endpoints",
 			Value:       cli.NewStringSlice("127.0.0.1:4222", "127.0.0.1:4223", "127.0.0.1:4224"),

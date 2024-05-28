@@ -70,7 +70,7 @@ func TestDevice_Save(t *testing.T) {
 }
 
 func TestSaveUser(t *testing.T) {
-	for i := 1; i <= 100000; i++ {
+	for i := 1; i <= 10; i++ {
 		t.Log(rpcClient.SaveUser(&model.User{
 			UserId:     fmt.Sprintf("user-%d", i),
 			LoginId:    fmt.Sprintf("user-%d", i),
@@ -80,13 +80,23 @@ func TestSaveUser(t *testing.T) {
 			TenantName: "品高软件",
 		}))
 	}
+	for i := 1; i <= 10; i++ {
+		user, err := rpcClient.GetUser(fmt.Sprintf("user-%d", i), "bingo")
+		if err != nil {
+			t.Log(err)
+		} else {
+			t.Log(user)
+		}
+	}
 }
 
 func TestGetUser(t *testing.T) {
-	user, err := rpcClient.GetUser(fmt.Sprintf("user-2"), "bingo")
-	if err != nil {
-		t.Log(err)
-	} else {
-		t.Log(user)
+	for i := 1; i <= 10; i++ {
+		user, err := rpcClient.GetUser(fmt.Sprintf("user-%d", i), "bingo")
+		if err != nil {
+			t.Log(err)
+		} else {
+			t.Log(user)
+		}
 	}
 }

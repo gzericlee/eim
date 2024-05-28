@@ -45,7 +45,7 @@ func Init(r Notifier) {
 					time.Sleep(10 * time.Millisecond)
 				}
 				_ = r.Sub(notifyTopic, func(payload string) {
-					vs := strings.Split(payload, ":")
+					vs := strings.Split(payload, "#")
 					if len(vs) >= 2 {
 						delAll(vs[0], vs[1])
 					}
@@ -63,7 +63,7 @@ func Bind(pool string, caches ...*cache.Cache) error {
 
 func Del(pool, key string) error {
 	r := redisCli
-	if r != nil && r.Pub(notifyTopic, strings.Join([]string{pool, key}, ":")) == nil {
+	if r != nil && r.Pub(notifyTopic, strings.Join([]string{pool, key}, "#")) == nil {
 		return nil
 	}
 	delAll(pool, key)
