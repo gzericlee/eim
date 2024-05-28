@@ -40,6 +40,11 @@ func StartServer(cfg Config) error {
 	}
 	svr.Plugins.Add(plugin)
 
+	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
+	if err != nil {
+		return fmt.Errorf("new storage rpc client -> %w", err)
+	}
+
 	generator, err := snowflake.NewGenerator(snowflake.GeneratorConfig{
 		RedisEndpoints: cfg.RedisEndpoints,
 		RedisPassword:  cfg.RedisPassword,
@@ -49,11 +54,6 @@ func StartServer(cfg Config) error {
 	})
 	if err != nil {
 		return fmt.Errorf("new snowflake id incrementer -> %w", err)
-	}
-
-	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
-	if err != nil {
-		return fmt.Errorf("new storage rpc client -> %w", err)
 	}
 
 	err = svr.RegisterName(servicePath, &segmentSeq{storageRpc: storageRpc, cache: sync.Map{}, generator: generator}, "")
