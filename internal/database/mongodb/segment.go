@@ -29,6 +29,7 @@ func (its *Repository) GetSegment(bizId string) (*model.Segment, error) {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("find segment -> %w", err)
 		}
+		seg = &model.Segment{}
 		seg.BizId = bizId
 		seg.MaxId = 0
 		seg.Step = defaultStep
