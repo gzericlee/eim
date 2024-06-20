@@ -10,9 +10,9 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
+	"eim"
 	"eim/internal/config"
 	seqrpc "eim/internal/seq/rpc"
-	"eim/internal/version"
 	"eim/pkg/pprof"
 	"eim/util/log"
 	"eim/util/net"
@@ -32,7 +32,7 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		version.Printf()
+		eim.Printf()
 
 		//开启PProf服务
 		pprof.EnablePProf()
@@ -68,7 +68,7 @@ func newCliApp() *cli.App {
 			}
 		}()
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName), zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.SeqSvr.RpcPort)))
+		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName), zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.SeqSvr.RpcPort)))
 
 		select {}
 
@@ -80,7 +80,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", eim.ServiceName, err)
 		os.Exit(1)
 	}
 }

@@ -94,10 +94,10 @@ func (its *Client) GetDevices(userId string) ([]*model.Device, error) {
 	return reply.Devices, nil
 }
 
-func (its *Client) SaveMessage(msg *model.Message) error {
-	err := its.messagePool.Get().Call(context.Background(), "SaveMessage", &MessageArgs{Message: msg}, nil)
+func (its *Client) SaveMessages(messages []*model.Message) error {
+	err := its.messagePool.Get().Call(context.Background(), "SaveMessages", &MessageArgs{Messages: messages}, nil)
 	if err != nil {
-		return fmt.Errorf("call save message -> %w", err)
+		return fmt.Errorf("call save messages -> %w", err)
 	}
 	return nil
 }
@@ -128,7 +128,7 @@ func (its *Client) GetOfflineMessagesCount(userId, deviceId string) (int64, erro
 }
 
 func (its *Client) GetOfflineMessages(userId, deviceId string) ([]*model.Message, error) {
-	reply := &OfflineMessagesReply{}
+	reply := &MessagesReply{}
 	err := its.messagePool.Get().Call(context.Background(), "GetOfflineMessages", &OfflineMessagesArgs{UserId: userId, DeviceId: deviceId}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call get offline messages -> %w", err)

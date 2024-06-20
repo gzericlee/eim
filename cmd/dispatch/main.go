@@ -9,11 +9,11 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
+	"eim"
 	"eim/internal/config"
 	"eim/internal/dispatch"
 	"eim/internal/mq"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/internal/version"
 	"eim/pkg/pprof"
 	"eim/util/log"
 )
@@ -32,7 +32,7 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		version.Printf()
+		eim.Printf()
 
 		//开启PProf服务
 		pprof.EnablePProf()
@@ -57,22 +57,26 @@ func newCliApp() *cli.App {
 
 			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
 
-			err = consumer.Subscribe(mq.MessageDispatchSubject, mq.DispatchQueue, &dispatch.UserMessageHandler{
-				StorageRpc: storageRpc,
-				Producer:   producer,
-			})
+			err = consumer.Subscribe(mq.UserMessageSubject, "", dispatch.NewUserMessageHandler(storageRpc, producer))
 			if err != nil {
 				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			log.Info("New mq consumers successfully")
+			err = consumer.Subscribe(mq.GroupMessageSubject, "", dispatch.NewGroupMessageHandler(storageRpc, producer))
+			if err != nil {
+				log.Error("Error new mq consumers", zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
+			log.Info("New mq consumers successfully", zap.Strings("subjects", []string{mq.UserMessageSubject, mq.GroupMessageSubject}))
 
 			break
 		}
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 
 		select {}
 
@@ -84,7 +88,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", eim.ServiceName, err)
 		os.Exit(1)
 	}
 }

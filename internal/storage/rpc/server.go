@@ -96,7 +96,7 @@ func StartServer(cfg Config) error {
 				if err != nil {
 					return fmt.Errorf("stats bind(device) -> %w", err)
 				}
-				rcvr = &Device{storageCache: storageCache, database: db}
+				rcvr = &Device{storageCache: storageCache, database: db, redisManager: redisManager}
 			}
 		case messageServicePath:
 			{
@@ -112,7 +112,7 @@ func StartServer(cfg Config) error {
 				if err != nil {
 					return fmt.Errorf("stats bind(user) -> %w", err)
 				}
-				rcvr = &User{storageCache: storageCache, database: db}
+				rcvr = &User{storageCache: storageCache, database: db, redisManager: redisManager}
 			}
 		case bizMemberServicePath:
 			{
@@ -151,7 +151,7 @@ func StartServer(cfg Config) error {
 
 	go func() {
 		for {
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Minute)
 			stats.All().Range(func(k, v interface{}) bool {
 				log.Info(fmt.Sprintf("Cache stats: %s %+v", k, v))
 				return true

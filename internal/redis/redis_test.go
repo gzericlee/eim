@@ -1,13 +1,11 @@
 package redis
 
 import (
-	"context"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/golang/protobuf/proto"
 
 	"eim/internal/metric"
 	"eim/internal/model"
@@ -28,17 +26,75 @@ func init() {
 	}
 }
 
-func TestSaveGroupMember(t *testing.T) {
-	for i := 1; i <= 1000; i++ {
-		t.Log(manager.AppendBizMember(&model.BizMember{
-			BizId:   "group-1",
-			BizType: "group",
-			UserId:  "user-" + strconv.Itoa(i),
+func TestManager_GetDevice(t *testing.T) {
+	device, err := manager.GetDevice("user-1000", "device-1000")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	body, _ := proto.Marshal(device)
+	t.Log(string(body), err)
+}
+
+func TestManager_GetDevices(t *testing.T) {
+	devices, err := manager.GetDevices("user-1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	body, _ := proto.Marshal(devices[0])
+	t.Log(len(devices), string(body), err)
+}
+
+func TestManager_SaveUser(t *testing.T) {
+	for i := 1; i <= 100000; i++ {
+		t.Log(manager.SaveUser(&model.User{
+			UserId:     fmt.Sprintf("user-%d", i),
+			LoginId:    fmt.Sprintf("user-%d", i),
+			UserName:   fmt.Sprintf("用户-%d", i),
+			Password:   "pass@word1",
+			TenantId:   "bingo",
+			TenantName: "品高软件",
 		}))
 	}
 }
 
-func TestGetBizMembers(t *testing.T) {
+func BenchmarkManager_SaveUser(b *testing.B) {
+	b.N = 100000
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = manager.SaveUser(&model.User{
+				UserId:     fmt.Sprintf("user-%d", b.N),
+				LoginId:    fmt.Sprintf("user-%d", b.N),
+				UserName:   fmt.Sprintf("用户-%d", b.N),
+				Password:   "pass@word1",
+				TenantId:   "bingo",
+				TenantName: "品高软件",
+			})
+		}
+	})
+}
+
+func TestManager_GetUser(t *testing.T) {
+	user, err := manager.GetUser("user-1", "bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(user.UserId, user.LoginId, user.UserName)
+}
+
+func TestManager_AppendBizMember(t *testing.T) {
+	for i := 1; i <= 1000; i++ {
+		t.Log(manager.AppendBizMember(&model.BizMember{
+			BizId:   "group-1",
+			BizType: "group",
+			UserId:  fmt.Sprintf("user-%d", i),
+		}))
+	}
+}
+
+func TestManager_GetBizMembers(t *testing.T) {
 	members, err := manager.GetBizMembers("group", "group-1")
 	t.Log(len(members), members, err)
 }
@@ -52,7 +108,7 @@ func BenchmarkGetBizMembers(b *testing.B) {
 	})
 }
 
-func TestSaveGateway(t *testing.T) {
+func TestManager_SaveGateway(t *testing.T) {
 	mMetric, err := metric.GetMachineMetric()
 	if err != nil {
 		t.Error(err)
@@ -65,7 +121,7 @@ func TestSaveGateway(t *testing.T) {
 	}, time.Second*10), err)
 }
 
-func TestGetGateways(t *testing.T) {
+func TestManager_GetGateways(t *testing.T) {
 	gateways, err := manager.GetGateways()
 	if err != nil {
 		t.Error(err)
@@ -76,34 +132,19 @@ func TestGetGateways(t *testing.T) {
 	}
 }
 
-func TestGetAll(t *testing.T) {
-	all, err := manager.getAllValues(fmt.Sprintf("%s:device:*", "user-1000"))
-	if err != nil {
-		t.Error(err)
-		return
+func TestManager_SaveOfflineMessages(t *testing.T) {
+	var msgs []*model.Message
+	for i := 0; i < 100; i++ {
+		msgs = append(msgs, &model.Message{
+			MsgId:    int64(i),
+			FromId:   "user-1",
+			ToId:     "user-2",
+			SeqId:    1,
+			Content:  "Hello, World!",
+			SendTime: time.Now().Unix(),
+		})
 	}
-	t.Log("count:", len(all))
-}
-
-func TestGetAllGateway(t *testing.T) {
-	gateways, err := manager.GetGateways()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	for _, gateway := range gateways {
-		t.Log(gateway)
-	}
-	t.Log("Gateway节点数:", len(gateways))
-}
-
-func TestClearAll(t *testing.T) {
-	err := manager.redisClient.(*redis.ClusterClient).ForEachMaster(context.Background(), func(ctx context.Context, client *redis.Client) error {
-		_, err := client.FlushAll(ctx).Result()
-		return err
-	})
-	if err != nil {
-		t.Fatalf("清空redis失败: %v", err)
-		return
-	}
+	t.Log(manager.SaveOfflineMessages(msgs, "user-1", "device-1"))
+	t.Log(manager.GetOfflineMessagesCount("user-1", "device-1"))
+	t.Log(manager.GetOfflineMessages("user-1", "device-1"))
 }

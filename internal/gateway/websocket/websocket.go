@@ -3,7 +3,6 @@ package websocket
 import (
 	"fmt"
 	"net/http"
-	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -51,7 +50,7 @@ func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrp
 		address = append(address, fmt.Sprintf("%v:%v", ip, port))
 	}
 
-	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 2)
+	taskPool, err := ants.NewPoolPreMalloc(1024)
 	if err != nil {
 		return nil, fmt.Errorf("new worker pool -> %w", err)
 	}
@@ -101,16 +100,6 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := r.Header.Get("Authorization")
-	token = strings.Replace(token, "Bearer ", "", 1)
-	token = strings.Replace(token, "Basic ", "", 1)
-
-	user, err := its.authRpc.CheckToken(token)
-	if err != nil {
-		log.Error("Error check auth token", zap.Error(err))
-		return
-	}
-
 	ws := websocket.NewUpgrader()
 
 	ws.OnMessage(its.receiverHandler)
@@ -124,6 +113,16 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
+
+	token := r.Header.Get("Authorization")
+	token = strings.Replace(token, "Bearer ", "", 1)
+	token = strings.Replace(token, "Basic ", "", 1)
+
+	user, err := its.authRpc.CheckToken(token)
+	if err != nil {
+		log.Error("Error check auth token", zap.Error(err))
+		return
+	}
 
 	sess := &session{device: &model.Device{}}
 	sess.server = its
@@ -149,11 +148,7 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	atomic.AddInt64(&its.clientTotal, 1)
 
-	_ = its.workerPool.Submit(func(sess *session) func() {
-		return func() {
-			sess.sendOfflineMessage()
-		}
-	}(sess))
+	sess.sendOfflineMessage()
 
 	log.Debug("device connected successfully", zap.String("userId", sess.device.UserId), zap.String("deviceId", sess.device.DeviceId), zap.String("version", sess.device.DeviceVersion))
 }

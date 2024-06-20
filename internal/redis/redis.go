@@ -9,6 +9,8 @@ import (
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
+
+	"eim/internal/model"
 )
 
 type Config struct {
@@ -19,8 +21,8 @@ type Config struct {
 }
 
 type Manager struct {
-	redisClient  redis.UniversalClient
-	msgIdsBuffer cmap.ConcurrentMap[string, []interface{}]
+	redisClient redis.UniversalClient
+	msgsBuffer  cmap.ConcurrentMap[string, []*model.Message]
 
 	offlineMessageExpire time.Duration
 	offlineDeviceExpire  time.Duration
@@ -46,7 +48,7 @@ func NewManager(cfg Config) (*Manager, error) {
 		redisClient:          redisClient,
 		offlineDeviceExpire:  cfg.OfflineDeviceExpire,
 		offlineMessageExpire: cfg.OfflineMessageExpire,
-		msgIdsBuffer:         cmap.New[[]interface{}](),
+		msgsBuffer:           cmap.New[[]*model.Message](),
 	}
 
 	go manager.checkProcessExit()

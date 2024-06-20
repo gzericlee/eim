@@ -20,7 +20,7 @@ func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
 		&cli.StringSliceFlag{
 			Name:        "eim-endpoints",
-			Value:       cli.NewStringSlice("127.0.0.1:10081", "127.0.0.1:10082", "127.0.0.1:10083", "127.0.0.1:10084", "127.0.0.1:10085", "127.0.0.1:10086", "127.0.0.1:10087", "127.0.0.1:10088", "127.0.0.1:10089", "127.0.0.1:10090"),
+			Value:       cli.NewStringSlice("127.0.0.1:10081"),
 			Usage:       "EIM endpoints",
 			EnvVars:     []string{EimEndpoints},
 			Destination: &config.SystemConfig.Mock.EimEndpoints,

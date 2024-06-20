@@ -1,11 +1,13 @@
 package mq
 
+import "github.com/nats-io/nats.go"
+
 type base interface {
 	printDetails()
 }
 
 type Handler interface {
-	HandleMessage(data []byte) error
+	HandleMessage(msg *nats.Msg) error
 }
 
 type Producer interface {

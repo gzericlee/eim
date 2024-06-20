@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 	"time"
 
@@ -53,14 +52,14 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 		}
 	}
 
-	taskPool, err := ants.NewPoolPreMalloc(runtime.NumCPU() * 2)
+	taskPool, err := ants.NewPoolPreMalloc(1024)
 	if err != nil {
 		return nil, fmt.Errorf("new task pool -> %w", err)
 	}
 
 	consumer := &natsConsumer{conn: conn, jsContext: jsContext, taskPool: taskPool}
 
-	//go consumer.printDetails()
+	go consumer.printDetails()
 
 	return consumer, nil
 }
@@ -69,17 +68,9 @@ func (its *natsConsumer) Subscribe(subj string, queue string, handler Handler) e
 	var doFunc = func(msg *nats.Msg) {
 		err := its.taskPool.Submit(func(msg *nats.Msg) func() {
 			return func() {
-				if err := handler.HandleMessage(msg.Data); err == nil {
-					err = msg.Ack()
-					if err != nil {
-						log.Error("Error ack message", zap.Error(err))
-					}
-				} else {
+				err := handler.HandleMessage(msg)
+				if err != nil {
 					log.Error("Error handle message", zap.Error(err))
-					err = msg.Nak()
-					if err != nil {
-						log.Error("Error nak message", zap.Error(err))
-					}
 				}
 			}
 		}(msg))

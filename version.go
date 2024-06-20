@@ -1,4 +1,4 @@
-package version
+package eim
 
 import (
 	"strings"
@@ -20,7 +20,6 @@ var (
 )
 
 func initLogger() {
-	//初始化日志
 	log.SetConfig(log.Config{
 		ConsoleEnabled: true,
 		ConsoleLevel:   config.SystemConfig.LogLevel,
@@ -38,19 +37,19 @@ func initLogger() {
 
 func Printf() {
 	if Version == "" {
-		Version = "dev"
+		Version = "unknown"
 	}
 	if ServiceName == "" {
 		ServiceName = "EIM-?"
 	}
 	if Branch == "" {
-		Branch = "master"
+		Branch = "unknown"
 	}
 	if Commit == "" {
-		Commit = "dev"
+		Commit = "unknown"
 	}
 	if Date == "" {
-		Date = time.Now().Format("2006-01-02 15:04:05")
+		Date = "unknown"
 	}
 
 	initLogger()

@@ -5,46 +5,52 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"go.uber.org/zap"
+	"github.com/nats-io/nats.go"
 
 	"eim/internal/model"
 	"eim/internal/mq"
-	"eim/internal/redis"
 	storagerpc "eim/internal/storage/rpc"
 	"eim/util/log"
 )
 
 type GroupMessageHandler struct {
-	StorageRpc   *storagerpc.Client
-	RedisManager *redis.Manager
-	Producer     mq.Producer
+	task       *saveTask
+	storageRpc *storagerpc.Client
+	producer   mq.Producer
 }
 
-func (its *GroupMessageHandler) HandleMessage(data []byte) error {
+func NewGroupMessageHandler(storageRpc *storagerpc.Client, producer mq.Producer) *GroupMessageHandler {
+	task := &saveTask{messages: make(chan *nats.Msg, 1000), storageRpc: storageRpc}
+	go task.doWorker()
+	return &GroupMessageHandler{
+		task:       task,
+		storageRpc: storageRpc,
+		producer:   producer,
+	}
+}
+
+func (its *GroupMessageHandler) HandleMessage(m *nats.Msg) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	if data == nil || len(data) == 0 {
-		return nil
+	if m.Data == nil || len(m.Data) == 0 {
+		_ = m.Ack()
+		return fmt.Errorf("message data is nil")
 	}
+
+	its.task.messages <- m
 
 	msg := &model.Message{}
-	err := proto.Unmarshal(data, msg)
+	err := proto.Unmarshal(m.Data, msg)
 	if err != nil {
-		log.Error("Error unmarshal message. Drop it", zap.Error(err))
-		return nil
+		return fmt.Errorf("unmarshal message -> %w", err)
 	}
 
-	err = toGroup(msg, its.StorageRpc, its.Producer)
+	err = toGroup(msg, its.storageRpc, its.producer)
 	if err != nil {
 		return fmt.Errorf("send message to group -> %w", err)
-	}
-
-	err = its.StorageRpc.SaveMessage(msg)
-	if err != nil {
-		return fmt.Errorf("save message -> %w", err)
 	}
 
 	return nil

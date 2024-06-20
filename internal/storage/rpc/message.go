@@ -21,7 +21,7 @@ type Message struct {
 }
 
 type MessageArgs struct {
-	Message *model.Message
+	Messages []*model.Message
 }
 
 type MessageIdsArgs struct {
@@ -39,17 +39,17 @@ type OfflineMessagesCountReply struct {
 	Count int64
 }
 
-type OfflineMessagesReply struct {
+type MessagesReply struct {
 	Messages []*model.Message
 }
 
-func (its *Message) SaveMessage(ctx context.Context, args *MessageArgs, reply *EmptyReply) error {
+func (its *Message) SaveMessages(ctx context.Context, args *MessageArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.database.SaveMessage(args.Message)
+	err := its.database.SaveMessages(args.Messages)
 	if err != nil {
 		return fmt.Errorf("save message -> %w", err)
 	}
@@ -101,7 +101,7 @@ func (its *Message) GetOfflineMessagesCount(ctx context.Context, args *OfflineMe
 	return nil
 }
 
-func (its *Message) GetOfflineMessages(ctx context.Context, args *OfflineMessagesArgs, reply *OfflineMessagesReply) error {
+func (its *Message) GetOfflineMessages(ctx context.Context, args *OfflineMessagesArgs, reply *MessagesReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))

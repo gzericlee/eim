@@ -7,6 +7,7 @@ import (
 
 	"eim/internal/database"
 	"eim/internal/model"
+	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/cache/notify"
 	"eim/util/log"
@@ -35,6 +36,7 @@ type DeviceReply struct {
 
 type Device struct {
 	storageCache *cache.Cache
+	redisManager *redis.Manager
 	database     database.IDatabase
 }
 
@@ -44,7 +46,7 @@ func (its *Device) SaveDevice(ctx context.Context, args *SaveDeviceArgs, reply *
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.database.SaveDevice(args.Device)
+	err := its.redisManager.SaveDevice(args.Device)
 	if err != nil {
 		return fmt.Errorf("save device -> %w", err)
 	}
@@ -72,7 +74,7 @@ func (its *Device) GetDevices(ctx context.Context, args *GetDevicesArgs, reply *
 	}
 
 	result, err, _ := group.Do(key, func() (interface{}, error) {
-		devices, err := its.database.GetDevices(args.UserId)
+		devices, err := its.redisManager.GetDevices(args.UserId)
 		if err != nil {
 			return nil, fmt.Errorf("get user devices -> %w", err)
 		}

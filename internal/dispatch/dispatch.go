@@ -55,7 +55,7 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.Produ
 		switch device.State {
 		case model.OnlineState:
 			{
-				err = producer.Publish(fmt.Sprintf(mq.MessageSendSubject, strings.Replace(device.GatewayIp, ".", "-", -1)), body)
+				err = producer.Publish(fmt.Sprintf(mq.SendMessageSubject, strings.Replace(device.GatewayIp, ".", "-", -1)), body)
 				if err != nil {
 					return fmt.Errorf("publish message -> %w", err)
 				}

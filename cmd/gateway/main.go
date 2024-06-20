@@ -11,11 +11,11 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
+	"eim"
 	"eim/internal/config"
 	"eim/internal/gateway"
 	"eim/internal/gateway/websocket"
 	"eim/internal/mq"
-	"eim/internal/version"
 	"eim/pkg/pprof"
 	"eim/util/log"
 )
@@ -34,7 +34,7 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		version.Printf()
+		eim.Printf()
 
 		//开启PProf服务
 		pprof.EnablePProf()
@@ -44,6 +44,7 @@ func newCliApp() *cli.App {
 		var server *websocket.Server
 		for {
 			server, err = gateway.StartWebsocketServer(gateway.Config{
+				//Ip:            config.SystemConfig.LocalIp,
 				Ports:         config.SystemConfig.GatewaySvr.WebSocketPorts.Value(),
 				MqEndpoints:   config.SystemConfig.Mq.Endpoints.Value(),
 				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
@@ -63,7 +64,7 @@ func newCliApp() *cli.App {
 				goto ERROR
 			}
 
-			err = consumer.Subscribe(fmt.Sprintf(mq.MessageSendSubject, strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), "", &websocket.SendHandler{
+			err = consumer.Subscribe(fmt.Sprintf(mq.SendMessageSubject, strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), "", &websocket.SendHandler{
 				Server: server,
 			})
 			if err != nil {
@@ -80,7 +81,7 @@ func newCliApp() *cli.App {
 
 		log.Info("New mq consumers successfully")
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 
 		select {}
 
@@ -92,7 +93,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", eim.ServiceName, err)
 		os.Exit(1)
 	}
 }

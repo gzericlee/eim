@@ -32,7 +32,8 @@ type IDatabase interface {
 	SaveUser(user *model.User) error
 	GetUser(userId, tenantId string) (*model.User, error)
 
-	SaveMessage(msg *model.Message) error
+	SaveMessage(message *model.Message) error
+	SaveMessages(messages []*model.Message) error
 	GetMessagesByIds(msgIds []int64) ([]*model.Message, error)
 
 	GetSegment(bizId string) (*model.Segment, error)

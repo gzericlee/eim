@@ -7,6 +7,7 @@ import (
 
 	"eim/internal/database"
 	"eim/internal/model"
+	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/cache/notify"
 	"eim/util/log"
@@ -22,6 +23,7 @@ type UserReply struct {
 
 type User struct {
 	storageCache *cache.Cache
+	redisManager *redis.Manager
 	database     database.IDatabase
 }
 
@@ -31,7 +33,7 @@ func (its *User) SaveUser(ctx context.Context, args *UserArgs, reply *EmptyReply
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.database.SaveUser(args.User)
+	err := its.redisManager.SaveUser(args.User)
 	if err != nil {
 		return fmt.Errorf("save user -> %w", err)
 	}
@@ -59,7 +61,7 @@ func (its *User) GetUser(ctx context.Context, args *UserArgs, reply *UserReply) 
 	}
 
 	result, err, _ := group.Do(key, func() (interface{}, error) {
-		user, err := its.database.GetUser(args.User.LoginId, args.User.TenantId)
+		user, err := its.redisManager.GetUser(args.User.LoginId, args.User.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get user -> %w", err)
 		}

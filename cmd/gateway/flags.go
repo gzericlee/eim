@@ -28,7 +28,7 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.StringSliceFlag{
 			Name:        "websocket-ports",
-			Value:       cli.NewStringSlice("10081", "10082", "10083", "10084", "10085", "10086", "10087", "10088", "10089", "10090"),
+			Value:       cli.NewStringSlice("10081"),
 			Usage:       "Websocket ports",
 			EnvVars:     []string{WebSocketPorts},
 			Destination: &config.SystemConfig.GatewaySvr.WebSocketPorts,

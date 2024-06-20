@@ -66,31 +66,26 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 
 			msg.SendTime = time.Now().UnixNano()
 
-			err = its.workerPool.Submit(func(sess *session, msg *model.Message) func() {
-				return func() {
-					body, err := proto.Marshal(msg)
-					if err != nil {
-						log.Error("Error marshal message", zap.Error(err))
-						atomic.AddInt64(&its.errorTotal, 1)
-						return
-					}
-
-					err = its.producer.Publish(mq.MessageDispatchSubject, body)
-					if err != nil {
-						log.Error("Error publish message", zap.Error(err))
-						atomic.AddInt64(&its.errorTotal, 1)
-						return
-					}
-
-					sess.send(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10)))
-				}
-			}(sess, msg))
-
+			body, err := proto.Marshal(msg)
 			if err != nil {
-				log.Error("Error submitting task", zap.Error(err))
+				log.Error("Error marshal message", zap.Error(err))
 				atomic.AddInt64(&its.errorTotal, 1)
 				return
 			}
+
+			switch msg.ToType {
+			case model.ToUser:
+				err = its.producer.Publish(mq.UserMessageSubject, body)
+			case model.ToGroup:
+				err = its.producer.Publish(mq.GroupMessageSubject, body)
+			}
+			if err != nil {
+				log.Error("Error publish message", zap.Error(err))
+				atomic.AddInt64(&its.errorTotal, 1)
+				return
+			}
+
+			sess.send(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10)))
 
 			atomic.AddInt64(&its.receivedMsgTotal, 1)
 		}

@@ -11,9 +11,9 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
+	"eim"
 	"eim/internal/config"
 	"eim/internal/mock"
-	"eim/internal/version"
 	"eim/util/log"
 )
 
@@ -31,7 +31,7 @@ func newCliApp() *cli.App {
 	app.Action = func(c *cli.Context) error {
 
 		//打印版本信息
-		version.Printf()
+		eim.Printf()
 
 		log.Info("EIM GatewaySvr", zap.Strings("endpoints", config.SystemConfig.Mock.EimEndpoints.Value()))
 		log.Info("Mock info", zap.Int("client_number", config.SystemConfig.Mock.ClientCount), zap.Int("send_number", config.SystemConfig.Mock.MessageCount))
@@ -42,7 +42,7 @@ func newCliApp() *cli.App {
 		}
 		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
 
-		log.Info(fmt.Sprintf("%v service started successfully", version.ServiceName))
+		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 
 		mock.Do()
 
@@ -55,7 +55,7 @@ func newCliApp() *cli.App {
 func main() {
 	app := newCliApp()
 	if err := app.Run(os.Args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", version.ServiceName, err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v server start error: %v\n", eim.ServiceName, err)
 		os.Exit(1)
 	}
 }

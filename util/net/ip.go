@@ -1,20 +1,39 @@
 package net
 
 import (
+	"fmt"
 	"net"
+	"os"
+	"strings"
 )
 
-func GetLocalIPv4() (string, error) {
-	addrs, err := net.InterfaceAddrs()
+func GetInternalIP() (string, error) {
+	inters, err := net.Interfaces()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get net interfaces -> %w", err)
 	}
-	for _, addr := range addrs {
-		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				return ipNet.IP.String(), nil
+	for _, inter := range inters {
+		if inter.Flags&net.FlagUp != 0 && !strings.HasPrefix(inter.Name, "lo") {
+			addrs, err := inter.Addrs()
+			if err != nil {
+				continue
+			}
+			for _, addr := range addrs {
+				if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+					if ipnet.IP.To4() != nil {
+						return ipnet.IP.String(), nil
+					}
+				}
 			}
 		}
 	}
-	return "", nil
+	return "", fmt.Errorf("no local ipv4 address found")
+}
+
+func GetPodIP() (string, error) {
+	podIp := os.Getenv("POD_IP")
+	if podIp == "" {
+		return "", fmt.Errorf("env POD_IP is empty")
+	}
+	return podIp, nil
 }

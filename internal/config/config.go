@@ -11,7 +11,7 @@ import (
 var SystemConfig *systemConfig
 
 func init() {
-	ip, err := net.GetLocalIPv4()
+	ip, err := net.GetInternalIP()
 	if err != nil {
 		log.Panic("get local ip error -> %v", zap.Error(err))
 	}

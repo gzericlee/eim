@@ -57,12 +57,17 @@ func newNatsProducer(endpoints []string) (Producer, error) {
 
 	producer := &natsProducer{conn: conn, jsContext: jsContext}
 
-	//go producer.printDetails()
+	go producer.printDetails()
 
 	return producer, nil
 }
 
 func (its *natsProducer) Publish(subj string, body []byte) error {
+	now := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
+	}()
+
 	var err error
 
 	ack, err := its.jsContext.Publish(subj, body)

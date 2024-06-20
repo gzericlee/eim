@@ -47,7 +47,7 @@ func BenchmarkPublish(b *testing.B) {
 			SendTime:   time.Now().UnixMilli(),
 		}
 		body, _ := proto.Marshal(msg)
-		err := producer.Publish(fmt.Sprintf(MessageSendSubject, "192_168_3_58"), body)
+		err := producer.Publish(fmt.Sprintf(SendMessageSubject, "192_168_3_58"), body)
 		if err != nil {
 			b.Log(err)
 			return
@@ -68,7 +68,7 @@ func (h *testHandler) HandleMessage(data []byte) error {
 }
 
 func TestSubscribe(t *testing.T) {
-	err := consumer.Subscribe(fmt.Sprintf(MessageSendSubject, "192_168_3_58"), "192_168_3_58", &testHandler{})
+	err := consumer.Subscribe(fmt.Sprintf(SendMessageSubject, "192_168_3_58"), "192_168_3_58", &testHandler{})
 	if err != nil {
 		return
 	}

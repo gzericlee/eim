@@ -5,10 +5,8 @@ const (
 )
 
 const (
-	MessageDispatchSubject string = "message.dispatch"
-	MessageSendSubject     string = "message.send-%s"
-)
+	UserMessageSubject  string = "message.user"
+	GroupMessageSubject string = "message.group"
 
-const (
-	DispatchQueue string = "dispatch"
+	SendMessageSubject string = "message.send-%s"
 )
