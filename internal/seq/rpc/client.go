@@ -26,7 +26,7 @@ func (its *Client) IncrementId(bizId string) (int64, error) {
 	reply := &Reply{}
 	err := its.pool.Get().Call(context.Background(), "IncrementId", &Request{BizId: bizId}, reply)
 	if err != nil {
-		return 0, fmt.Errorf("call increment id -> %w", err)
+		return 0, fmt.Errorf("call IncrementId -> %w", err)
 	}
 	return reply.Number, nil
 }
@@ -35,7 +35,7 @@ func (its *Client) SnowflakeId() (int64, error) {
 	reply := &Reply{}
 	err := its.pool.Get().Call(context.Background(), "SnowflakeId", &Request{}, reply)
 	if err != nil {
-		return 0, fmt.Errorf("call snowflake id -> %w", err)
+		return 0, fmt.Errorf("call SnowflakeId -> %w", err)
 	}
 	return reply.Number, nil
 }

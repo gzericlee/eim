@@ -1,0 +1,21 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+import "google/protobuf/any.proto";
+
+message Biz {
+  enum BizType {
+    UNKNOWN = 0;
+    USER = 1;
+    GROUP = 2;
+    SERVICE = 3;
+  }
+
+  string biz_id = 1;
+  BizType biz_type = 2;
+  string biz_name = 3;
+  string tenant_id = 4;
+  string tenant_name = 5;
+  map<string, google.protobuf.Any> attributes = 6;
+}

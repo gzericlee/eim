@@ -3,10 +3,7 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
-
-	"go.uber.org/zap"
 
 	"eim/internal/model"
 	"eim/internal/redis"
@@ -20,12 +17,14 @@ type Message struct {
 	redisManager *redis.Manager
 }
 
-type MessageArgs struct {
-	Messages []*model.Message
+type MessageIdsArgs struct {
+	MessageIds []string
+	UserId     string
+	DeviceId   string
 }
 
-type MessageIdsArgs struct {
-	MsgIds   []interface{}
+type MessagesArgs struct {
+	Messages []*model.Message
 	UserId   string
 	DeviceId string
 }
@@ -43,7 +42,7 @@ type MessagesReply struct {
 	Messages []*model.Message
 }
 
-func (its *Message) SaveMessages(ctx context.Context, args *MessageArgs, reply *EmptyReply) error {
+func (its *Message) SaveMessages(ctx context.Context, args *MessagesArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
@@ -51,35 +50,35 @@ func (its *Message) SaveMessages(ctx context.Context, args *MessageArgs, reply *
 
 	err := its.database.SaveMessages(args.Messages)
 	if err != nil {
-		return fmt.Errorf("save message -> %w", err)
+		return fmt.Errorf("save messages -> %w", err)
 	}
 
 	return nil
 }
 
-func (its *Message) SaveOfflineMessageIds(ctx context.Context, args *MessageIdsArgs, reply *EmptyReply) error {
+func (its *Message) SaveOfflineMessages(ctx context.Context, args *MessagesArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.redisManager.SaveOfflineMessageIds(args.MsgIds, args.UserId, args.DeviceId)
+	err := its.redisManager.SaveOfflineMessages(args.Messages, args.UserId, args.DeviceId)
 	if err != nil {
-		return fmt.Errorf("save offline message ids -> %w", err)
+		return fmt.Errorf("save offline messages -> %w", err)
 	}
 
 	return nil
 }
 
-func (its *Message) RemoveOfflineMessageIds(ctx context.Context, args *MessageIdsArgs, reply *EmptyReply) error {
+func (its *Message) RemoveOfflineMessages(ctx context.Context, args *MessageIdsArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.redisManager.RemoveOfflineMessageIds(args.MsgIds, args.UserId, args.DeviceId)
+	err := its.redisManager.RemoveOfflineMessages(args.MessageIds, args.UserId, args.DeviceId)
 	if err != nil {
-		return fmt.Errorf("remove offline message ids -> %w", err)
+		return fmt.Errorf("remove offline messages -> %w", err)
 	}
 
 	return nil
@@ -112,28 +111,7 @@ func (its *Message) GetOfflineMessages(ctx context.Context, args *OfflineMessage
 		return fmt.Errorf("get offline messages -> %w", err)
 	}
 
-	var allMsgIds []int64
-	for _, msgIds := range result {
-		for _, msgId := range msgIds {
-			intId, err := strconv.ParseInt(msgId, 10, 64)
-			if err != nil {
-				log.Error("Error converting message id to int", zap.String("msgId", msgId), zap.Error(err))
-				continue
-			}
-			allMsgIds = append(allMsgIds, intId)
-		}
-	}
-
-	if len(allMsgIds) == 0 {
-		return nil
-	}
-
-	messages, err := its.database.GetMessagesByIds(allMsgIds)
-	if err != nil {
-		return fmt.Errorf("get messages by ids -> %w", err)
-	}
-
-	reply.Messages = messages
+	reply.Messages = result
 
 	return nil
 }

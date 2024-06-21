@@ -13,33 +13,33 @@ import (
 	"eim/util/log"
 )
 
-type UserArgs struct {
-	User *model.User
+type BizArgs struct {
+	Biz *model.Biz
 }
 
-type UserReply struct {
-	User *model.User
+type BizReply struct {
+	Biz *model.Biz
 }
 
-type User struct {
+type Biz struct {
 	storageCache *cache.Cache
 	redisManager *redis.Manager
 	database     database.IDatabase
 }
 
-func (its *User) SaveUser(ctx context.Context, args *UserArgs, reply *EmptyReply) error {
+func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.redisManager.SaveUser(args.User)
+	err := its.redisManager.SaveBiz(args.Biz)
 	if err != nil {
 		return fmt.Errorf("save user -> %w", err)
 	}
 
-	key := fmt.Sprintf("%s:%s:%s", userCachePool, args.User.UserId, args.User.TenantId)
-	err = notify.Del(userCachePool, key)
+	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
+	err = notify.Del(bizCachePool, key)
 	if err != nil {
 		return fmt.Errorf("del user(%s) cache -> %w", key, err)
 	}
@@ -47,21 +47,21 @@ func (its *User) SaveUser(ctx context.Context, args *UserArgs, reply *EmptyReply
 	return nil
 }
 
-func (its *User) GetUser(ctx context.Context, args *UserArgs, reply *UserReply) error {
+func (its *Biz) GetBiz(ctx context.Context, args *BizArgs, reply *BizReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	key := fmt.Sprintf("%s:%s:%s", userCachePool, args.User.LoginId, args.User.TenantId)
+	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
 
 	if cacheItem, exist := its.storageCache.Get(key); exist {
-		reply.User = cacheItem.(*model.User)
+		reply.Biz = cacheItem.(*model.Biz)
 		return nil
 	}
 
 	result, err, _ := group.Do(key, func() (interface{}, error) {
-		user, err := its.redisManager.GetUser(args.User.LoginId, args.User.TenantId)
+		user, err := its.redisManager.GetBiz(args.Biz.BizId, args.Biz.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get user -> %w", err)
 		}
@@ -71,10 +71,8 @@ func (its *User) GetUser(ctx context.Context, args *UserArgs, reply *UserReply) 
 		return fmt.Errorf("group do -> %w", err)
 	}
 
-	user := result.(*model.User)
-	its.storageCache.Put(key, user)
-
-	reply.User = user
+	reply.Biz = result.(*model.Biz)
+	its.storageCache.Put(key, reply.Biz)
 
 	return nil
 }

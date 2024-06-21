@@ -13,7 +13,7 @@ import (
 )
 
 type session struct {
-	user   *model.User
+	user   *model.Biz
 	device *model.Device
 	conn   *websocket.Conn
 	server *Server
@@ -30,7 +30,7 @@ func (its *session) send(cmd int, body []byte) {
 }
 
 func (its *session) sendOfflineMessage() {
-	messages, err := its.server.storageRpc.GetOfflineMessages(its.user.UserId, its.device.DeviceId)
+	messages, err := its.server.storageRpc.GetOfflineMessages(its.user.BizId, its.device.DeviceId)
 	if err != nil {
 		log.Error("Error get offline messages", zap.String("userId", its.device.UserId), zap.String("deviceId", its.device.DeviceId), zap.Error(err))
 		return

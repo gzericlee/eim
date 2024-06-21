@@ -12,16 +12,11 @@ import (
 	"eim/util/log"
 )
 
-type AppendBizMemberArgs struct {
+type BizMemberArgs struct {
 	BizMember *model.BizMember
 }
 
-type GetBizMembersArgs struct {
-	BizType string
-	BizId   string
-}
-
-type GetBizMembersReply struct {
+type BizMembersReply struct {
 	Members []string
 }
 
@@ -30,18 +25,18 @@ type BizMember struct {
 	redisManager *redis.Manager
 }
 
-func (its *BizMember) AppendBizMember(ctx context.Context, args *AppendBizMemberArgs, reply *EmptyReply) error {
+func (its *BizMember) AddBizMember(ctx context.Context, args *BizMemberArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	err := its.redisManager.AppendBizMember(args.BizMember)
+	err := its.redisManager.AddBizMember(args.BizMember)
 	if err != nil {
 		return fmt.Errorf("save user -> %w", err)
 	}
 
-	key := fmt.Sprintf("%s:%s:%s", userCachePool, args.BizMember.BizType, args.BizMember.BizId)
+	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.TenantId)
 	err = notify.Del(bizMemberCachePool, key)
 	if err != nil {
 		return fmt.Errorf("del biz_members(%s) cache -> %w", key, err)
@@ -50,13 +45,13 @@ func (its *BizMember) AppendBizMember(ctx context.Context, args *AppendBizMember
 	return nil
 }
 
-func (its *BizMember) GetBizMembers(ctx context.Context, args *GetBizMembersArgs, reply *GetBizMembersReply) error {
+func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, reply *BizMembersReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	key := fmt.Sprintf("%s:%s:%s", bizMemberCachePool, args.BizType, args.BizId)
+	key := fmt.Sprintf(cacheKeyFormat, bizMemberCachePool, args.BizMember.BizId, args.BizMember.TenantId)
 
 	if cacheItem, exist := its.storageCache.Get(key); exist {
 		reply.Members = cacheItem.([]string)
@@ -64,11 +59,11 @@ func (its *BizMember) GetBizMembers(ctx context.Context, args *GetBizMembersArgs
 	}
 
 	result, err, _ := group.Do(key, func() (interface{}, error) {
-		user, err := its.redisManager.GetBizMembers(args.BizType, args.BizId)
+		members, err := its.redisManager.GetBizMembers(args.BizMember.BizId, args.BizMember.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get biz_members -> %w", err)
 		}
-		return user, nil
+		return members, nil
 	})
 	if err != nil {
 		return fmt.Errorf("group do -> %w", err)

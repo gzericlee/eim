@@ -4,6 +4,6 @@ option go_package = "../model";
 
 message BizMember {
   string biz_id = 1;
-  string biz_type = 2;
-  string user_id = 3;
+  string member_id = 2;
+  string tenant_id = 3;
 }

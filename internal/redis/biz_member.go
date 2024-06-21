@@ -7,10 +7,14 @@ import (
 	"eim/internal/model"
 )
 
-func (its *Manager) AppendBizMember(member *model.BizMember) error {
-	key := fmt.Sprintf("%s:%s:members", member.BizType, member.BizId)
+const (
+	bizMemberKeyFormat = "biz:%s:%s:members"
+)
 
-	err := its.redisClient.SAdd(context.Background(), key, member.UserId).Err()
+func (its *Manager) AddBizMember(member *model.BizMember) error {
+	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.TenantId)
+
+	err := its.redisClient.SAdd(context.Background(), key, member.MemberId).Err()
 	if err != nil {
 		return fmt.Errorf("redis sadd(%s) -> %w", key, err)
 	}
@@ -18,8 +22,19 @@ func (its *Manager) AppendBizMember(member *model.BizMember) error {
 	return nil
 }
 
-func (its *Manager) GetBizMembers(bizType, bizId string) ([]string, error) {
-	key := fmt.Sprintf("%s:%s:members", bizType, bizId)
+func (its *Manager) RemoveBizMember(member *model.BizMember) error {
+	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.TenantId)
+
+	err := its.redisClient.SRem(context.Background(), key, member.MemberId).Err()
+	if err != nil {
+		return fmt.Errorf("redis srem(%s) -> %w", key, err)
+	}
+
+	return nil
+}
+
+func (its *Manager) GetBizMembers(bizId, tenantId string) ([]string, error) {
+	key := fmt.Sprintf(bizMemberKeyFormat, bizId, tenantId)
 
 	result, err := its.redisClient.SMembers(context.Background(), key).Result()
 	if err != nil {

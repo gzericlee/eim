@@ -13,17 +13,8 @@ import (
 	"eim/util/log"
 )
 
-type SaveDeviceArgs struct {
+type DeviceArgs struct {
 	Device *model.Device
-}
-
-type GetDevicesArgs struct {
-	UserId string
-}
-
-type GetDeviceArgs struct {
-	UserId   string
-	DeviceId string
 }
 
 type DevicesReply struct {
@@ -40,7 +31,7 @@ type Device struct {
 	database     database.IDatabase
 }
 
-func (its *Device) SaveDevice(ctx context.Context, args *SaveDeviceArgs, reply *DeviceReply) error {
+func (its *Device) SaveDevice(ctx context.Context, args *DeviceArgs, reply *DeviceReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
@@ -51,7 +42,7 @@ func (its *Device) SaveDevice(ctx context.Context, args *SaveDeviceArgs, reply *
 		return fmt.Errorf("save device -> %w", err)
 	}
 
-	key := fmt.Sprintf("%s:%s", deviceCachePool, args.Device.DeviceId)
+	key := fmt.Sprintf(cacheKeyFormat, deviceCachePool, args.Device.UserId, "*")
 	err = notify.Del(deviceCachePool, key)
 	if err != nil {
 		return fmt.Errorf("del device(%s) cache -> %w", key, err)
@@ -60,13 +51,13 @@ func (its *Device) SaveDevice(ctx context.Context, args *SaveDeviceArgs, reply *
 	return nil
 }
 
-func (its *Device) GetDevices(ctx context.Context, args *GetDevicesArgs, reply *DevicesReply) error {
+func (its *Device) GetDevices(ctx context.Context, args *DeviceArgs, reply *DevicesReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	key := fmt.Sprintf("%s:%s", deviceCachePool, args.UserId)
+	key := fmt.Sprintf(cacheKeyFormat, deviceCachePool, args.Device.UserId, "*")
 
 	if cacheItem, exist := its.storageCache.Get(key); exist {
 		reply.Devices = cacheItem.([]*model.Device)
@@ -74,7 +65,7 @@ func (its *Device) GetDevices(ctx context.Context, args *GetDevicesArgs, reply *
 	}
 
 	result, err, _ := group.Do(key, func() (interface{}, error) {
-		devices, err := its.redisManager.GetDevices(args.UserId)
+		devices, err := its.redisManager.GetDevices(args.Device.UserId)
 		if err != nil {
 			return nil, fmt.Errorf("get user devices -> %w", err)
 		}
@@ -92,7 +83,7 @@ func (its *Device) GetDevices(ctx context.Context, args *GetDevicesArgs, reply *
 	return nil
 }
 
-func (its *Device) GetDevice(ctx context.Context, args *GetDeviceArgs, reply *DeviceReply) error {
+func (its *Device) GetDevice(ctx context.Context, args *DeviceArgs, reply *DeviceReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
@@ -100,13 +91,13 @@ func (its *Device) GetDevice(ctx context.Context, args *GetDeviceArgs, reply *De
 
 	result := &DevicesReply{}
 
-	err := its.GetDevices(ctx, &GetDevicesArgs{UserId: args.UserId}, result)
+	err := its.GetDevices(ctx, args, result)
 	if err != nil {
 		return fmt.Errorf("get user devices -> %w", err)
 	}
 
 	for _, device := range result.Devices {
-		if device.DeviceId == args.DeviceId {
+		if device.DeviceId == args.Device.DeviceId {
 			reply.Device = device
 			return nil
 		}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"eim/internal/metric"
 	"eim/internal/model"
@@ -47,49 +48,44 @@ func TestManager_GetDevices(t *testing.T) {
 }
 
 func TestManager_SaveUser(t *testing.T) {
-	for i := 1; i <= 100000; i++ {
-		t.Log(manager.SaveUser(&model.User{
-			UserId:     fmt.Sprintf("user-%d", i),
-			LoginId:    fmt.Sprintf("user-%d", i),
-			UserName:   fmt.Sprintf("用户-%d", i),
-			Password:   "pass@word1",
+	for i := 1; i <= 1000000; i++ {
+		t.Log(manager.SaveBiz(&model.Biz{
+			BizId:      fmt.Sprintf("user-%d", i),
+			BizType:    model.Biz_USER,
+			BizName:    fmt.Sprintf("用户-%d", i),
 			TenantId:   "bingo",
 			TenantName: "品高软件",
+			Attributes: map[string]*anypb.Any{"password": {Value: []byte("pass@word1")}},
 		}))
 	}
 }
 
 func BenchmarkManager_SaveUser(b *testing.B) {
-	b.N = 100000
+	b.N = 1000000
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_ = manager.SaveUser(&model.User{
-				UserId:     fmt.Sprintf("user-%d", b.N),
-				LoginId:    fmt.Sprintf("user-%d", b.N),
-				UserName:   fmt.Sprintf("用户-%d", b.N),
-				Password:   "pass@word1",
+			_ = manager.SaveBiz(&model.Biz{
+				BizId:      fmt.Sprintf("user-%d", b.N),
+				BizName:    fmt.Sprintf("用户-%d", b.N),
 				TenantId:   "bingo",
 				TenantName: "品高软件",
+				BizType:    model.Biz_USER,
+				Attributes: map[string]*anypb.Any{"password": {Value: []byte("pass@word1")}},
 			})
 		}
 	})
 }
 
 func TestManager_GetUser(t *testing.T) {
-	user, err := manager.GetUser("user-1", "bingo")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(user.UserId, user.LoginId, user.UserName)
+	t.Log(manager.GetBiz("user-1", "bingo"))
 }
 
 func TestManager_AppendBizMember(t *testing.T) {
 	for i := 1; i <= 1000; i++ {
-		t.Log(manager.AppendBizMember(&model.BizMember{
-			BizId:   "group-1",
-			BizType: "group",
-			UserId:  fmt.Sprintf("user-%d", i),
+		t.Log(manager.AddBizMember(&model.BizMember{
+			BizId:    "group-1",
+			MemberId: fmt.Sprintf("user-%d", i),
+			TenantId: "bingo",
 		}))
 	}
 }

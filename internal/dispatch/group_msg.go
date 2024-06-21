@@ -14,16 +14,12 @@ import (
 )
 
 type GroupMessageHandler struct {
-	task       *saveTask
 	storageRpc *storagerpc.Client
 	producer   mq.Producer
 }
 
 func NewGroupMessageHandler(storageRpc *storagerpc.Client, producer mq.Producer) *GroupMessageHandler {
-	task := &saveTask{messages: make(chan *nats.Msg, 1000), storageRpc: storageRpc}
-	go task.doWorker()
 	return &GroupMessageHandler{
-		task:       task,
 		storageRpc: storageRpc,
 		producer:   producer,
 	}
@@ -36,11 +32,8 @@ func (its *GroupMessageHandler) HandleMessage(m *nats.Msg) error {
 	}()
 
 	if m.Data == nil || len(m.Data) == 0 {
-		_ = m.Ack()
-		return fmt.Errorf("message data is nil")
+		return m.Ack()
 	}
-
-	its.task.messages <- m
 
 	msg := &model.Message{}
 	err := proto.Unmarshal(m.Data, msg)
@@ -53,5 +46,5 @@ func (its *GroupMessageHandler) HandleMessage(m *nats.Msg) error {
 		return fmt.Errorf("send message to group -> %w", err)
 	}
 
-	return nil
+	return m.Ack()
 }

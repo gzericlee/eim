@@ -25,10 +25,12 @@ const (
 	gatewayServicePath   = "gateway"
 	segmentServicePath   = "segment"
 
-	userCachePool      = "users"
+	bizCachePool       = "bizs"
 	gatewayCachePool   = "gateways"
 	deviceCachePool    = "devices"
 	bizMemberCachePool = "biz_members"
+
+	cacheKeyFormat = "%s:%s:%s"
 )
 
 var (
@@ -51,6 +53,8 @@ type Config struct {
 
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
+
+	svr.AsyncWrite = true
 
 	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
 	if err != nil {
@@ -104,15 +108,15 @@ func StartServer(cfg Config) error {
 			}
 		case userServicePath:
 			{
-				err = notify.Bind(userCachePool, storageCache)
+				err = notify.Bind(bizCachePool, storageCache)
 				if err != nil {
 					return fmt.Errorf("notify bind(user) -> %w", err)
 				}
-				err = stats.Bind(userCachePool, storageCache)
+				err = stats.Bind(bizCachePool, storageCache)
 				if err != nil {
 					return fmt.Errorf("stats bind(user) -> %w", err)
 				}
-				rcvr = &User{storageCache: storageCache, database: db, redisManager: redisManager}
+				rcvr = &Biz{storageCache: storageCache, database: db, redisManager: redisManager}
 			}
 		case bizMemberServicePath:
 			{

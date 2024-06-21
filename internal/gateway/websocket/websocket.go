@@ -126,7 +126,7 @@ func (its *Server) connectHandler(w http.ResponseWriter, r *http.Request) {
 
 	sess := &session{device: &model.Device{}}
 	sess.server = its
-	sess.device.UserId = user.UserId
+	sess.device.UserId = user.BizId
 	sess.device.OnlineAt = timestamppb.Now()
 	sess.device.DeviceId = r.Header.Get("DeviceId")
 	sess.device.DeviceVersion = r.Header.Get("DeviceVersion")

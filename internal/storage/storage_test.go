@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"eim/internal/model"
 	"eim/internal/storage/rpc"
@@ -36,7 +37,7 @@ func TestMessage_Save(t *testing.T) {
 			ToDevice:   uuid.New().String(),
 			SendTime:   0,
 		}
-		err := rpcClient.SaveMessage(msg)
+		err := rpcClient.SaveMessages([]*model.Message{msg})
 		if err != nil {
 			t.Log(err)
 		} else {
@@ -71,17 +72,17 @@ func TestDevice_Save(t *testing.T) {
 
 func TestSaveUser(t *testing.T) {
 	for i := 1; i <= 10; i++ {
-		t.Log(rpcClient.SaveUser(&model.User{
-			UserId:     fmt.Sprintf("user-%d", i),
-			LoginId:    fmt.Sprintf("user-%d", i),
-			UserName:   fmt.Sprintf("用户-%d", i),
-			Password:   "pass@word1",
+		t.Log(rpcClient.SaveBiz(&model.Biz{
+			BizId:      fmt.Sprintf("user-%d", i),
+			BizType:    model.Biz_USER,
+			BizName:    fmt.Sprintf("用户-%d", i),
 			TenantId:   "bingo",
 			TenantName: "品高软件",
+			Attributes: map[string]*anypb.Any{},
 		}))
 	}
 	for i := 1; i <= 10; i++ {
-		user, err := rpcClient.GetUser(fmt.Sprintf("user-%d", i), "bingo")
+		user, err := rpcClient.GetBiz(fmt.Sprintf("user-%d", i), "bingo")
 		if err != nil {
 			t.Log(err)
 		} else {
@@ -92,7 +93,7 @@ func TestSaveUser(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	for i := 1; i <= 10; i++ {
-		user, err := rpcClient.GetUser(fmt.Sprintf("user-%d", i), "bingo")
+		user, err := rpcClient.GetBiz(fmt.Sprintf("user-%d", i), "bingo")
 		if err != nil {
 			t.Log(err)
 		} else {

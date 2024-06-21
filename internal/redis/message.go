@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	batchSize = 100
+	batchSize                = 100
+	offlineMessagesKeyFormat = "offline:messages:%s:%s"
 )
 
 func (its *Manager) checkProcessExit() {
@@ -38,7 +39,7 @@ func (its *Manager) checkProcessExit() {
 }
 
 func (its *Manager) SaveOfflineMessages(msgs []*model.Message, userId, deviceId string) error {
-	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
+	key := fmt.Sprintf(offlineMessagesKeyFormat, userId, deviceId)
 
 	its.msgsBuffer.Upsert(key, msgs, func(exist bool, valueInMap, newValue []*model.Message) []*model.Message {
 		if !exist {
@@ -57,7 +58,7 @@ func (its *Manager) SaveOfflineMessages(msgs []*model.Message, userId, deviceId 
 }
 
 func (its *Manager) RemoveOfflineMessages(msgIds []string, userId, deviceId string) error {
-	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
+	key := fmt.Sprintf(offlineMessagesKeyFormat, userId, deviceId)
 
 	err := its.flushMessages(key)
 	if err != nil {
@@ -73,7 +74,7 @@ func (its *Manager) RemoveOfflineMessages(msgIds []string, userId, deviceId stri
 }
 
 func (its *Manager) GetOfflineMessagesCount(userId, deviceId string) (int64, error) {
-	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
+	key := fmt.Sprintf(offlineMessagesKeyFormat, userId, deviceId)
 
 	err := its.flushMessages(key)
 	if err != nil {
@@ -89,7 +90,7 @@ func (its *Manager) GetOfflineMessagesCount(userId, deviceId string) (int64, err
 }
 
 func (its *Manager) GetOfflineMessages(userId, deviceId string) ([]*model.Message, error) {
-	key := fmt.Sprintf("%s:offline:messages:%s", userId, deviceId)
+	key := fmt.Sprintf(offlineMessagesKeyFormat, userId, deviceId)
 
 	err := its.flushMessages(key)
 	if err != nil {

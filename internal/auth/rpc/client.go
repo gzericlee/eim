@@ -24,11 +24,11 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 	return &Client{pool: pool}, nil
 }
 
-func (its *Client) CheckToken(token string) (*model.User, error) {
+func (its *Client) CheckToken(token string) (*model.Biz, error) {
 	reply := &Reply{}
 	err := its.pool.Get().Call(context.Background(), "CheckToken", &Request{Token: token}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call check token -> %w", err)
+		return nil, fmt.Errorf("call CheckToken -> %w", err)
 	}
-	return reply.User, nil
+	return reply.Biz, nil
 }

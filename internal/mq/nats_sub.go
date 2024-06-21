@@ -59,7 +59,7 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 
 	consumer := &natsConsumer{conn: conn, jsContext: jsContext, taskPool: taskPool}
 
-	go consumer.printDetails()
+	//go consumer.printDetails()
 
 	return consumer, nil
 }

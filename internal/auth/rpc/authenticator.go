@@ -2,7 +2,7 @@ package rpc
 
 import (
 	"eim/internal/auth/pkg/basic"
-	"eim/internal/auth/pkg/sso"
+	"eim/internal/auth/pkg/oauth2"
 	"eim/internal/model"
 	storagerpc "eim/internal/storage/rpc"
 )
@@ -10,20 +10,20 @@ import (
 type Mode string
 
 const (
-	SSOMode   Mode = "sso"
-	BasicMode Mode = "basic"
+	OAuth2Mode Mode = "auth2"
+	BasicMode  Mode = "basic"
 )
 
 type Authenticator interface {
-	CheckToken(token string) (*model.User, error)
+	CheckToken(token string) (*model.Biz, error)
 }
 
 func NewAuthenticator(mode Mode, storageRpc *storagerpc.Client) Authenticator {
 	//TODO 参数
 	switch mode {
-	case SSOMode:
+	case OAuth2Mode:
 		{
-			return &sso.Authenticator{}
+			return &oauth2.Authenticator{}
 		}
 	case BasicMode:
 		{

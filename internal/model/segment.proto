@@ -6,8 +6,9 @@ import "google/protobuf/timestamp.proto";
 
 message Segment {
   string biz_id = 1;
-  int64 max_id = 2;
-  int32 step = 3;
-  google.protobuf.Timestamp create_at = 4;
-  google.protobuf.Timestamp update_at = 5;
+  string tenant_id = 2;
+  int64 max_id = 3;
+  int32 step = 4;
+  google.protobuf.Timestamp create_at = 5;
+  google.protobuf.Timestamp update_at = 6;
 }

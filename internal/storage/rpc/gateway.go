@@ -10,12 +10,12 @@ import (
 	"eim/util/log"
 )
 
-type RegisterGatewayArgs struct {
+type GatewayArgs struct {
 	Gateway    *model.Gateway
 	Expiration time.Duration
 }
 
-type GetGatewaysReply struct {
+type GatewaysReply struct {
 	Gateways []*model.Gateway
 }
 
@@ -23,7 +23,7 @@ type Gateway struct {
 	redisManager *redis.Manager
 }
 
-func (its *Gateway) RegisterGateway(ctx context.Context, args *RegisterGatewayArgs, reply *EmptyReply) error {
+func (its *Gateway) RegisterGateway(ctx context.Context, args *GatewayArgs, reply *EmptyReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
@@ -37,7 +37,7 @@ func (its *Gateway) RegisterGateway(ctx context.Context, args *RegisterGatewayAr
 	return nil
 }
 
-func (its *Gateway) GetGateways(ctx context.Context, args *EmptyArgs, reply *GetGatewaysReply) error {
+func (its *Gateway) GetGateways(ctx context.Context, args *EmptyArgs, reply *GatewaysReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))

@@ -32,7 +32,7 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 	case protocol.Ack:
 		{
 			msgId := string(frame)
-			err := its.storageRpc.RemoveOfflineMessageIds([]interface{}{msgId}, sess.user.UserId, sess.device.DeviceId)
+			err := its.storageRpc.RemoveOfflineMessages([]string{msgId}, sess.user.BizId, sess.device.DeviceId)
 			if err != nil {
 				atomic.AddInt64(&its.errorTotal, 1)
 				log.Error("Error remove offline message id", zap.Error(err))
@@ -51,11 +51,6 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			}
 
 			bizId := ""
-			if msg.ToType == model.ToUser {
-				bizId = msg.FromId
-			} else {
-				bizId = msg.ToId
-			}
 
 			msg.SeqId, err = its.seqRpc.IncrementId(bizId)
 			if err != nil {
@@ -90,4 +85,14 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			atomic.AddInt64(&its.receivedMsgTotal, 1)
 		}
 	}
+}
+
+func getBizId(msg *model.Message) string {
+	bizId := ""
+	if msg.ToType == model.ToUser {
+		bizId = msg.FromId
+	} else {
+		bizId = msg.ToId
+	}
+	return bizId
 }

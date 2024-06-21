@@ -47,7 +47,7 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.Produ
 			continue
 		}
 
-		err = storageRpc.SaveOfflineMessageIds([]interface{}{msg.MsgId}, msg.UserId, device.DeviceId)
+		err = storageRpc.SaveOfflineMessages([]*model.Message{msg}, msg.UserId, device.DeviceId)
 		if err != nil {
 			return fmt.Errorf("save device offline message ids -> %w", err)
 		}

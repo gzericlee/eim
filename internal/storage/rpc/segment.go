@@ -10,8 +10,9 @@ import (
 	"eim/util/log"
 )
 
-type GetSegmentArgs struct {
-	BizId string
+type SegmentArgs struct {
+	BizId    string
+	TenantId string
 }
 
 type SegmentReply struct {
@@ -22,13 +23,13 @@ type Segment struct {
 	database database.IDatabase
 }
 
-func (its *Segment) GetSegment(ctx context.Context, args *GetSegmentArgs, reply *SegmentReply) error {
+func (its *Segment) GetSegment(ctx context.Context, args *SegmentArgs, reply *SegmentReply) error {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
 	}()
 
-	segment, err := its.database.GetSegment(args.BizId)
+	segment, err := its.database.GetSegment(args.BizId, args.TenantId)
 	if err != nil {
 		return fmt.Errorf("get segment -> %w", err)
 	}

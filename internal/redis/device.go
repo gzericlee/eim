@@ -11,8 +11,13 @@ import (
 	"eim/util/log"
 )
 
+const (
+	userDeviceKeyFormat = "device:%s:%s"
+	devicesKeyFormat    = "device:%s:*"
+)
+
 func (its *Manager) SaveDevice(device *model.Device) error {
-	key := fmt.Sprintf("%s:device:%s", device.UserId, device.DeviceId)
+	key := fmt.Sprintf(userDeviceKeyFormat, device.UserId, device.DeviceId)
 
 	body, err := proto.Marshal(device)
 	if err != nil {
@@ -28,7 +33,7 @@ func (its *Manager) SaveDevice(device *model.Device) error {
 }
 
 func (its *Manager) GetDevices(userId string) ([]*model.Device, error) {
-	key := fmt.Sprintf("%s:device:*", userId)
+	key := fmt.Sprintf(devicesKeyFormat, userId)
 
 	values, err := its.getAllValues(key)
 	if err != nil {
@@ -50,7 +55,7 @@ func (its *Manager) GetDevices(userId string) ([]*model.Device, error) {
 }
 
 func (its *Manager) GetDevice(userId, deviceId string) (*model.Device, error) {
-	key := fmt.Sprintf("%s:device:%s", userId, deviceId)
+	key := fmt.Sprintf(userDeviceKeyFormat, userId, deviceId)
 
 	value, err := its.redisClient.Get(context.Background(), key).Result()
 	if err != nil {

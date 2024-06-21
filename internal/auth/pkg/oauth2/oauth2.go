@@ -1,4 +1,4 @@
-package sso
+package oauth2
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type Authenticator struct {
 	resourceId   string
 }
 
-func (its *Authenticator) CheckToken(token string) (*model.User, error) {
+func (its *Authenticator) CheckToken(token string) (*model.Biz, error) {
 	now := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))

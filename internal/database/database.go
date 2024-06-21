@@ -29,14 +29,14 @@ type IDatabase interface {
 	GetDevices(userId string) ([]*model.Device, error)
 	GetDevice(userId, deviceId string) (*model.Device, error)
 
-	SaveUser(user *model.User) error
-	GetUser(userId, tenantId string) (*model.User, error)
+	SaveBiz(biz *model.Biz) error
+	GetBiz(bizId, tenantId string) (*model.Biz, error)
 
 	SaveMessage(message *model.Message) error
 	SaveMessages(messages []*model.Message) error
 	GetMessagesByIds(msgIds []int64) ([]*model.Message, error)
 
-	GetSegment(bizId string) (*model.Segment, error)
+	GetSegment(bizId, tenantId string) (*model.Segment, error)
 }
 
 func NewDatabase(driver Driver, connection, name string) (IDatabase, error) {

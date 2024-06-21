@@ -22,15 +22,16 @@ const (
 	defaultStep = 1000
 )
 
-func (its *Repository) GetSegment(bizId string) (*model.Segment, error) {
+func (its *Repository) GetSegment(bizId, tenantId string) (*model.Segment, error) {
 	var seg *model.Segment
-	err := its.db.Collection("segment").FindOne(context.Background(), bson.M{"biz_id": bizId}).Decode(&seg)
+	err := its.db.Collection("segment").FindOne(context.Background(), bson.M{"biz_id": bizId, "tenant_id": tenantId}).Decode(&seg)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("find segment -> %w", err)
 		}
 		seg = &model.Segment{}
 		seg.BizId = bizId
+		seg.TenantId = tenantId
 		seg.MaxId = 0
 		seg.Step = defaultStep
 		seg.CreateAt = timestamppb.Now()
@@ -39,7 +40,7 @@ func (its *Repository) GetSegment(bizId string) (*model.Segment, error) {
 		seg.MaxId = seg.MaxId + int64(seg.Step)
 		seg.UpdateAt = timestamppb.Now()
 	}
-	_, err = its.db.Collection("segment").ReplaceOne(context.Background(), bson.M{"biz_id": bizId}, seg, &options.ReplaceOptions{Upsert: &isTrue})
+	_, err = its.db.Collection("segment").ReplaceOne(context.Background(), bson.M{"biz_id": bizId, "tenant_id": tenantId}, seg, &options.ReplaceOptions{Upsert: &isTrue})
 	if err != nil {
 		return nil, fmt.Errorf("upsert segment -> %w", err)
 	}

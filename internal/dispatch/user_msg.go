@@ -6,7 +6,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
-	"go.uber.org/zap"
 
 	"eim/internal/model"
 	"eim/internal/mq"
@@ -15,16 +14,12 @@ import (
 )
 
 type UserMessageHandler struct {
-	task       *saveTask
 	storageRpc *storagerpc.Client
 	producer   mq.Producer
 }
 
 func NewUserMessageHandler(storageRpc *storagerpc.Client, producer mq.Producer) *UserMessageHandler {
-	task := &saveTask{messages: make(chan *nats.Msg, 1000), storageRpc: storageRpc}
-	go task.doWorker()
 	return &UserMessageHandler{
-		task:       task,
 		storageRpc: storageRpc,
 		producer:   producer,
 	}
@@ -37,17 +32,13 @@ func (its *UserMessageHandler) HandleMessage(m *nats.Msg) error {
 	}()
 
 	if m.Data == nil || len(m.Data) == 0 {
-		_ = m.Ack()
-		return fmt.Errorf("message data is nil")
+		return m.Ack()
 	}
-
-	its.task.messages <- m
 
 	msg := &model.Message{}
 	err := proto.Unmarshal(m.Data, msg)
 	if err != nil {
-		_ = m.Nak()
-		log.Error("unmarshal message", zap.Error(err))
+		return m.Ack()
 	}
 
 	//发送者多端同步
@@ -64,5 +55,5 @@ func (its *UserMessageHandler) HandleMessage(m *nats.Msg) error {
 		return fmt.Errorf("dispatch user message to receive user -> %w", err)
 	}
 
-	return nil
+	return m.Ack()
 }

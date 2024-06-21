@@ -24,6 +24,8 @@ type Config struct {
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
 
+	svr.AsyncWrite = true
+
 	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
 	if err != nil {
 		return fmt.Errorf("new storage rpc client -> %w", err)

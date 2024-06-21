@@ -59,5 +59,13 @@ func (its *Repository) initIndexes() error {
 		return fmt.Errorf("create message(seq_id) index -> %w", err)
 	}
 
+	_, err = its.db.Collection("biz").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{"biz_id", 1}, {"tenant_id", 1}},
+		Options: options.Index().SetUnique(true),
+	})
+	if err != nil {
+		return fmt.Errorf("create biz(biz_id,tenant_id) index -> %w", err)
+	}
+
 	return nil
 }

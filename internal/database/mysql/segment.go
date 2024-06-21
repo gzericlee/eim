@@ -4,6 +4,6 @@ import (
 	"eim/internal/model"
 )
 
-func (its *Repository) GetSegment(id string) (*model.Segment, error) {
+func (its *Repository) GetSegment(bizId, tenantId string) (*model.Segment, error) {
 	return nil, nil
 }

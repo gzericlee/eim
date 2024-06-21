@@ -59,61 +59,61 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 	}
 
 	return &Client{
-		devicePool:    rpcxclient.NewXClientPool(runtime.NumCPU()*2, deviceServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d1, rpcxclient.DefaultOption),
-		messagePool:   rpcxclient.NewXClientPool(runtime.NumCPU()*2, messageServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d2, rpcxclient.DefaultOption),
-		userPool:      rpcxclient.NewXClientPool(runtime.NumCPU()*2, userServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d3, rpcxclient.DefaultOption),
-		bizMemberPool: rpcxclient.NewXClientPool(runtime.NumCPU()*2, bizMemberServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d4, rpcxclient.DefaultOption),
-		gatewayPool:   rpcxclient.NewXClientPool(runtime.NumCPU()*2, gatewayServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d5, rpcxclient.DefaultOption),
-		segmentPool:   rpcxclient.NewXClientPool(runtime.NumCPU()*2, segmentServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d6, rpcxclient.DefaultOption),
+		devicePool:    rpcxclient.NewXClientPool(runtime.NumCPU()*10, deviceServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d1, rpcxclient.DefaultOption),
+		messagePool:   rpcxclient.NewXClientPool(runtime.NumCPU()*10, messageServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d2, rpcxclient.DefaultOption),
+		userPool:      rpcxclient.NewXClientPool(runtime.NumCPU()*10, userServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d3, rpcxclient.DefaultOption),
+		bizMemberPool: rpcxclient.NewXClientPool(runtime.NumCPU()*10, bizMemberServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d4, rpcxclient.DefaultOption),
+		gatewayPool:   rpcxclient.NewXClientPool(runtime.NumCPU()*10, gatewayServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d5, rpcxclient.DefaultOption),
+		segmentPool:   rpcxclient.NewXClientPool(runtime.NumCPU()*10, segmentServicePath, rpcxclient.Failover, rpcxclient.ConsistentHash, d6, rpcxclient.DefaultOption),
 	}, nil
 }
 
 func (its *Client) SaveDevice(device *model.Device) error {
-	err := its.devicePool.Get().Call(context.Background(), "SaveDevice", &SaveDeviceArgs{Device: device}, nil)
+	err := its.devicePool.Get().Call(context.Background(), "SaveDevice", &DeviceArgs{Device: device}, nil)
 	if err != nil {
-		return fmt.Errorf("call save device -> %w", err)
+		return fmt.Errorf("call SaveDevice -> %w", err)
 	}
 	return nil
 }
 
 func (its *Client) GetDevice(userId, deviceId string) (*model.Device, error) {
 	reply := &DeviceReply{}
-	err := its.devicePool.Get().Call(context.Background(), "GetDevice", &GetDeviceArgs{UserId: userId, DeviceId: deviceId}, reply)
+	err := its.devicePool.Get().Call(context.Background(), "GetDevice", &DeviceArgs{Device: &model.Device{UserId: userId, DeviceId: deviceId}}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call get device -> %w", err)
+		return nil, fmt.Errorf("call GetDevice -> %w", err)
 	}
 	return reply.Device, nil
 }
 
 func (its *Client) GetDevices(userId string) ([]*model.Device, error) {
 	reply := &DevicesReply{}
-	err := its.devicePool.Get().Call(context.Background(), "GetDevices", &GetDevicesArgs{UserId: userId}, reply)
+	err := its.devicePool.Get().Call(context.Background(), "GetDevices", &DeviceArgs{Device: &model.Device{UserId: userId}}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call get devices -> %w", err)
+		return nil, fmt.Errorf("call GetDevices -> %w", err)
 	}
 	return reply.Devices, nil
 }
 
 func (its *Client) SaveMessages(messages []*model.Message) error {
-	err := its.messagePool.Get().Call(context.Background(), "SaveMessages", &MessageArgs{Messages: messages}, nil)
+	err := its.messagePool.Get().Call(context.Background(), "SaveMessages", &MessagesArgs{Messages: messages}, nil)
 	if err != nil {
-		return fmt.Errorf("call save messages -> %w", err)
+		return fmt.Errorf("call SaveMessages -> %w", err)
 	}
 	return nil
 }
 
-func (its *Client) SaveOfflineMessageIds(msgIds []interface{}, userId, deviceId string) error {
-	err := its.messagePool.Get().Call(context.Background(), "SaveOfflineMessageIds", &MessageIdsArgs{MsgIds: msgIds, UserId: userId, DeviceId: deviceId}, nil)
+func (its *Client) SaveOfflineMessages(msgs []*model.Message, userId, deviceId string) error {
+	err := its.messagePool.Get().Call(context.Background(), "SaveOfflineMessages", &MessagesArgs{Messages: msgs, UserId: userId, DeviceId: deviceId}, nil)
 	if err != nil {
-		return fmt.Errorf("call save offline message ids -> %w", err)
+		return fmt.Errorf("call SaveOfflineMessages -> %w", err)
 	}
 	return nil
 }
 
-func (its *Client) RemoveOfflineMessageIds(msgIds []interface{}, userId, deviceId string) error {
-	err := its.messagePool.Get().Call(context.Background(), "RemoveOfflineMessageIds", &MessageIdsArgs{MsgIds: msgIds, UserId: userId, DeviceId: deviceId}, nil)
+func (its *Client) RemoveOfflineMessages(msgIds []string, userId, deviceId string) error {
+	err := its.messagePool.Get().Call(context.Background(), "RemoveOfflineMessages", &MessageIdsArgs{MessageIds: msgIds, UserId: userId, DeviceId: deviceId}, nil)
 	if err != nil {
-		return fmt.Errorf("call remove offline message ids -> %w", err)
+		return fmt.Errorf("call RemoveOfflineMessages -> %w", err)
 	}
 	return nil
 }
@@ -122,7 +122,7 @@ func (its *Client) GetOfflineMessagesCount(userId, deviceId string) (int64, erro
 	reply := &OfflineMessagesCountReply{}
 	err := its.messagePool.Get().Call(context.Background(), "GetOfflineMessagesCount", &OfflineMessagesArgs{UserId: userId, DeviceId: deviceId}, reply)
 	if err != nil {
-		return 0, fmt.Errorf("call get offline messages count -> %w", err)
+		return 0, fmt.Errorf("call GetOfflineMessagesCount -> %w", err)
 	}
 	return reply.Count, nil
 }
@@ -131,67 +131,67 @@ func (its *Client) GetOfflineMessages(userId, deviceId string) ([]*model.Message
 	reply := &MessagesReply{}
 	err := its.messagePool.Get().Call(context.Background(), "GetOfflineMessages", &OfflineMessagesArgs{UserId: userId, DeviceId: deviceId}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call get offline messages -> %w", err)
+		return nil, fmt.Errorf("call GetOfflineMessages -> %w", err)
 	}
 	return reply.Messages, nil
 }
 
-func (its *Client) SaveUser(user *model.User) error {
-	err := its.userPool.Get().Call(context.Background(), "SaveUser", &UserArgs{User: user}, nil)
+func (its *Client) SaveBiz(biz *model.Biz) error {
+	err := its.userPool.Get().Call(context.Background(), "SaveBiz", &BizArgs{Biz: biz}, nil)
 	if err != nil {
-		return fmt.Errorf("call save user -> %w", err)
+		return fmt.Errorf("call SaveBiz -> %w", err)
 	}
 	return nil
 }
 
-func (its *Client) GetUser(loginId, tenantId string) (*model.User, error) {
-	reply := &UserReply{}
-	err := its.userPool.Get().Call(context.Background(), "GetUser", &UserArgs{User: &model.User{LoginId: loginId, TenantId: tenantId}}, reply)
+func (its *Client) GetBiz(bizId, tenantId string) (*model.Biz, error) {
+	reply := &BizReply{}
+	err := its.userPool.Get().Call(context.Background(), "GetBiz", &BizArgs{Biz: &model.Biz{BizId: bizId, TenantId: tenantId}}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call get user -> %w", err)
+		return nil, fmt.Errorf("call GetBiz -> %w", err)
 	}
-	return reply.User, nil
+	return reply.Biz, nil
 }
 
-func (its *Client) AppendBizMember(member *model.BizMember) error {
-	err := its.bizMemberPool.Get().Call(context.Background(), "AppendBizMember", &AppendBizMemberArgs{BizMember: member}, nil)
+func (its *Client) AddBizMember(member *model.BizMember) error {
+	err := its.bizMemberPool.Get().Call(context.Background(), "AddBizMember", &BizMemberArgs{BizMember: member}, nil)
 	if err != nil {
-		return fmt.Errorf("call append biz_member -> %w", err)
+		return fmt.Errorf("call AddBizMember -> %w", err)
 	}
 	return nil
 }
 
-func (its *Client) GetBizMembers(bizType, bizId string) ([]string, error) {
-	reply := &GetBizMembersReply{}
-	err := its.bizMemberPool.Get().Call(context.Background(), "GetBizMembers", &GetBizMembersArgs{BizType: bizType, BizId: bizId}, reply)
+func (its *Client) GetBizMembers(bizId, tenantId string) ([]string, error) {
+	reply := &BizMembersReply{}
+	err := its.bizMemberPool.Get().Call(context.Background(), "GetBizMembers", &BizMemberArgs{BizMember: &model.BizMember{BizId: bizId, TenantId: tenantId}}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call append biz_member -> %w", err)
+		return nil, fmt.Errorf("call GetBizMembers -> %w", err)
 	}
 	return reply.Members, nil
 }
 
 func (its *Client) RegisterGateway(gateway *model.Gateway, expiration time.Duration) error {
-	err := its.gatewayPool.Get().Call(context.Background(), "RegisterGateway", &RegisterGatewayArgs{Gateway: gateway, Expiration: expiration}, nil)
+	err := its.gatewayPool.Get().Call(context.Background(), "RegisterGateway", &GatewayArgs{Gateway: gateway, Expiration: expiration}, nil)
 	if err != nil {
-		return fmt.Errorf("call register gateway -> %w", err)
+		return fmt.Errorf("call RegisterGateway -> %w", err)
 	}
 	return nil
 }
 
 func (its *Client) GetGateways() ([]*model.Gateway, error) {
-	reply := &GetGatewaysReply{}
-	err := its.bizMemberPool.Get().Call(context.Background(), "GetBizMembers", nil, reply)
+	reply := &GatewaysReply{}
+	err := its.bizMemberPool.Get().Call(context.Background(), "GetGateways", nil, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call get gateways -> %w", err)
+		return nil, fmt.Errorf("call GetGateways -> %w", err)
 	}
 	return reply.Gateways, nil
 }
 
 func (its *Client) GetSegment(bizId string) (*model.Segment, error) {
 	reply := &SegmentReply{}
-	err := its.segmentPool.Get().Call(context.Background(), "GetSegment", &GetSegmentArgs{BizId: bizId}, reply)
+	err := its.segmentPool.Get().Call(context.Background(), "GetSegment", &SegmentArgs{BizId: bizId}, reply)
 	if err != nil {
-		return nil, fmt.Errorf("call get Segment -> %w", err)
+		return nil, fmt.Errorf("call GetSegment -> %w", err)
 	}
 	return reply.Segment, nil
 }

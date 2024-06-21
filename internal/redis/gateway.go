@@ -12,8 +12,13 @@ import (
 	"eim/util/log"
 )
 
+const (
+	gatewayKeyFormat  = "gateway:%s"
+	gatewaysKeyFormat = "gateway:*"
+)
+
 func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Duration) error {
-	key := fmt.Sprintf("gateway:%s", gateway.Ip)
+	key := fmt.Sprintf(gatewayKeyFormat, gateway.Ip)
 
 	body, err := proto.Marshal(gateway)
 	if err != nil {
@@ -29,7 +34,7 @@ func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Dura
 }
 
 func (its *Manager) GetGateways() ([]*model.Gateway, error) {
-	key := fmt.Sprintf("gateway:*")
+	key := gatewaysKeyFormat
 
 	values, err := its.getAllValues(key)
 	if err != nil {
