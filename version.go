@@ -19,22 +19,6 @@ var (
 	Date        string
 )
 
-func initLogger() {
-	log.SetConfig(log.Config{
-		ConsoleEnabled: true,
-		ConsoleLevel:   config.SystemConfig.LogLevel,
-		ConsoleJson:    false,
-		FileEnabled:    false,
-		FileLevel:      config.SystemConfig.LogLevel,
-		FileJson:       false,
-		Directory:      "./logs/" + strings.ToLower(ServiceName) + "/",
-		Filename:       time.Now().Format("20060102") + ".log",
-		MaxSize:        200,
-		MaxBackups:     10,
-		MaxAge:         30,
-	})
-}
-
 func Printf() {
 	if Version == "" {
 		Version = "unknown"
@@ -52,7 +36,19 @@ func Printf() {
 		Date = "unknown"
 	}
 
-	initLogger()
+	log.SetConfig(log.Config{
+		ConsoleEnabled: true,
+		ConsoleLevel:   config.SystemConfig.LogLevel,
+		ConsoleJson:    false,
+		FileEnabled:    false,
+		FileLevel:      config.SystemConfig.LogLevel,
+		FileJson:       false,
+		Directory:      "./logs/" + strings.ToLower(ServiceName) + "/",
+		Filename:       time.Now().Format("20060102") + ".log",
+		MaxSize:        200,
+		MaxBackups:     10,
+		MaxAge:         30,
+	})
 
 	template := `
 {{ .Title "` + ServiceName + `" "" 0 }}

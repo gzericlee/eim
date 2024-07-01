@@ -11,22 +11,21 @@ import (
 	"eim/internal/database"
 	"eim/internal/redis"
 	"eim/pkg/cache"
-	"eim/pkg/cache/notify"
-	"eim/pkg/cache/stats"
-	"eim/util/log"
+	"eim/pkg/lock"
 )
 
 const (
-	basePath             = "/eim_storage"
+	basePath = "eim_storage"
+
 	deviceServicePath    = "device"
 	messageServicePath   = "message"
-	userServicePath      = "user"
+	bizServicePath       = "biz"
 	bizMemberServicePath = "biz_member"
 	gatewayServicePath   = "gateway"
 	segmentServicePath   = "segment"
+	refresherServicePath = "refresher"
 
 	bizCachePool       = "bizs"
-	gatewayCachePool   = "gateways"
 	deviceCachePool    = "devices"
 	bizMemberCachePool = "biz_members"
 
@@ -34,7 +33,8 @@ const (
 )
 
 var (
-	group singleflight.Group
+	storageRpc  *Client
+	singleGroup singleflight.Group
 )
 
 type Config struct {
@@ -83,63 +83,49 @@ func StartServer(cfg Config) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	storageCache := cache.NewLRUCache(1024, 65535, 0)
+	deviceCache, err := cache.NewCache("device", 3*1024*1024*1024, 1000000)
+	if err != nil {
+		panic(err)
+	}
 
-	notify.Init(notify.NewRedisNotifier(redisManager.GetRedisClient()))
+	bizCache, err := cache.NewCache("biz", 3*1024*1024*1024, 500000)
+	if err != nil {
+		panic(err)
+	}
+
+	bizMemberCache, err := cache.NewCache("biz_member", 3*1024*1024*1024, 1000000)
+	if err != nil {
+		panic(err)
+	}
+
+	keyLock := lock.NewKeyLock()
+
+	err = svr.RegisterName(refresherServicePath, &Refresher{deviceCache: deviceCache, bizCache: bizCache, bizMemberCache: bizMemberCache, lock: keyLock}, "")
+	if err != nil {
+		return fmt.Errorf("register service(%s) -> %w", refresherServicePath, err)
+	}
 
 	for _, service := range cfg.RegistryServices {
 		var rcvr interface{}
 		switch service {
 		case deviceServicePath:
 			{
-				err = notify.Bind(deviceCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("notify bind(device) -> %w", err)
-				}
-				err = stats.Bind(deviceCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("stats bind(device) -> %w", err)
-				}
-				rcvr = &Device{storageCache: storageCache, database: db, redisManager: redisManager}
+				rcvr = &Device{storageCache: deviceCache, database: db, redisManager: redisManager, lock: keyLock}
 			}
 		case messageServicePath:
 			{
 				rcvr = &Message{database: db, redisManager: redisManager}
 			}
-		case userServicePath:
+		case bizServicePath:
 			{
-				err = notify.Bind(bizCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("notify bind(user) -> %w", err)
-				}
-				err = stats.Bind(bizCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("stats bind(user) -> %w", err)
-				}
-				rcvr = &Biz{storageCache: storageCache, database: db, redisManager: redisManager}
+				rcvr = &Biz{storageCache: bizCache, database: db, redisManager: redisManager}
 			}
 		case bizMemberServicePath:
 			{
-				err = notify.Bind(bizMemberCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("notify bind(biz_member) -> %w", err)
-				}
-				err = stats.Bind(bizMemberCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("stats bind(biz_member) -> %w", err)
-				}
-				rcvr = &BizMember{storageCache: storageCache, redisManager: redisManager}
+				rcvr = &BizMember{storageCache: bizMemberCache, redisManager: redisManager}
 			}
 		case gatewayServicePath:
 			{
-				err = notify.Bind(gatewayCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("notify bind(gateway) -> %w", err)
-				}
-				err = stats.Bind(gatewayCachePool, storageCache)
-				if err != nil {
-					return fmt.Errorf("stats bind(gateway) -> %w", err)
-				}
 				rcvr = &Gateway{redisManager: redisManager}
 			}
 		case segmentServicePath:
@@ -153,15 +139,10 @@ func StartServer(cfg Config) error {
 		}
 	}
 
-	go func() {
-		for {
-			time.Sleep(time.Minute)
-			stats.All().Range(func(k, v interface{}) bool {
-				log.Info(fmt.Sprintf("Cache stats: %s %+v", k, v))
-				return true
-			})
-		}
-	}()
+	storageRpc, err = NewClient(cfg.EtcdEndpoints)
+	if err != nil {
+		return fmt.Errorf("new storage rpc client -> %w", err)
+	}
 
 	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
 	if err != nil {

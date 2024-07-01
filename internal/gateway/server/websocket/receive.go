@@ -1,9 +1,7 @@
 package websocket
 
 import (
-	"fmt"
 	"strconv"
-	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -11,51 +9,51 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/gateway/protocol"
+	"eim/internal/gateway/session"
 	"eim/internal/model"
 	"eim/internal/mq"
 	"eim/util/log"
 )
 
-func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
+func (its *Server) receive(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
 	_ = conn.SetReadDeadline(time.Now().Add(its.keepaliveTime))
 
 	cmd, frame := protocol.WebsocketCodec.Decode(data)
 
-	sess := conn.Session().(*session)
+	sess := conn.Session().(*session.Session)
+	if sess == nil {
+		return
+	}
+
+	user := sess.GetUser()
+	device := sess.GetDevice()
 
 	switch cmd {
 	case protocol.Ack:
 		{
 			msgId := string(frame)
-			err := its.storageRpc.RemoveOfflineMessages([]string{msgId}, sess.user.BizId, sess.device.DeviceId)
+			err := its.storageRpc.RemoveOfflineMessages([]string{msgId}, user.BizId, device.DeviceId)
 			if err != nil {
-				atomic.AddInt64(&its.errorTotal, 1)
+				its.IncrErrorTotal(1)
 				log.Error("Error remove offline message id", zap.Error(err))
 				return
 			}
-			atomic.AddInt64(&its.ackTotal, 1)
+			its.IncrAckTotal(1)
 		}
 	case protocol.Message:
 		{
 			msg := &model.Message{}
 			err := proto.Unmarshal(frame, msg)
 			if err != nil {
-				atomic.AddInt64(&its.invalidMsgTotal, 1)
+				its.IncrInvalidMsgTotal(1)
 				log.Error("Error illegal message", zap.ByteString("body", frame), zap.Error(err))
 				return
 			}
 
-			bizId := ""
-
-			msg.SeqId, err = its.seqRpc.IncrementId(bizId)
+			msg.SeqId, err = its.seqRpc.IncrId(user.BizId, user.TenantId)
 			if err != nil {
-				log.Error("Error getting seq bizId: %v，%v", zap.String("bizId", bizId), zap.Error(err))
-				atomic.AddInt64(&its.errorTotal, 1)
+				log.Error("Error getting seq", zap.String("bizId", user.BizId), zap.String("tenantId", user.TenantId), zap.Error(err))
+				its.IncrErrorTotal(1)
 				return
 			}
 
@@ -64,7 +62,7 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			body, err := proto.Marshal(msg)
 			if err != nil {
 				log.Error("Error marshal message", zap.Error(err))
-				atomic.AddInt64(&its.errorTotal, 1)
+				its.IncrErrorTotal(1)
 				return
 			}
 
@@ -76,23 +74,13 @@ func (its *Server) receiverHandler(conn *websocket.Conn, _ websocket.MessageType
 			}
 			if err != nil {
 				log.Error("Error publish message", zap.Error(err))
-				atomic.AddInt64(&its.errorTotal, 1)
+				its.IncrErrorTotal(1)
 				return
 			}
 
-			sess.send(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10)))
+			its.send(sess, protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10)))
 
-			atomic.AddInt64(&its.receivedMsgTotal, 1)
+			its.IncrReceivedMsgTotal(1)
 		}
 	}
-}
-
-func getBizId(msg *model.Message) string {
-	bizId := ""
-	if msg.ToType == model.ToUser {
-		bizId = msg.FromId
-	} else {
-		bizId = msg.ToId
-	}
-	return bizId
 }

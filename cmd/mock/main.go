@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
-	"net/http"
 	"os"
 	"sort"
 	"syscall"
@@ -14,6 +12,7 @@ import (
 	"eim"
 	"eim/internal/config"
 	"eim/internal/mock"
+	"eim/pkg/pprof"
 	"eim/util/log"
 )
 
@@ -33,20 +32,17 @@ func newCliApp() *cli.App {
 		//打印版本信息
 		eim.Printf()
 
+		//开启PProf服务
+		pprof.EnablePProf()
+
 		log.Info("EIM GatewaySvr", zap.Strings("endpoints", config.SystemConfig.Mock.EimEndpoints.Value()))
 		log.Info("Mock info", zap.Int("client_number", config.SystemConfig.Mock.ClientCount), zap.Int("send_number", config.SystemConfig.Mock.MessageCount))
-
-		l, err := net.Listen("tcp", ":0")
-		if err != nil {
-			return err
-		}
-		log.Info("PProf service started successfully", zap.String("addr", l.Addr().String()))
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 
 		mock.Do()
 
-		return http.Serve(l, nil)
+		select {}
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
 	return app

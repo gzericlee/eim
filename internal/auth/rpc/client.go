@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"time"
 
 	rpcxetcdclient "github.com/rpcxio/rpcx-etcd/client"
 	rpcxclient "github.com/smallnest/rpcx/client"
@@ -18,7 +19,7 @@ type Client struct {
 func NewClient(etcdEndpoints []string) (*Client, error) {
 	d, err := rpcxetcdclient.NewEtcdV3Discovery(basePath, servicePath, etcdEndpoints, false, nil)
 	if err != nil {
-		return nil, fmt.Errorf("new etcd v3 discovery -> %w", err)
+		return nil, fmt.Errorf("new etcd v3 discovery for auth service -> %w", err)
 	}
 	pool := rpcxclient.NewXClientPool(runtime.NumCPU()*2, servicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d, rpcxclient.DefaultOption)
 	return &Client{pool: pool}, nil
@@ -26,7 +27,8 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 
 func (its *Client) CheckToken(token string) (*model.Biz, error) {
 	reply := &Reply{}
-	err := its.pool.Get().Call(context.Background(), "CheckToken", &Request{Token: token}, reply)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.pool.Get().Call(ctx, "CheckToken", &Request{Token: token}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call CheckToken -> %w", err)
 	}

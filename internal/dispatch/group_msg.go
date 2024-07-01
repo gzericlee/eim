@@ -2,7 +2,6 @@ package dispatch
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
@@ -10,27 +9,21 @@ import (
 	"eim/internal/model"
 	"eim/internal/mq"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/util/log"
 )
 
 type GroupMessageHandler struct {
 	storageRpc *storagerpc.Client
-	producer   mq.Producer
+	producer   mq.IProducer
 }
 
-func NewGroupMessageHandler(storageRpc *storagerpc.Client, producer mq.Producer) *GroupMessageHandler {
+func NewGroupMessageHandler(storageRpc *storagerpc.Client, producer mq.IProducer) *GroupMessageHandler {
 	return &GroupMessageHandler{
 		storageRpc: storageRpc,
 		producer:   producer,
 	}
 }
 
-func (its *GroupMessageHandler) HandleMessage(m *nats.Msg) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
+func (its *GroupMessageHandler) Process(m *nats.Msg) error {
 	if m.Data == nil || len(m.Data) == 0 {
 		return m.Ack()
 	}

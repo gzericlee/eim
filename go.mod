@@ -4,17 +4,18 @@ go 1.22
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/dgraph-io/ristretto v0.1.1
 	github.com/dimiro1/banner v1.1.0
 	github.com/emicklei/go-restful-openapi/v2 v2.10.2
 	github.com/emicklei/go-restful/v3 v3.12.0
 	github.com/go-openapi/spec v0.21.0
+	github.com/go-redsync/redsync/v4 v4.13.0
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.5.8
 	github.com/lesismal/nbio v1.5.8
 	github.com/nats-io/nats.go v1.34.1
 	github.com/onsi/ginkgo v1.16.5
-	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/panjf2000/ants v1.2.1
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/rpcxio/rpcx-etcd v0.3.2
@@ -44,6 +45,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/dgryski/go-jump v0.0.0-20211018200510-ba001c3ffce0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/edwingeng/doublejump v1.0.1 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -56,7 +58,9 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/godzie44/go-uring v0.0.0-20220926161041-69611e8b13d5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/pprof v0.0.0-20240424215950-a892ee059fd6 // indirect
 	github.com/grandcat/zeroconf v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

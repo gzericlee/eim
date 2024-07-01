@@ -14,11 +14,11 @@ const (
 	BasicMode  Mode = "basic"
 )
 
-type Authenticator interface {
+type IAuthenticator interface {
 	CheckToken(token string) (*model.Biz, error)
 }
 
-func NewAuthenticator(mode Mode, storageRpc *storagerpc.Client) Authenticator {
+func NewAuthenticator(mode Mode, storageRpc *storagerpc.Client) IAuthenticator {
 	//TODO 参数
 	switch mode {
 	case OAuth2Mode:

@@ -14,7 +14,7 @@ import (
 
 var maxL7Cps, lastClientTotal int64
 
-func (its *Server) printServiceDetail() {
+func (its *Server) PrintServiceStats() {
 	ticker := time.NewTicker(time.Second * 5)
 	for {
 		select {

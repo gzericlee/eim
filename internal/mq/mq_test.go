@@ -2,22 +2,27 @@ package mq
 
 import (
 	"fmt"
-	"log"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
 
 	"eim/internal/model"
 	"eim/pkg/snowflake"
 )
 
-var producer Producer
-var consumer Consumer
+var producer IProducer
+var consumer IConsumer
 
 func init() {
-	snowflake.Init([]string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"}, "pass@word1")
+	snowflake.NewGenerator(snowflake.GeneratorConfig{
+		RedisEndpoints: []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"},
+		RedisPassword:  "pass@word1",
+		MaxWorkerId:    1000,
+		MinWorkerId:    0,
+		NodeCount:      1,
+	})
 
 	var err error
 	producer, err = NewProducer([]string{"127.0.0.1:4222"})
@@ -34,7 +39,7 @@ func init() {
 func BenchmarkPublish(b *testing.B) {
 	for i := 0; i < 1; i++ {
 		msg := &model.Message{
-			MsgId:      uuid.New().String(),
+			MsgId:      1,
 			SeqId:      1,
 			MsgType:    1,
 			Content:    time.Now().String(),
@@ -57,14 +62,10 @@ func BenchmarkPublish(b *testing.B) {
 
 type testHandler struct{}
 
-func (h *testHandler) HandleMessage(data []byte) error {
+func (h *testHandler) Process(m *nats.Msg) error {
 	msg := &model.Message{}
-	err := proto.Unmarshal(data, msg)
-	if err != nil {
-		return err
-	}
-	log.Printf("%s", data)
-	return nil
+	err := proto.Unmarshal(m.Data, msg)
+	return err
 }
 
 func TestSubscribe(t *testing.T) {

@@ -3,12 +3,12 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"time"
+
+	"go.uber.org/zap"
 
 	"eim/internal/model"
 	"eim/internal/redis"
 	"eim/pkg/cache"
-	"eim/pkg/cache/notify"
 	"eim/util/log"
 )
 
@@ -26,31 +26,38 @@ type BizMember struct {
 }
 
 func (its *BizMember) AddBizMember(ctx context.Context, args *BizMemberArgs, reply *EmptyReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	err := its.redisManager.AddBizMember(args.BizMember)
 	if err != nil {
-		return fmt.Errorf("save user -> %w", err)
+		return fmt.Errorf("add biz_member -> %w", err)
 	}
 
 	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.TenantId)
-	err = notify.Del(bizMemberCachePool, key)
+
+	err = storageRpc.RefreshBizMembersCache(key, args.BizMember, ActionAdd)
 	if err != nil {
-		return fmt.Errorf("del biz_members(%s) cache -> %w", key, err)
+		log.Error("Error refresh biz_members cache: %v", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (its *BizMember) RemoveBizMember(ctx context.Context, args *BizMemberArgs, reply *EmptyReply) error {
+	err := its.redisManager.RemoveBizMember(args.BizMember)
+	if err != nil {
+		return fmt.Errorf("remove biz_member -> %w", err)
+	}
+
+	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.TenantId)
+
+	err = storageRpc.RefreshBizMembersCache(key, args.BizMember, ActionDelete)
+	if err != nil {
+		log.Error("Error refresh biz_members cache: %v", zap.Error(err))
 	}
 
 	return nil
 }
 
 func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, reply *BizMembersReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	key := fmt.Sprintf(cacheKeyFormat, bizMemberCachePool, args.BizMember.BizId, args.BizMember.TenantId)
 
 	if cacheItem, exist := its.storageCache.Get(key); exist {
@@ -58,7 +65,7 @@ func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, re
 		return nil
 	}
 
-	result, err, _ := group.Do(key, func() (interface{}, error) {
+	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
 		members, err := its.redisManager.GetBizMembers(args.BizMember.BizId, args.BizMember.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get biz_members -> %w", err)
@@ -66,13 +73,13 @@ func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, re
 		return members, nil
 	})
 	if err != nil {
-		return fmt.Errorf("group do -> %w", err)
+		return fmt.Errorf("biz_member single group do -> %w", err)
 	}
 
 	members := result.([]string)
-	its.storageCache.Put(key, members)
-
 	reply.Members = members
+
+	its.storageCache.Set(key, members)
 
 	return nil
 }

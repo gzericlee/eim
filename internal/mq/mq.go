@@ -2,28 +2,28 @@ package mq
 
 import "github.com/nats-io/nats.go"
 
-type base interface {
+type IBase interface {
 	printDetails()
 }
 
-type Handler interface {
-	HandleMessage(msg *nats.Msg) error
+type IHandler interface {
+	Process(msg *nats.Msg) error
 }
 
-type Producer interface {
-	base
+type IProducer interface {
+	IBase
 	Publish(subj string, body []byte) error
 }
 
-type Consumer interface {
-	base
-	Subscribe(subj string, queue string, handler Handler) error
+type IConsumer interface {
+	IBase
+	Subscribe(subj string, queue string, handler IHandler) error
 }
 
-func NewProducer(endpoints []string) (Producer, error) {
+func NewProducer(endpoints []string) (IProducer, error) {
 	return newNatsProducer(endpoints)
 }
 
-func NewConsumer(endpoints []string) (Consumer, error) {
+func NewConsumer(endpoints []string) (IConsumer, error) {
 	return newNatsConsumer(endpoints)
 }

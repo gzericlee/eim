@@ -12,21 +12,20 @@ import (
 )
 
 const (
-	userDeviceKeyFormat = "device:%s:%s"
-	devicesKeyFormat    = "device:%s:*"
+	devicesKeyFormat = "devices:%s"
 )
 
 func (its *Manager) SaveDevice(device *model.Device) error {
-	key := fmt.Sprintf(userDeviceKeyFormat, device.UserId, device.DeviceId)
+	key := fmt.Sprintf(devicesKeyFormat, device.UserId)
 
 	body, err := proto.Marshal(device)
 	if err != nil {
 		return fmt.Errorf("proto marshal -> %w", err)
 	}
 
-	err = its.redisClient.Set(context.Background(), key, body, 0).Err()
+	err = its.redisClient.HSet(context.Background(), key, device.DeviceId, body).Err()
 	if err != nil {
-		return fmt.Errorf("redis set(%s) -> %w", key, err)
+		return fmt.Errorf("redis hset(%s) -> %w", key, err)
 	}
 
 	return nil
@@ -35,9 +34,28 @@ func (its *Manager) SaveDevice(device *model.Device) error {
 func (its *Manager) GetDevices(userId string) ([]*model.Device, error) {
 	key := fmt.Sprintf(devicesKeyFormat, userId)
 
-	values, err := its.getAllValues(key)
+	values, err := its.redisClient.HGetAll(context.Background(), key).Result()
+
+	var devices []*model.Device
+	for _, value := range values {
+		device := &model.Device{}
+		err = proto.Unmarshal([]byte(value), device)
+		if err != nil {
+			log.Error("Error proto unmarshal. Drop it", zap.Error(err))
+			continue
+		}
+		devices = append(devices, device)
+	}
+
+	return devices, nil
+}
+
+func (its *Manager) GetAllDevices() ([]*model.Device, error) {
+	key := fmt.Sprintf(devicesKeyFormat, "*")
+
+	values, err := its.redisClient.HGetAll(context.Background(), key).Result()
 	if err != nil {
-		return nil, fmt.Errorf("redis getAllValues(%s) -> %w", key, err)
+		return nil, fmt.Errorf("redis hgetall(%s) -> %w", key, err)
 	}
 
 	var devices []*model.Device
@@ -55,11 +73,11 @@ func (its *Manager) GetDevices(userId string) ([]*model.Device, error) {
 }
 
 func (its *Manager) GetDevice(userId, deviceId string) (*model.Device, error) {
-	key := fmt.Sprintf(userDeviceKeyFormat, userId, deviceId)
+	key := fmt.Sprintf(devicesKeyFormat, userId)
 
-	value, err := its.redisClient.Get(context.Background(), key).Result()
+	value, err := its.redisClient.HGet(context.Background(), key, deviceId).Result()
 	if err != nil {
-		return nil, fmt.Errorf("redis get(%s) -> %w", key, err)
+		return nil, fmt.Errorf("redis hget(%s) -> %w", key, err)
 	}
 
 	device := &model.Device{}
@@ -69,4 +87,15 @@ func (its *Manager) GetDevice(userId, deviceId string) (*model.Device, error) {
 	}
 
 	return device, nil
+}
+
+func (its *Manager) RemoveDevice(userId, deviceId string) error {
+	key := fmt.Sprintf(devicesKeyFormat, userId)
+
+	err := its.redisClient.HDel(context.Background(), key, deviceId).Err()
+	if err != nil {
+		return fmt.Errorf("redis hdel(%s) -> %w", key, err)
+	}
+
+	return nil
 }

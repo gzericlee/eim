@@ -4,11 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
-	"time"
 
 	"eim/internal/model"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/util/log"
 )
 
 type Authenticator struct {
@@ -16,11 +14,6 @@ type Authenticator struct {
 }
 
 func (its *Authenticator) CheckToken(token string) (*model.Biz, error) {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	c, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		return nil, fmt.Errorf("decode token -> %w", err)

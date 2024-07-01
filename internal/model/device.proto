@@ -9,8 +9,7 @@ message Device {
   string device_type = 3;
   string device_version = 4;
   string gateway_ip = 5;
-  string from_id = 6;
-  google.protobuf.Timestamp online_at = 7;
-  google.protobuf.Timestamp offline_at = 8;
-  int32 state = 9;
+  google.protobuf.Timestamp online_at = 6;
+  google.protobuf.Timestamp offline_at = 7;
+  int32 state = 8;
 }

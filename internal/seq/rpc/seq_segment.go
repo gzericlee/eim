@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -19,17 +18,12 @@ type segmentSeq struct {
 	cache      sync.Map
 }
 
-func (its *segmentSeq) IncrementId(ctx context.Context, req *Request, reply *Reply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
+func (its *segmentSeq) IncrId(ctx context.Context, req *Request, reply *Reply) error {
 	var incr *incrementer
 	if obj, exist := its.cache.Load(req.BizId); exist {
 		incr = obj.(*incrementer)
 	} else {
-		incr = newIncrementer(req.BizId, its.storageRpc)
+		incr = newIncrementer(req.BizId, req.TenantId, its.storageRpc)
 		its.cache.Store(req.BizId, incr)
 	}
 	reply.Number = incr.Get()
@@ -37,27 +31,24 @@ func (its *segmentSeq) IncrementId(ctx context.Context, req *Request, reply *Rep
 }
 
 func (its *segmentSeq) SnowflakeId(ctx context.Context, req *Request, reply *Reply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	reply.Number = its.generator.NextId()
 	return nil
 }
 
 type incrementer struct {
 	bizId      string
+	tenantId   string
 	ch         chan int64
 	min, max   int64
 	locker     sync.RWMutex
 	storageRpc *storagerpc.Client
 }
 
-func newIncrementer(bizId string, storageRpc *storagerpc.Client) *incrementer {
+func newIncrementer(bizId, tenantId string, storageRpc *storagerpc.Client) *incrementer {
 	var gen = &incrementer{}
 
 	gen.bizId = bizId
+	gen.tenantId = tenantId
 	gen.storageRpc = storageRpc
 	gen.ch = make(chan int64, 1)
 	go gen.generate()
@@ -87,7 +78,7 @@ func (its *incrementer) reload() error {
 	its.locker.Lock()
 	defer its.locker.Unlock()
 	for {
-		seg, err := its.storageRpc.GetSegment(its.bizId)
+		seg, err := its.storageRpc.GetSegment(its.bizId, its.tenantId)
 		if err != nil {
 			log.Error("Get segment failed", zap.String("bizId", its.bizId), zap.Error(err))
 			time.Sleep(time.Second)

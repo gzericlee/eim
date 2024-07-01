@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -21,7 +22,7 @@ type natsConsumer struct {
 	taskPool  *ants.Pool
 }
 
-func newNatsConsumer(endpoints []string) (Consumer, error) {
+func newNatsConsumer(endpoints []string) (IConsumer, error) {
 	conn, err := nats.Connect(
 		strings.Join(endpoints, ","),
 		nats.Name("eim"),
@@ -64,22 +65,26 @@ func newNatsConsumer(endpoints []string) (Consumer, error) {
 	return consumer, nil
 }
 
-func (its *natsConsumer) Subscribe(subj string, queue string, handler Handler) error {
+func (its *natsConsumer) Subscribe(subj string, queue string, handler IHandler) error {
 	var doFunc = func(msg *nats.Msg) {
 		err := its.taskPool.Submit(func(msg *nats.Msg) func() {
 			return func() {
-				err := handler.HandleMessage(msg)
+				err := handler.Process(msg)
 				if err != nil {
 					log.Error("Error handle message", zap.Error(err))
 				}
 			}
 		}(msg))
 		if err != nil {
-			return
+			log.Error("Error submit task", zap.Error(err))
 		}
 	}
 
-	name := strings.ReplaceAll(subj, ".", "-")
+	t := reflect.TypeOf(handler)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	name := strings.ReplaceAll(subj, ".", "-") + "-" + strings.ToLower(t.Name())
 
 	if queue == "" {
 		_, err := its.jsContext.Subscribe(subj, doFunc, nats.ManualAck(), nats.Durable(name))

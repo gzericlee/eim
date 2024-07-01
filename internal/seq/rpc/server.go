@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	basePath    = "/eim_seq"
+	basePath    = "eim_seq"
 	servicePath = "id"
 )
 

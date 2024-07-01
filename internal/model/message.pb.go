@@ -36,7 +36,7 @@ type Message struct {
 	ToId       string `protobuf:"bytes,9,opt,name=to_id,json=toId,proto3" json:"to_id,omitempty" bson:"to_id"`
 	ToDevice   string `protobuf:"bytes,10,opt,name=to_device,json=toDevice,proto3" json:"to_device,omitempty" bson:"to_device"`
 	SendTime   int64  `protobuf:"varint,11,opt,name=send_time,json=sendTime,proto3" json:"send_time,omitempty" bson:"send_time"`
-	UserId     string `protobuf:"bytes,12,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" bson:"user_id"`
+	UserId     string `protobuf:"bytes,12,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" bson:"-"`
 }
 
 func (x *Message) Reset() {

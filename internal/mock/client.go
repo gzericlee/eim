@@ -21,9 +21,10 @@ type client struct {
 	deviceType    string
 	deviceVersion string
 	conn          *websocket.Conn
+	connected     chan bool
 }
 
-func newUpgrader() *websocket.Upgrader {
+func upgrader(cli *client) *websocket.Upgrader {
 	u := websocket.NewUpgrader()
 	u.SetPongHandler(func(conn *websocket.Conn, s string) {
 		hbCount.Add(1)
@@ -35,24 +36,9 @@ func newUpgrader() *websocket.Upgrader {
 			{
 				ackCount.Add(1)
 			}
-		case protocol.OfflineMessage:
+		case protocol.Connected:
 			{
-				var msgs []*model.Message
-				err := json.Unmarshal(data, &msgs)
-				if err != nil {
-					log.Error("Error unmarshal offline message", zap.Error(err))
-					invalidCount.Add(1)
-					return
-				}
-				for _, msg := range msgs {
-					err = conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10))))
-					if err != nil {
-						log.Error("Error sending ack", zap.Error(err))
-						return
-					}
-					ackCount.Add(1)
-					msgCount.Add(1)
-				}
+				cli.connected <- true
 			}
 		case protocol.Message:
 			{
@@ -63,19 +49,38 @@ func newUpgrader() *websocket.Upgrader {
 					invalidCount.Add(1)
 					return
 				}
-				err = conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10))))
+				msgHandler(conn, msg)
+			}
+		case protocol.Messages:
+			{
+				var msgs []*model.Message
+				err := json.Unmarshal(data, &msgs)
 				if err != nil {
-					log.Error("Error sending ack", zap.Error(err))
+					log.Error("Error unmarshal messages", zap.Error(err))
+					invalidCount.Add(1)
 					return
 				}
-				msgCount.Add(1)
+				for _, msg := range msgs {
+					msgHandler(conn, msg)
+				}
 			}
 		}
 	})
 
 	u.OnClose(func(conn *websocket.Conn, err error) {
 		connectedCount.Add(-1)
+		log.Error("Connection closed", zap.Error(err))
 	})
 
 	return u
+}
+
+func msgHandler(conn *websocket.Conn, msg *model.Message) {
+	err := conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10))))
+	if err != nil {
+		log.Error("Error sending ack", zap.Error(err))
+		return
+	}
+	ackCount.Add(1)
+	msgCount.Add(1)
 }

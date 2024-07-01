@@ -3,13 +3,10 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"eim/internal/model"
-	"eim/internal/redis"
-	"eim/util/log"
 
 	"eim/internal/database"
+	"eim/internal/model"
+	"eim/internal/redis"
 )
 
 type Message struct {
@@ -43,11 +40,6 @@ type MessagesReply struct {
 }
 
 func (its *Message) SaveMessages(ctx context.Context, args *MessagesArgs, reply *EmptyReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	err := its.database.SaveMessages(args.Messages)
 	if err != nil {
 		return fmt.Errorf("save messages -> %w", err)
@@ -57,11 +49,6 @@ func (its *Message) SaveMessages(ctx context.Context, args *MessagesArgs, reply 
 }
 
 func (its *Message) SaveOfflineMessages(ctx context.Context, args *MessagesArgs, reply *EmptyReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	err := its.redisManager.SaveOfflineMessages(args.Messages, args.UserId, args.DeviceId)
 	if err != nil {
 		return fmt.Errorf("save offline messages -> %w", err)
@@ -71,11 +58,6 @@ func (its *Message) SaveOfflineMessages(ctx context.Context, args *MessagesArgs,
 }
 
 func (its *Message) RemoveOfflineMessages(ctx context.Context, args *MessageIdsArgs, reply *EmptyReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	err := its.redisManager.RemoveOfflineMessages(args.MessageIds, args.UserId, args.DeviceId)
 	if err != nil {
 		return fmt.Errorf("remove offline messages -> %w", err)
@@ -85,11 +67,6 @@ func (its *Message) RemoveOfflineMessages(ctx context.Context, args *MessageIdsA
 }
 
 func (its *Message) GetOfflineMessagesCount(ctx context.Context, args *OfflineMessagesArgs, reply *OfflineMessagesCountReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	count, err := its.redisManager.GetOfflineMessagesCount(args.UserId, args.DeviceId)
 	if err != nil {
 		return fmt.Errorf("get offline messages count -> %w", err)
@@ -101,11 +78,6 @@ func (its *Message) GetOfflineMessagesCount(ctx context.Context, args *OfflineMe
 }
 
 func (its *Message) GetOfflineMessages(ctx context.Context, args *OfflineMessagesArgs, reply *MessagesReply) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	result, err := its.redisManager.GetOfflineMessages(args.UserId, args.DeviceId)
 	if err != nil {
 		return fmt.Errorf("get offline messages -> %w", err)

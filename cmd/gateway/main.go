@@ -14,7 +14,8 @@ import (
 	"eim"
 	"eim/internal/config"
 	"eim/internal/gateway"
-	"eim/internal/gateway/websocket"
+	"eim/internal/gateway/handler"
+	"eim/internal/gateway/server"
 	"eim/internal/mq"
 	"eim/pkg/pprof"
 	"eim/util/log"
@@ -41,21 +42,24 @@ func newCliApp() *cli.App {
 
 		//开启WS服务
 		var err error
-		var server *websocket.Server
+		var wsServer server.IServer
 		for {
-			server, err = gateway.StartWebsocketServer(gateway.Config{
+			wsServer, err = gateway.StartWebsocketServer(&gateway.Config{
 				//Ip:            config.SystemConfig.LocalIp,
 				Ports:         config.SystemConfig.GatewaySvr.WebSocketPorts.Value(),
 				MqEndpoints:   config.SystemConfig.Mq.Endpoints.Value(),
 				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
 			})
 			if err != nil {
-				log.Error("Error start webSocket server", zap.Error(err))
+				log.Error("Error start websocket server", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 			break
 		}
+		defer func() {
+			wsServer.Stop()
+		}()
 
 		//初始化Nsq消费者
 		for {
@@ -64,8 +68,8 @@ func newCliApp() *cli.App {
 				goto ERROR
 			}
 
-			err = consumer.Subscribe(fmt.Sprintf(mq.SendMessageSubject, strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), "", &websocket.SendHandler{
-				Server: server,
+			err = consumer.Subscribe(fmt.Sprintf(mq.SendMessageSubject, strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), "", &handler.SendHandler{
+				Servers: []server.IServer{wsServer},
 			})
 			if err != nil {
 				goto ERROR

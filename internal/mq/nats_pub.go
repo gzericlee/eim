@@ -24,7 +24,7 @@ type natsProducer struct {
 	jsContext nats.JetStreamContext
 }
 
-func newNatsProducer(endpoints []string) (Producer, error) {
+func newNatsProducer(endpoints []string) (IProducer, error) {
 	conn, err := nats.Connect(
 		strings.Join(endpoints, ","),
 		nats.Name("eim"),
@@ -63,11 +63,6 @@ func newNatsProducer(endpoints []string) (Producer, error) {
 }
 
 func (its *natsProducer) Publish(subj string, body []byte) error {
-	now := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("Function time duration %v", time.Since(now)))
-	}()
-
 	var err error
 
 	ack, err := its.jsContext.Publish(subj, body)

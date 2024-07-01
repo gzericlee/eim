@@ -1,7 +1,9 @@
 package redis
 
 import (
+	"context"
 	"fmt"
+	"math/rand/v2"
 	"testing"
 	"time"
 
@@ -45,6 +47,15 @@ func TestManager_GetDevices(t *testing.T) {
 	}
 	body, _ := proto.Marshal(devices[0])
 	t.Log(len(devices), string(body), err)
+}
+
+func TestManager_GetAllDevices(t *testing.T) {
+	devices, err := manager.GetAllDevices()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(len(devices), err)
 }
 
 func TestManager_SaveUser(t *testing.T) {
@@ -143,4 +154,18 @@ func TestManager_SaveOfflineMessages(t *testing.T) {
 	t.Log(manager.SaveOfflineMessages(msgs, "user-1", "device-1"))
 	t.Log(manager.GetOfflineMessagesCount("user-1", "device-1"))
 	t.Log(manager.GetOfflineMessages("user-1", "device-1"))
+}
+
+func BenchmarkManager_GetDevices(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		idx := rand.Int64N(9999)
+		_, _ = manager.GetDevices(fmt.Sprintf("user-%d", idx))
+	}
+}
+
+func TestManager_RemoveDevice(t *testing.T) {
+	keys, _ := manager.getAllKeys("device:*")
+	for _, key := range keys {
+		manager.redisClient.Del(context.Background(), key).Err()
+	}
 }

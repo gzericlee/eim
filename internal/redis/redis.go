@@ -6,11 +6,8 @@ import (
 	"sync"
 	"time"
 
-	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
-
-	"eim/internal/model"
 )
 
 type Config struct {
@@ -22,7 +19,6 @@ type Config struct {
 
 type Manager struct {
 	redisClient redis.UniversalClient
-	msgsBuffer  cmap.ConcurrentMap[string, []*model.Message]
 
 	offlineMessageExpire time.Duration
 	offlineDeviceExpire  time.Duration
@@ -35,7 +31,7 @@ func NewManager(cfg Config) (*Manager, error) {
 		DialTimeout:  10 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		PoolSize:     100,
+		PoolSize:     1000,
 		PoolTimeout:  30 * time.Second,
 	})
 
@@ -48,10 +44,7 @@ func NewManager(cfg Config) (*Manager, error) {
 		redisClient:          redisClient,
 		offlineDeviceExpire:  cfg.OfflineDeviceExpire,
 		offlineMessageExpire: cfg.OfflineMessageExpire,
-		msgsBuffer:           cmap.New[[]*model.Message](),
 	}
-
-	go manager.checkProcessExit()
 
 	return manager, nil
 }
@@ -85,7 +78,7 @@ func (its *Manager) getAllKeys(pattern string) ([]string, error) {
 		for {
 			var keysSlice []string
 			var err error
-			keysSlice, cursor, err = client.Scan(ctx, cursor, pattern, 1000).Result()
+			keysSlice, cursor, err = client.Scan(ctx, cursor, pattern, 5000).Result()
 			if err != nil {
 				return fmt.Errorf("redis scan -> %w", err)
 			}
@@ -137,7 +130,7 @@ func (its *Manager) getAllValues(pattern string) ([]string, error) {
 		for {
 			var keys []string
 			var err error
-			keys, cursor, err = client.Scan(ctx, cursor, pattern, 1000).Result()
+			keys, cursor, err = client.Scan(ctx, cursor, pattern, 5000).Result()
 			if err != nil {
 				return fmt.Errorf("redis scan -> %w", err)
 			}

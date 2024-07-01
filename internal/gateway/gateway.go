@@ -7,7 +7,8 @@ import (
 	"go.uber.org/zap"
 
 	authrpc "eim/internal/auth/rpc"
-	"eim/internal/gateway/websocket"
+	"eim/internal/gateway/server"
+	"eim/internal/gateway/server/websocket"
 	"eim/internal/mq"
 	seqrpc "eim/internal/seq/rpc"
 	storagerpc "eim/internal/storage/rpc"
@@ -21,7 +22,7 @@ type Config struct {
 	EtcdEndpoints []string
 }
 
-func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
+func StartWebsocketServer(cfg *Config) (server.IServer, error) {
 	logging.SetLevel(logging.LevelNone)
 
 	seqRpc, err := seqrpc.NewClient(cfg.EtcdEndpoints)
@@ -53,6 +54,8 @@ func StartWebsocketServer(cfg Config) (*websocket.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("start websocket server -> %w", err)
 	}
+
+	go server.PrintServiceStats()
 
 	log.Info("Listening websocket connect", zap.String("ip", cfg.Ip), zap.Strings("ports", cfg.Ports))
 

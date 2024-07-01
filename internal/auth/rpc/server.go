@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	basePath    = "/eim_auth"
+	basePath    = "eim_auth"
 	servicePath = "auth"
 )
 

@@ -64,7 +64,21 @@ func newCliApp() *cli.App {
 				continue
 			}
 
+			err = consumer.Subscribe(mq.UserMessageSubject, "", dispatch.NewSaveMessageHandler(storageRpc))
+			if err != nil {
+				log.Error("Error new mq consumers", zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
 			err = consumer.Subscribe(mq.GroupMessageSubject, "", dispatch.NewGroupMessageHandler(storageRpc, producer))
+			if err != nil {
+				log.Error("Error new mq consumers", zap.Error(err))
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
+			err = consumer.Subscribe(mq.GroupMessageSubject, "", dispatch.NewSaveMessageHandler(storageRpc))
 			if err != nil {
 				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
