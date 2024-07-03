@@ -44,7 +44,7 @@ services:
   storage:
     image: "eim/storage"
     deploy:
-      replicas: ${STORAGE_REPLICAS:-0}
+      replicas: ${STORAGE_REPLICAS:-1}
     restart: always
     environment:
       MAIN_DB_CONNECTION: "root:pass@word1@tcp(127.0.0.1:4000)/eim?charset=utf8mb4&parseTime=True&loc=Local"
@@ -52,7 +52,7 @@ services:
   mock:
     image: "eim/mock"
     deploy:
-      replicas: ${MOCK_REPLICAS:-1}
+      replicas: ${MOCK_REPLICAS:-0}
     environment:
       #,gateway:10082,gateway:10083,gateway:10084,gateway:10085,gateway:10086,gateway:10087,gateway:10088,gateway:10089,gateway:10090
       EMB_ENDPOINTS: "gateway:10081,gateway:10082,gateway:10083,gateway:10084"

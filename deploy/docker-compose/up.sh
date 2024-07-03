@@ -4,6 +4,10 @@ dir=$(dirname "$0")
 
 source "${dir}"/env
 
+for no in $(seq 1 6); do \
+  NO=${no} envsubst < "$dir/redis/cluster.tmpl" > "$dir/redis/redis-${no}.conf"
+done
+
 if [ "$1" = 'all' ] || [ "$1" = '' ]; then
   #docker-compose -p eim -f ${dir}/eim/docker-compose.yml up -d
   docker compose -p redis -f "${dir}"/redis/docker-compose.yml up -d

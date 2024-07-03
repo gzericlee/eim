@@ -1,10 +1,10 @@
 # global
 
 # service
-export MOCK_REPLICAS=10
+export MOCK_REPLICAS=0
 export GATEWAY_REPLICAS=1
-export DISPATCH_REPLICAS=2
-export STORAGE_REPLICAS=0
+export DISPATCH_REPLICAS=1
+export STORAGE_REPLICAS=1
 
 # mock
 export MESSAGE_COUNT=1
