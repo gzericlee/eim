@@ -2,10 +2,14 @@ package dispatch
 
 import (
 	"fmt"
+	"os"
+	"runtime"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/panjf2000/ants"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"go.uber.org/zap"
 
 	"eim/internal/model"
@@ -15,14 +19,38 @@ import (
 	"eim/internal/mq"
 )
 
-var taskPool *ants.Pool
+var (
+	userMsgTotal    int64
+	groupMsgTotal   int64
+	offlineMsgTotal int64
+	onlineMsgTotal  int64
+	savedMsgTotal   int64
+)
 
 func init() {
-	var err error
-	taskPool, err = ants.NewPoolPreMalloc(2048)
-	if err != nil {
-		panic(fmt.Sprintf("new ants pool -> %v", err))
-	}
+	go func() {
+		ticker := time.NewTicker(time.Second * 5)
+		for {
+			select {
+			case <-ticker.C:
+				{
+					t := table.NewWriter()
+					t.SetOutputMirror(os.Stdout)
+					t.AppendHeader(table.Row{"User Message Total", "Group Message Total", "Online Message Total", "Offline Message Total", "Saved Message Total", "Goroutines"})
+					t.AppendRows([]table.Row{{
+						userMsgTotal,
+						groupMsgTotal,
+						onlineMsgTotal,
+						offlineMsgTotal,
+						savedMsgTotal,
+						runtime.NumGoroutine()},
+					})
+					t.AppendSeparator()
+					t.Render()
+				}
+			}
+		}
+	}()
 }
 
 func toGroup(msg *model.Message, storageRpc *storagerpc.Client, producer mq.IProducer) error {
@@ -47,6 +75,10 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.IProd
 	devices, err := storageRpc.GetDevices(msg.UserId)
 	if err != nil {
 		return fmt.Errorf("get user devices -> %w", err)
+	}
+	if len(devices) == 0 {
+		log.Warn("No devices", zap.String("userId", msg.UserId))
+		return nil
 	}
 
 	body, err := proto.Marshal(msg)
@@ -73,7 +105,7 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.IProd
 					log.Error("Error sending message", zap.Error(err))
 					continue
 				}
-
+				atomic.AddInt64(&onlineMsgTotal, 1)
 				log.Debug("Online message", zap.String("gateway", device.GatewayIp), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
 			}
 		case model.OfflineState:
@@ -83,10 +115,9 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.IProd
 					log.Error("Error getting offline messages count", zap.Error(err))
 					continue
 				}
-
+				atomic.AddInt64(&offlineMsgCount, 1)
 				//TODO Push notification
-
-				log.Debug("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
+				log.Info("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
 			}
 		}
 	}

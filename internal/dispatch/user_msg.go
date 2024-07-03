@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
@@ -47,6 +48,8 @@ func (its *UserMessageHandler) Process(m *nats.Msg) error {
 	if err != nil {
 		return fmt.Errorf("dispatch user message to receive user -> %w", err)
 	}
+
+	atomic.AddInt64(&userMsgTotal, 1)
 
 	return m.Ack()
 }

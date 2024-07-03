@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
@@ -38,6 +39,8 @@ func (its *GroupMessageHandler) Process(m *nats.Msg) error {
 	if err != nil {
 		return fmt.Errorf("send message to group -> %w", err)
 	}
+
+	atomic.AddInt64(&groupMsgTotal, 1)
 
 	return m.Ack()
 }
