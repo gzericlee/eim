@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"time"
 
 	rpcxetcdclient "github.com/rpcxio/rpcx-etcd/client"
@@ -19,7 +18,7 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("new etcd v3 discovery for seq service -> %w", err)
 	}
-	pool := rpcxclient.NewXClientPool(runtime.NumCPU()*2, servicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d, rpcxclient.DefaultOption)
+	pool := rpcxclient.NewXClientPool(100, servicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d, rpcxclient.DefaultOption)
 	return &Client{pool: pool}, nil
 }
 

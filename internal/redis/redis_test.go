@@ -164,7 +164,7 @@ func BenchmarkManager_GetDevices(b *testing.B) {
 }
 
 func TestManager_RemoveDevice(t *testing.T) {
-	keys, _ := manager.getAllKeys("device:*")
+	keys, _ := manager.getAllKeys("devices:*")
 	for _, key := range keys {
 		manager.redisClient.Del(context.Background(), key).Err()
 	}

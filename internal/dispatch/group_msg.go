@@ -40,7 +40,7 @@ func (its *GroupMessageHandler) Process(m *nats.Msg) error {
 		return fmt.Errorf("send message to group -> %w", err)
 	}
 
-	atomic.AddInt64(&groupMsgTotal, 1)
+	atomic.AddInt64(&msgTotal, 1)
 
 	return m.Ack()
 }

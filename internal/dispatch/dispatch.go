@@ -20,8 +20,7 @@ import (
 )
 
 var (
-	userMsgTotal    int64
-	groupMsgTotal   int64
+	msgTotal        int64
 	offlineMsgTotal int64
 	onlineMsgTotal  int64
 	savedMsgTotal   int64
@@ -29,17 +28,16 @@ var (
 
 func init() {
 	go func() {
-		ticker := time.NewTicker(time.Second * 5)
+		ticker := time.NewTicker(time.Second * 30)
 		for {
 			select {
 			case <-ticker.C:
 				{
 					t := table.NewWriter()
 					t.SetOutputMirror(os.Stdout)
-					t.AppendHeader(table.Row{"User Message Total", "Group Message Total", "Online Message Total", "Offline Message Total", "Saved Message Total", "Goroutines"})
+					t.AppendHeader(table.Row{"Processed", "Online", "Offline", "Saved", "Goroutines"})
 					t.AppendRows([]table.Row{{
-						userMsgTotal,
-						groupMsgTotal,
+						msgTotal,
 						onlineMsgTotal,
 						offlineMsgTotal,
 						savedMsgTotal,
@@ -100,13 +98,15 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.IProd
 		switch device.State {
 		case model.OnlineState:
 			{
-				err = producer.Publish(fmt.Sprintf(mq.SendMessageSubject, strings.Replace(device.GatewayIp, ".", "-", -1)), body)
+				fmtAddr := strings.Replace(device.GatewayAddress, ".", "-", -1)
+				fmtAddr = strings.Replace(fmtAddr, ":", "-", -1)
+				err = producer.Publish(fmt.Sprintf(mq.SendMessageSubjectFormat, fmtAddr), body)
 				if err != nil {
 					log.Error("Error sending message", zap.Error(err))
 					continue
 				}
 				atomic.AddInt64(&onlineMsgTotal, 1)
-				log.Debug("Online message", zap.String("gateway", device.GatewayIp), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
+				log.Debug("Online message", zap.String("gateway", device.GatewayAddress), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
 			}
 		case model.OfflineState:
 			{
@@ -115,9 +115,9 @@ func toUser(msg *model.Message, storageRpc *storagerpc.Client, producer mq.IProd
 					log.Error("Error getting offline messages count", zap.Error(err))
 					continue
 				}
-				atomic.AddInt64(&offlineMsgCount, 1)
+				atomic.AddInt64(&offlineMsgTotal, offlineMsgCount)
 				//TODO Push notification
-				log.Info("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
+				log.Debug("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -38,39 +37,29 @@ func newCliApp() *cli.App {
 		pprof.EnablePProf()
 
 		//获取随机端口
-		for {
-			port, err := net.GetRandomPort()
-			if err != nil {
-				log.Error("Error get random port", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-			config.SystemConfig.StorageSvr.RpcPort = port
-			break
+		port, err := net.RandomPort()
+		if err != nil {
+			panic(fmt.Errorf("get random port -> %w", err))
 		}
+		config.SystemConfig.StorageSvr.RpcPort = port
 
 		//开启Storage服务
 		go func() {
-			for {
-				err := storagerpc.StartServer(storagerpc.Config{
-					Ip:                   config.SystemConfig.LocalIp,
-					Port:                 config.SystemConfig.StorageSvr.RpcPort,
-					DatabaseName:         config.SystemConfig.Database.Name,
-					EtcdEndpoints:        config.SystemConfig.Etcd.Endpoints.Value(),
-					DatabaseDriver:       database.Driver(config.SystemConfig.Database.Driver),
-					DatabaseConnection:   config.SystemConfig.Database.Connection,
-					RedisEndpoints:       config.SystemConfig.Redis.Endpoints.Value(),
-					RedisPassword:        config.SystemConfig.Redis.Password,
-					OfflineMessageExpire: config.SystemConfig.Redis.OfflineMessageExpire,
-					OfflineDeviceExpire:  config.SystemConfig.Redis.OfflineDeviceExpire,
-					RegistryServices:     config.SystemConfig.StorageSvr.RegistryServices.Value(),
-				})
-				if err != nil {
-					log.Error("Error start storage rpc server", zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.StorageSvr.RpcPort)), zap.Error(err))
-					time.Sleep(time.Second * 5)
-					continue
-				}
-				break
+			err := storagerpc.StartServer(storagerpc.Config{
+				Ip:                   config.SystemConfig.LocalIp,
+				Port:                 config.SystemConfig.StorageSvr.RpcPort,
+				DatabaseName:         config.SystemConfig.Database.Name,
+				EtcdEndpoints:        config.SystemConfig.Etcd.Endpoints.Value(),
+				DatabaseDriver:       database.Driver(config.SystemConfig.Database.Driver),
+				DatabaseConnection:   config.SystemConfig.Database.Connection,
+				RedisEndpoints:       config.SystemConfig.Redis.Endpoints.Value(),
+				RedisPassword:        config.SystemConfig.Redis.Password,
+				OfflineMessageExpire: config.SystemConfig.Redis.OfflineMessageExpire,
+				OfflineDeviceExpire:  config.SystemConfig.Redis.OfflineDeviceExpire,
+				RegistryServices:     config.SystemConfig.StorageSvr.RegistryServices.Value(),
+			})
+			if err != nil {
+				panic(fmt.Errorf("start storage rpc server -> %w", err))
 			}
 		}()
 

@@ -36,7 +36,7 @@ func RegisterAPIRoutes(redisManager *redis.Manager) error {
 
 	restful.Filter(cors.Filter)
 	restful.Filter(restful.OPTIONSFilter())
-	restful.Filter(filter.NCSALogFormat())
+	restful.Filter(filter.LogFormat())
 
 	return nil
 }

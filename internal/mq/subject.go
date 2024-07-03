@@ -8,5 +8,5 @@ const (
 	UserMessageSubject  string = "message.user"
 	GroupMessageSubject string = "message.group"
 
-	SendMessageSubject string = "message.send-%s"
+	SendMessageSubjectFormat string = "message.send-%s"
 )

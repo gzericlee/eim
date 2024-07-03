@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	HttpPort       = "HTTP_PORT"
-	WebSocketPorts = "WEBSOCKET_PORTS"
+	WebSocketPort = "WEBSOCKET_PORT"
 
 	MqEndpoints = "MQ_ENDPOINTS"
 
@@ -19,12 +18,12 @@ const (
 
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
-		&cli.StringSliceFlag{
-			Name:        "websocket-ports",
-			Value:       cli.NewStringSlice("10081"),
-			Usage:       "Websocket ports",
-			EnvVars:     []string{WebSocketPorts},
-			Destination: &config.SystemConfig.GatewaySvr.WebSocketPorts,
+		&cli.IntFlag{
+			Name:        "websocket-port",
+			Value:       10081,
+			Usage:       "Websocket port",
+			EnvVars:     []string{WebSocketPort},
+			Destination: &config.SystemConfig.GatewaySvr.WebSocketPort,
 		},
 		&cli.StringSliceFlag{
 			Name:        "mq-endpoints",

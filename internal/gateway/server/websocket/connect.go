@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"eim/internal/config"
 	"eim/internal/gateway/protocol"
 	"eim/internal/gateway/session"
 	"eim/internal/model"
@@ -51,13 +51,13 @@ func (its *Server) connect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device := &model.Device{
-		UserId:        user.BizId,
-		OnlineAt:      timestamppb.Now(),
-		DeviceId:      r.Header.Get("DeviceId"),
-		DeviceVersion: r.Header.Get("DeviceVersion"),
-		DeviceType:    r.Header.Get("DeviceType"),
-		State:         model.OnlineState,
-		GatewayIp:     config.SystemConfig.LocalIp,
+		UserId:         user.BizId,
+		OnlineAt:       timestamppb.Now(),
+		DeviceId:       r.Header.Get("DeviceId"),
+		DeviceVersion:  r.Header.Get("DeviceVersion"),
+		DeviceType:     r.Header.Get("DeviceType"),
+		State:          model.OnlineState,
+		GatewayAddress: fmt.Sprintf("%s:%d", its.ip, its.port),
 	}
 
 	err = its.storageRpc.SaveDevice(device)

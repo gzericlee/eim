@@ -5,7 +5,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -40,26 +39,19 @@ func newCliApp() *cli.App {
 		go func() {
 			httpServer := api.HttpServer{}
 			//开启Http服务
-			for {
-				redisManager, err := redis.NewManager(redis.Config{
-					RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
-					RedisPassword:  config.SystemConfig.Redis.Password,
-				})
-				if err != nil {
-					log.Error("Error new redis manager", zap.Strings("endpoints", config.SystemConfig.Redis.Endpoints.Value()), zap.Error(err))
-					time.Sleep(time.Second * 5)
-					continue
-				}
+			redisManager, err := redis.NewManager(redis.Config{
+				RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
+				RedisPassword:  config.SystemConfig.Redis.Password,
+			})
+			if err != nil {
+				panic(fmt.Errorf("new redis manager -> %w", err))
+			}
 
-				log.Info("New redis manager successfully")
+			log.Info("New redis manager successfully")
 
-				err = httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort, RedisManager: redisManager})
-				if err != nil {
-					log.Error("Error start api server", zap.Error(err))
-					time.Sleep(time.Second * 5)
-					continue
-				}
-				break
+			err = httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort, RedisManager: redisManager})
+			if err != nil {
+				panic(fmt.Errorf("run http server -> %w", err))
 			}
 		}()
 

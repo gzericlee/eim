@@ -29,4 +29,5 @@ type IServer interface {
 	IncrErrorTotal(count int64)
 
 	PrintServiceStats()
+	RegistryGateway()
 }

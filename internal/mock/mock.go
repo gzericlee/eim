@@ -2,7 +2,9 @@ package mock
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -114,6 +116,15 @@ func Do() {
 	concurrency := make(chan struct{}, 500)
 	connectionStart = time.Now()
 
+	resp, err := http.Get("http://127.0.0.1:10060/gateways")
+	if err != nil {
+		log.Error("Error getting gateway list", zap.Error(err))
+		return
+	}
+	data, _ := io.ReadAll(resp.Body)
+	var gateways []*model.Gateway
+	json.Unmarshal(data, &gateways)
+
 	for i := 1; i <= config.SystemConfig.Mock.ClientCount; i++ {
 		wg.Add(1)
 		concurrency <- struct{}{}
@@ -122,8 +133,11 @@ func Do() {
 				wg.Done()
 				<-concurrency
 			}()
+
+			gateway := gateways[i%len(gateways)]
+
 			id := strconv.Itoa(i)
-			u := url.URL{Scheme: "ws", Host: config.SystemConfig.Mock.EimEndpoints.Value()[i%len(config.SystemConfig.Mock.EimEndpoints.Value())], Path: "/"}
+			u := url.URL{Scheme: "ws", Host: fmt.Sprintf("%s:%d", gateway.Ip, gateway.Port), Path: "/"}
 
 			userId := "user-" + id
 			deviceId := "device-" + id

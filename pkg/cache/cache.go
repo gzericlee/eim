@@ -2,20 +2,23 @@ package cache
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/dgraph-io/ristretto"
+	"github.com/jedib0t/go-pretty/v6/table"
 
 	"eim/util/log"
 )
 
 type Cache struct {
+	name  string
 	cache *ristretto.Cache
 }
 
-func NewCache(name string, maxCost, numCounters int64) (*Cache, error) {
+func NewCache(name string, maxCost, numCounters int64, metrics bool) (*Cache, error) {
 	cache, err := ristretto.NewCache(&ristretto.Config{
-		Metrics: true,
+		Metrics: metrics,
 		OnEvict: func(item *ristretto.Item) {
 			log.Warn(fmt.Sprintf("cache evict %+v", item.Key))
 		},
@@ -30,16 +33,16 @@ func NewCache(name string, maxCost, numCounters int64) (*Cache, error) {
 		return nil, fmt.Errorf("new ristretto cache -> %w", err)
 	}
 
-	go func() {
-		for {
-			time.Sleep(time.Second * 10)
-			log.Info(fmt.Sprintf("Cache `%s` metrics %+v", name, cache.Metrics))
-		}
-	}()
-
-	return &Cache{
+	c := &Cache{
+		name:  name,
 		cache: cache,
-	}, nil
+	}
+
+	if metrics {
+		go c.printMetrics()
+	}
+
+	return c, nil
 }
 
 func (its *Cache) Set(key string, value interface{}) {
@@ -60,4 +63,24 @@ func (its *Cache) Delete(key string) {
 
 func (its *Cache) Close() {
 	its.cache.Close()
+}
+
+func (its *Cache) printMetrics() {
+	ticker := time.NewTicker(time.Second * 30)
+	for {
+		select {
+		case <-ticker.C:
+			{
+				t := table.NewWriter()
+				t.SetOutputMirror(os.Stdout)
+				t.AppendHeader(table.Row{"Cache Name", "Metrics"})
+				t.AppendRows([]table.Row{{
+					its.name,
+					its.cache.Metrics},
+				})
+				t.AppendSeparator()
+				t.Render()
+			}
+		}
+	}
 }

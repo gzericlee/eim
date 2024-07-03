@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -38,57 +37,44 @@ func newCliApp() *cli.App {
 		pprof.EnablePProf()
 
 		//初始化Nsq消费者
-		for {
-			storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
-			if err != nil {
-				log.Error("Error new storage rpc client", zap.Strings("endpoints", config.SystemConfig.Etcd.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			producer, err := mq.NewProducer(config.SystemConfig.Mq.Endpoints.Value())
-			if err != nil {
-				log.Error("Error new mq producer", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			log.Info("New mq producers successfully")
-
-			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
-
-			err = consumer.Subscribe(mq.UserMessageSubject, "dispatch-user-message", dispatch.NewUserMessageHandler(storageRpc, producer))
-			if err != nil {
-				log.Error("Error new mq consumers", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			err = consumer.Subscribe(mq.UserMessageSubject, "save-user-message", dispatch.NewSaveMessageHandler(storageRpc))
-			if err != nil {
-				log.Error("Error new mq consumers", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			err = consumer.Subscribe(mq.GroupMessageSubject, "dispatch-group-message", dispatch.NewGroupMessageHandler(storageRpc, producer))
-			if err != nil {
-				log.Error("Error new mq consumers", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			err = consumer.Subscribe(mq.GroupMessageSubject, "save-group-message", dispatch.NewSaveMessageHandler(storageRpc))
-			if err != nil {
-				log.Error("Error new mq consumers", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			log.Info("New mq consumers successfully", zap.Strings("subjects", []string{mq.UserMessageSubject, mq.GroupMessageSubject}))
-
-			break
+		storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+		if err != nil {
+			panic(fmt.Errorf("new storage rpc client -> %w", err))
 		}
+
+		producer, err := mq.NewProducer(config.SystemConfig.Mq.Endpoints.Value())
+		if err != nil {
+			panic(fmt.Errorf("new mq producer -> %w", err))
+		}
+
+		log.Info("New mq producers successfully")
+
+		consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
+		if err != nil {
+			panic(fmt.Errorf("new mq consumer -> %w", err))
+		}
+
+		err = consumer.Subscribe(mq.UserMessageSubject, "dispatch-user-message", dispatch.NewUserMessageHandler(storageRpc, producer))
+		if err != nil {
+			panic(fmt.Errorf("subscribe dispatch user message subject -> %w", err))
+		}
+
+		err = consumer.Subscribe(mq.UserMessageSubject, "save-user-message", dispatch.NewSaveMessageHandler(storageRpc))
+		if err != nil {
+			panic(fmt.Errorf("subscribe save user message subject -> %w", err))
+		}
+
+		err = consumer.Subscribe(mq.GroupMessageSubject, "dispatch-group-message", dispatch.NewGroupMessageHandler(storageRpc, producer))
+		if err != nil {
+			panic(fmt.Errorf("subscribe dispatch group message subject -> %w", err))
+		}
+
+		err = consumer.Subscribe(mq.GroupMessageSubject, "save-group-message", dispatch.NewSaveMessageHandler(storageRpc))
+		if err != nil {
+			panic(fmt.Errorf("subscribe save group message subject -> %w", err))
+		}
+
+		log.Info("New mq consumers successfully", zap.Strings("subjects", []string{mq.UserMessageSubject, mq.GroupMessageSubject}))
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 

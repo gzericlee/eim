@@ -2,7 +2,7 @@ package net
 
 import "net"
 
-func GetRandomPort() (int, error) {
+func RandomPort() (int, error) {
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		return 0, err

@@ -49,7 +49,7 @@ func (its *UserMessageHandler) Process(m *nats.Msg) error {
 		return fmt.Errorf("dispatch user message to receive user -> %w", err)
 	}
 
-	atomic.AddInt64(&userMsgTotal, 1)
+	atomic.AddInt64(&msgTotal, 1)
 
 	return m.Ack()
 }

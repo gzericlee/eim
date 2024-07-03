@@ -3,6 +3,7 @@ package websocket
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/gateway/session"
+	"eim/internal/metric"
+	"eim/internal/model"
 	"eim/internal/mq"
 	seqrpc "eim/internal/seq/rpc"
 	storagerpc "eim/internal/storage/rpc"
@@ -18,7 +21,7 @@ import (
 
 type Server struct {
 	ip             string
-	ports          []string
+	port           int
 	keepaliveTime  time.Duration
 	sessionManager *session.Manager
 	workerPool     *ants.Pool
@@ -37,12 +40,7 @@ type Server struct {
 	errorTotal       int64
 }
 
-func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrpc.Client, storageRpc *storagerpc.Client, producer mq.IProducer) (*Server, error) {
-	var address []string
-	for _, port := range ports {
-		address = append(address, fmt.Sprintf("%v:%v", ip, port))
-	}
-
+func NewServer(ip string, port int, seqRpc *seqrpc.Client, authRpc *authrpc.Client, storageRpc *storagerpc.Client, producer mq.IProducer) (*Server, error) {
 	taskPool, err := ants.NewPoolPreMalloc(1024)
 	if err != nil {
 		return nil, fmt.Errorf("new worker pool -> %w", err)
@@ -52,7 +50,7 @@ func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrp
 
 	server := &Server{
 		ip:             ip,
-		ports:          ports,
+		port:           port,
 		keepaliveTime:  keepaliveTime,
 		sessionManager: session.NewManager(),
 		workerPool:     taskPool,
@@ -67,7 +65,7 @@ func NewServer(ip string, ports []string, seqRpc *seqrpc.Client, authRpc *authrp
 
 	server.http = nbhttp.NewServer(nbhttp.Config{
 		Network:                 "tcp",
-		Addrs:                   address,
+		Addrs:                   []string{fmt.Sprintf("%v:%v", ip, port)},
 		MaxLoad:                 1000000,
 		ReleaseWebsocketPayload: true,
 		Handler:                 mux,
@@ -131,4 +129,22 @@ func (its *Server) IncrClientTotal(count int64) {
 
 func (its *Server) IncrErrorTotal(count int64) {
 	atomic.AddInt64(&its.errorTotal, count)
+}
+
+func (its *Server) RegistryGateway() {
+	mMetric, _ := metric.GetMachineMetric()
+	err := its.storageRpc.RegisterGateway(&model.Gateway{
+		Ip:             its.ip,
+		Port:           int32(its.port),
+		ClientTotal:    its.clientTotal,
+		SendTotal:      its.sendMsgTotal,
+		ReceivedTotal:  its.receivedMsgTotal,
+		InvalidTotal:   its.invalidMsgTotal,
+		GoroutineTotal: int64(runtime.NumGoroutine()),
+		MemUsed:        float32(mMetric.MemUsed),
+		CpuUsed:        float32(mMetric.CpuUsed),
+	}, time.Second*10)
+	if err != nil {
+		return
+	}
 }

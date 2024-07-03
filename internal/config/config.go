@@ -11,7 +11,7 @@ import (
 var SystemConfig *systemConfig
 
 func init() {
-	ip, err := net.GetInternalIP()
+	ip, err := net.InternalIP()
 	if err != nil {
 		log.Panic("get local ip error -> %v", zap.Error(err))
 	}
@@ -33,10 +33,9 @@ type systemConfig struct {
 		Endpoints cli.StringSlice
 	}
 	GatewaySvr struct {
-		WebSocketPorts cli.StringSlice
+		WebSocketPort int
 	}
 	Mock struct {
-		EimEndpoints cli.StringSlice
 		ClientCount  int
 		MessageCount int
 	}

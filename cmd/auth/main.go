@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -37,31 +36,21 @@ func newCliApp() *cli.App {
 		pprof.EnablePProf()
 
 		//获取随机端口
-		for {
-			port, err := net.GetRandomPort()
-			if err != nil {
-				log.Error("Error get random port", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-			config.SystemConfig.AuthSvr.RpcPort = port
-			break
+		port, err := net.RandomPort()
+		if err != nil {
+			panic(fmt.Errorf("get random port -> %w", err))
 		}
+		config.SystemConfig.AuthSvr.RpcPort = port
 
 		//开启Rpc服务
 		go func() {
-			for {
-				err := authrpc.StartServer(authrpc.Config{
-					Ip:            config.SystemConfig.LocalIp,
-					Port:          config.SystemConfig.AuthSvr.RpcPort,
-					EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
-				})
-				if err != nil {
-					log.Error("Error start auth rpc server", zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.AuthSvr.RpcPort)), zap.Error(err))
-					time.Sleep(time.Second * 5)
-					continue
-				}
-				break
+			err := authrpc.StartServer(authrpc.Config{
+				Ip:            config.SystemConfig.LocalIp,
+				Port:          config.SystemConfig.AuthSvr.RpcPort,
+				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
+			})
+			if err != nil {
+				panic(fmt.Errorf("start auth rpc server -> %w", err))
 			}
 		}()
 

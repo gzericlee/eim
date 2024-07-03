@@ -4,11 +4,12 @@ option go_package = "../model";
 
 message Gateway {
   string ip = 1;
-  int64 client_total = 2;
-  int64 send_total = 3;
-  int64 received_total = 4;
-  int64 invalid_total = 5;
-  int64 goroutine_total = 6;
-  float mem_used = 7;
-  float cpu_used= 8;
+  int32 port = 2;
+  int64 client_total = 3;
+  int64 send_total = 4;
+  int64 received_total = 5;
+  int64 invalid_total = 6;
+  int64 goroutine_total = 7;
+  float mem_used = 8;
+  float cpu_used= 9;
 }

@@ -10,7 +10,7 @@ import (
 	"eim/util/log"
 )
 
-func NCSALogFormat() restful.FilterFunction {
+func LogFormat() restful.FilterFunction {
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 		start := time.Now()
 		chain.ProcessFilter(req, resp)

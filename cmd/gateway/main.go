@@ -6,10 +6,8 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/urfave/cli/v2"
-	"go.uber.org/zap"
 
 	"eim"
 	"eim/internal/config"
@@ -41,46 +39,31 @@ func newCliApp() *cli.App {
 		pprof.EnablePProf()
 
 		//开启WS服务
-		var err error
-		var wsServer server.IServer
-		for {
-			wsServer, err = gateway.StartWebsocketServer(&gateway.Config{
-				//Ip:            config.SystemConfig.LocalIp,
-				Ports:         config.SystemConfig.GatewaySvr.WebSocketPorts.Value(),
-				MqEndpoints:   config.SystemConfig.Mq.Endpoints.Value(),
-				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
-			})
-			if err != nil {
-				log.Error("Error start websocket server", zap.Error(err))
-				time.Sleep(time.Second * 5)
-				continue
-			}
-			break
+		wsServer, err := gateway.StartWebsocketServer(&gateway.Config{
+			Ip:            config.SystemConfig.LocalIp,
+			Port:          config.SystemConfig.GatewaySvr.WebSocketPort,
+			MqEndpoints:   config.SystemConfig.Mq.Endpoints.Value(),
+			EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
+		})
+		if err != nil {
+			panic(fmt.Errorf("start ws server -> %w", err))
 		}
-		defer func() {
-			wsServer.Stop()
-		}()
+
+		defer wsServer.Stop()
 
 		//初始化Nsq消费者
-		for {
-			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
-			if err != nil {
-				goto ERROR
-			}
+		consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
+		if err != nil {
+			panic(fmt.Errorf("new mq consumer -> %w", err))
+		}
 
-			err = consumer.Subscribe(mq.SendMessageSubject, fmt.Sprintf("send-%s", strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), &handler.SendHandler{
-				Servers: []server.IServer{wsServer},
-			})
-			if err != nil {
-				goto ERROR
-			}
-			break
-
-		ERROR:
-			log.Error("Error new mq consumers", zap.Strings("endpoints", config.SystemConfig.Mq.Endpoints.Value()), zap.Error(err))
-			time.Sleep(time.Second * 5)
-			continue
-
+		fmtAddr := strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)
+		fmtAddr = fmt.Sprintf("%s-%d", fmtAddr, config.SystemConfig.GatewaySvr.WebSocketPort)
+		err = consumer.Subscribe(fmt.Sprintf(mq.SendMessageSubjectFormat, fmtAddr), fmtAddr, &handler.SendHandler{
+			Servers: []server.IServer{wsServer},
+		})
+		if err != nil {
+			panic(fmt.Errorf("subscribe send message subject -> %w", err))
 		}
 
 		log.Info("New mq consumers successfully")

@@ -39,7 +39,7 @@ func newCliApp() *cli.App {
 
 		//获取随机端口
 		for {
-			port, err := net.GetRandomPort()
+			port, err := net.RandomPort()
 			if err != nil {
 				log.Error("Error get random port", zap.Error(err))
 				time.Sleep(time.Second * 5)

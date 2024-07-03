@@ -83,17 +83,17 @@ func StartServer(cfg Config) error {
 	}
 	svr.Plugins.Add(plugin)
 
-	deviceCache, err := cache.NewCache("device", 3*1024*1024*1024, 1000000)
+	deviceCache, err := cache.NewCache("device", 3*1024*1024*1024, 1000000, true)
 	if err != nil {
 		panic(err)
 	}
 
-	bizCache, err := cache.NewCache("biz", 3*1024*1024*1024, 500000)
+	bizCache, err := cache.NewCache("biz", 3*1024*1024*1024, 500000, true)
 	if err != nil {
 		panic(err)
 	}
 
-	bizMemberCache, err := cache.NewCache("biz_member", 3*1024*1024*1024, 1000000)
+	bizMemberCache, err := cache.NewCache("biz_member", 3*1024*1024*1024, 1000000, true)
 	if err != nil {
 		panic(err)
 	}

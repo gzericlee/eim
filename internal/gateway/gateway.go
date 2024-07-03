@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/lesismal/nbio/logging"
 	"go.uber.org/zap"
@@ -17,7 +18,7 @@ import (
 
 type Config struct {
 	Ip            string
-	Ports         []string
+	Port          int
 	MqEndpoints   []string
 	EtcdEndpoints []string
 }
@@ -45,7 +46,7 @@ func StartWebsocketServer(cfg *Config) (server.IServer, error) {
 		return nil, fmt.Errorf("new mq producer -> %w", err)
 	}
 
-	server, err := websocket.NewServer(cfg.Ip, cfg.Ports, seqRpc, authRpc, storageRpc, producer)
+	server, err := websocket.NewServer(cfg.Ip, cfg.Port, seqRpc, authRpc, storageRpc, producer)
 	if err != nil {
 		return nil, fmt.Errorf("new websocket server -> %w", err)
 	}
@@ -57,7 +58,19 @@ func StartWebsocketServer(cfg *Config) (server.IServer, error) {
 
 	go server.PrintServiceStats()
 
-	log.Info("Listening websocket connect", zap.String("ip", cfg.Ip), zap.Strings("ports", cfg.Ports))
+	go func() {
+		ticker := time.NewTicker(time.Second * 10)
+		for {
+			select {
+			case <-ticker.C:
+				{
+					server.RegistryGateway()
+				}
+			}
+		}
+	}()
+
+	log.Info("Listening websocket connect", zap.String("ip", cfg.Ip), zap.Int("port", cfg.Port))
 
 	return server, nil
 }

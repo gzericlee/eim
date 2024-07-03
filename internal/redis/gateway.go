@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	gatewayKeyFormat  = "gateway:%s"
+	gatewayKeyFormat  = "gateway:%s:%d"
 	gatewaysKeyFormat = "gateway:*"
 )
 
 func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Duration) error {
-	key := fmt.Sprintf(gatewayKeyFormat, gateway.Ip)
+	key := fmt.Sprintf(gatewayKeyFormat, gateway.Ip, gateway.Port)
 
 	body, err := proto.Marshal(gateway)
 	if err != nil {

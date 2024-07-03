@@ -35,7 +35,6 @@ func newCliApp() *cli.App {
 		//开启PProf服务
 		pprof.EnablePProf()
 
-		log.Info("EIM GatewaySvr", zap.Strings("endpoints", config.SystemConfig.Mock.EimEndpoints.Value()))
 		log.Info("Mock info", zap.Int("client_number", config.SystemConfig.Mock.ClientCount), zap.Int("send_number", config.SystemConfig.Mock.MessageCount))
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))

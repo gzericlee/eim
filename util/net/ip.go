@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func GetInternalIP() (string, error) {
+func InternalIP() (string, error) {
 	inters, err := net.Interfaces()
 	if err != nil {
 		return "", fmt.Errorf("get net interfaces -> %w", err)
@@ -30,7 +30,7 @@ func GetInternalIP() (string, error) {
 	return "", fmt.Errorf("no local ipv4 address found")
 }
 
-func GetPodIP() (string, error) {
+func PodIP() (string, error) {
 	podIp := os.Getenv("POD_IP")
 	if podIp == "" {
 		return "", fmt.Errorf("env POD_IP is empty")

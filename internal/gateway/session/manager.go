@@ -12,7 +12,7 @@ type Manager struct {
 }
 
 func NewManager() *Manager {
-	sessionCache, err := cache.NewCache("session", 3*1024*1024*1024, 1000000)
+	sessionCache, err := cache.NewCache("session", 3*1024*1024*1024, 1000000, true)
 	if err != nil {
 		panic(err)
 	}

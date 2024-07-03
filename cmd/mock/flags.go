@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	EimEndpoints = "EIM_ENDPOINTS"
 	ClientCount  = "CLIENT_COUNT"
 	MessageCount = "MESSAGE_COUNT"
 
@@ -18,13 +17,6 @@ const (
 
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
-		&cli.StringSliceFlag{
-			Name:        "eim-endpoints",
-			Value:       cli.NewStringSlice("127.0.0.1:10081", "127.0.0.1:10082", "127.0.0.1:10083"),
-			Usage:       "EIM endpoints",
-			EnvVars:     []string{EimEndpoints},
-			Destination: &config.SystemConfig.Mock.EimEndpoints,
-		},
 		&cli.StringSliceFlag{
 			Name:        "etcd-endpoints",
 			Value:       cli.NewStringSlice("127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"),
