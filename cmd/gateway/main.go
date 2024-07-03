@@ -68,7 +68,7 @@ func newCliApp() *cli.App {
 				goto ERROR
 			}
 
-			err = consumer.Subscribe(fmt.Sprintf(mq.SendMessageSubject, strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), "", &handler.SendHandler{
+			err = consumer.Subscribe(mq.SendMessageSubject, fmt.Sprintf("send-%s", strings.Replace(config.SystemConfig.LocalIp, ".", "-", -1)), &handler.SendHandler{
 				Servers: []server.IServer{wsServer},
 			})
 			if err != nil {

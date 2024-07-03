@@ -19,13 +19,6 @@ const (
 
 func ParseFlags(app *cli.App) {
 	flags := []cli.Flag{
-		&cli.IntFlag{
-			Name:        "http-port",
-			Value:       10081,
-			Usage:       "Http port",
-			EnvVars:     []string{HttpPort},
-			Destination: &config.SystemConfig.GatewaySvr.HttpPort,
-		},
 		&cli.StringSliceFlag{
 			Name:        "websocket-ports",
 			Value:       cli.NewStringSlice("10081"),

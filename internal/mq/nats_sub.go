@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -80,23 +79,11 @@ func (its *natsConsumer) Subscribe(subj string, queue string, handler IHandler) 
 		}
 	}
 
-	t := reflect.TypeOf(handler)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
+	_, err := its.jsContext.QueueSubscribe(subj, queue, doFunc, nats.ManualAck())
+	if err != nil {
+		return fmt.Errorf("queue subscribe message -> %w", err)
 	}
-	name := strings.ReplaceAll(subj, ".", "-") + "-" + strings.ToLower(t.Name())
 
-	if queue == "" {
-		_, err := its.jsContext.Subscribe(subj, doFunc, nats.ManualAck(), nats.Durable(name))
-		if err != nil {
-			return fmt.Errorf("subscribe message -> %w", err)
-		}
-	} else {
-		_, err := its.jsContext.QueueSubscribe(subj, queue, doFunc, nats.ManualAck(), nats.Durable(name))
-		if err != nil {
-			return fmt.Errorf("queue subscribe message -> %w", err)
-		}
-	}
 	return nil
 }
 

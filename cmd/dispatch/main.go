@@ -57,28 +57,28 @@ func newCliApp() *cli.App {
 
 			consumer, err := mq.NewConsumer(config.SystemConfig.Mq.Endpoints.Value())
 
-			err = consumer.Subscribe(mq.UserMessageSubject, "", dispatch.NewUserMessageHandler(storageRpc, producer))
+			err = consumer.Subscribe(mq.UserMessageSubject, "dispatch-user-message", dispatch.NewUserMessageHandler(storageRpc, producer))
 			if err != nil {
 				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			err = consumer.Subscribe(mq.UserMessageSubject, "", dispatch.NewSaveMessageHandler(storageRpc))
+			err = consumer.Subscribe(mq.UserMessageSubject, "save-user-message", dispatch.NewSaveMessageHandler(storageRpc))
 			if err != nil {
 				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			err = consumer.Subscribe(mq.GroupMessageSubject, "", dispatch.NewGroupMessageHandler(storageRpc, producer))
+			err = consumer.Subscribe(mq.GroupMessageSubject, "dispatch-group-message", dispatch.NewGroupMessageHandler(storageRpc, producer))
 			if err != nil {
 				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)
 				continue
 			}
 
-			err = consumer.Subscribe(mq.GroupMessageSubject, "", dispatch.NewSaveMessageHandler(storageRpc))
+			err = consumer.Subscribe(mq.GroupMessageSubject, "save-group-message", dispatch.NewSaveMessageHandler(storageRpc))
 			if err != nil {
 				log.Error("Error new mq consumers", zap.Error(err))
 				time.Sleep(time.Second * 5)

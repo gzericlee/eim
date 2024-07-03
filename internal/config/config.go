@@ -33,7 +33,6 @@ type systemConfig struct {
 		Endpoints cli.StringSlice
 	}
 	GatewaySvr struct {
-		HttpPort       int
 		WebSocketPorts cli.StringSlice
 	}
 	Mock struct {
