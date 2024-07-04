@@ -27,7 +27,7 @@ import (
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
 	seqrpc "eim/internal/seq/rpc"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 var connectedCount = &atomic.Int64{}

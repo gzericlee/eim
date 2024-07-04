@@ -7,8 +7,9 @@ import (
 	"github.com/dimiro1/banner"
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable"
 
+	log2 "eim/pkg/log"
+
 	"eim/internal/config"
-	"eim/util/log"
 )
 
 var (
@@ -36,7 +37,7 @@ func Printf() {
 		Date = "unknown"
 	}
 
-	log.SetConfig(log.Config{
+	log2.SetConfig(log2.Config{
 		ConsoleEnabled: true,
 		ConsoleLevel:   config.SystemConfig.LogLevel,
 		ConsoleJson:    false,

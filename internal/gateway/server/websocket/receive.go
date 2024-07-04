@@ -12,7 +12,7 @@ import (
 	"eim/internal/gateway/session"
 	"eim/internal/model"
 	"eim/internal/mq"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func (its *Server) receive(conn *websocket.Conn, _ websocket.MessageType, data []byte) {

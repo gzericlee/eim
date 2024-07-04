@@ -51,14 +51,14 @@ func TestDevice_Save(t *testing.T) {
 	s := 0
 	for i := 0; i < 150000; i++ {
 		device := &model.Device{
-			DeviceId:      uuid.New().String(),
-			UserId:        uuid.New().String(),
-			DeviceType:    uuid.New().String(),
-			DeviceVersion: uuid.New().String(),
-			GatewayIp:     uuid.New().String(),
-			OnlineAt:      nil,
-			OfflineAt:     nil,
-			State:         0,
+			DeviceId:       uuid.New().String(),
+			UserId:         uuid.New().String(),
+			DeviceType:     uuid.New().String(),
+			DeviceVersion:  uuid.New().String(),
+			GatewayAddress: uuid.New().String(),
+			OnlineAt:       nil,
+			OfflineAt:      nil,
+			State:          0,
 		}
 		err := rpcClient.SaveDevice(device)
 		if err != nil {

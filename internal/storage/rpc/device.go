@@ -12,7 +12,7 @@ import (
 	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/lock"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type DeviceArgs struct {

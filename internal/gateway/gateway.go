@@ -13,7 +13,7 @@ import (
 	"eim/internal/mq"
 	seqrpc "eim/internal/seq/rpc"
 	storagerpc "eim/internal/storage/rpc"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type Config struct {

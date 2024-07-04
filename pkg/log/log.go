@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -55,6 +56,10 @@ func (its *Logger) Fatal(msg string, fields ...Field) {
 
 type Logger struct {
 	*zap.Logger
+}
+
+func (its *Logger) Printf(format string, v ...interface{}) {
+	its.Debug(fmt.Sprintf(format, v...))
 }
 
 var logger *Logger

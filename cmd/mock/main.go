@@ -12,8 +12,8 @@ import (
 	"eim"
 	"eim/internal/config"
 	"eim/internal/mock"
+	"eim/pkg/log"
 	"eim/pkg/pprof"
-	"eim/util/log"
 )
 
 func newCliApp() *cli.App {

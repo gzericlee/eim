@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type workerIdManager struct {

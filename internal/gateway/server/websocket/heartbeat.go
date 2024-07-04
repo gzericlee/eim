@@ -6,7 +6,7 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func (its *Server) heartbeat(conn *websocket.Conn, s string) {

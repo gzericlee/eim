@@ -12,7 +12,7 @@ import (
 	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type natsConsumer struct {
@@ -34,7 +34,7 @@ func newNatsConsumer(endpoints []string) (IConsumer, error) {
 		return nil, fmt.Errorf("connect nats server -> %w", err)
 	}
 
-	jsContext, err := conn.JetStream(nats.PublishAsyncMaxPending(1024))
+	jsContext, err := conn.JetStream(nats.PublishAsyncMaxPending(5000))
 	if err != nil {
 		return nil, fmt.Errorf("get jetstream context -> %w", err)
 	}
@@ -79,7 +79,7 @@ func (its *natsConsumer) Subscribe(subj string, queue string, handler IHandler) 
 		}
 	}
 
-	_, err := its.jsContext.QueueSubscribe(subj, queue, doFunc, nats.ManualAck())
+	_, err := its.jsContext.QueueSubscribe(subj, queue, doFunc, nats.ManualAck(), nats.AckExplicit(), nats.MaxAckPending(5000))
 	if err != nil {
 		return fmt.Errorf("queue subscribe message -> %w", err)
 	}

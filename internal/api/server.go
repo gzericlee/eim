@@ -9,9 +9,11 @@ import (
 
 	"eim/internal/api/router"
 	"eim/internal/redis"
+	eimmetrics "eim/pkg/metrics"
 )
 
 type Config struct {
+	Ip           string
 	Port         int
 	RedisManager *redis.Manager
 }
@@ -27,6 +29,8 @@ func (its *HttpServer) Run(cfg Config) error {
 	}
 
 	its.server = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: restful.DefaultContainer}
+
+	eimmetrics.EnableMetrics(32003)
 
 	return its.server.ListenAndServe()
 }

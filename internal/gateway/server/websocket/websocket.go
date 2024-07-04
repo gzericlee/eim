@@ -12,7 +12,6 @@ import (
 
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/gateway/session"
-	"eim/internal/metric"
 	"eim/internal/model"
 	"eim/internal/mq"
 	seqrpc "eim/internal/seq/rpc"
@@ -132,7 +131,6 @@ func (its *Server) IncrErrorTotal(count int64) {
 }
 
 func (its *Server) RegistryGateway() {
-	mMetric, _ := metric.GetMachineMetric()
 	err := its.storageRpc.RegisterGateway(&model.Gateway{
 		Ip:             its.ip,
 		Port:           int32(its.port),
@@ -141,8 +139,6 @@ func (its *Server) RegistryGateway() {
 		ReceivedTotal:  its.receivedMsgTotal,
 		InvalidTotal:   its.invalidMsgTotal,
 		GoroutineTotal: int64(runtime.NumGoroutine()),
-		MemUsed:        float32(mMetric.MemUsed),
-		CpuUsed:        float32(mMetric.CpuUsed),
 	}, time.Second*10)
 	if err != nil {
 		return

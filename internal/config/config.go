@@ -4,14 +4,14 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/util/log"
-	"eim/util/net"
+	"eim/pkg/log"
+	"eim/pkg/netutil"
 )
 
 var SystemConfig *systemConfig
 
 func init() {
-	ip, err := net.InternalIP()
+	ip, err := netutil.InternalIP()
 	if err != nil {
 		log.Panic("get local ip error -> %v", zap.Error(err))
 	}

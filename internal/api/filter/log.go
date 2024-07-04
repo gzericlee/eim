@@ -7,7 +7,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func LogFormat() restful.FilterFunction {

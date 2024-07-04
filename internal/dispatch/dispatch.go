@@ -13,10 +13,9 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/model"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/util/log"
-
 	"eim/internal/mq"
+	storagerpc "eim/internal/storage/rpc"
+	"eim/pkg/log"
 )
 
 var (

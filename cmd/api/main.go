@@ -13,8 +13,8 @@ import (
 	"eim/internal/api"
 	"eim/internal/config"
 	"eim/internal/redis"
+	"eim/pkg/log"
 	"eim/pkg/pprof"
-	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -49,7 +49,9 @@ func newCliApp() *cli.App {
 
 			log.Info("New redis manager successfully")
 
-			err = httpServer.Run(api.Config{Port: config.SystemConfig.ApiSvr.HttpPort, RedisManager: redisManager})
+			err = httpServer.Run(api.Config{
+				Port:         config.SystemConfig.ApiSvr.HttpPort,
+				RedisManager: redisManager})
 			if err != nil {
 				panic(fmt.Errorf("run http server -> %w", err))
 			}

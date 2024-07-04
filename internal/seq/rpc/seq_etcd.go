@@ -9,7 +9,7 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type etcdSeq struct {

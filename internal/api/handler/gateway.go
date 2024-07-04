@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/redis"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type GatewayHandler struct {

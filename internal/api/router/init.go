@@ -9,7 +9,7 @@ import (
 
 	"eim/internal/api/filter"
 	"eim/internal/redis"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func RegisterAPIRoutes(redisManager *redis.Manager) error {

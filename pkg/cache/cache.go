@@ -2,13 +2,11 @@ package cache
 
 import (
 	"fmt"
-	"os"
-	"time"
 
 	"github.com/dgraph-io/ristretto"
-	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/rcrowley/go-metrics"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type Cache struct {
@@ -16,9 +14,9 @@ type Cache struct {
 	cache *ristretto.Cache
 }
 
-func NewCache(name string, maxCost, numCounters int64, metrics bool) (*Cache, error) {
+func NewCache(name string, maxCost, numCounters int64, enableMetrics bool) (*Cache, error) {
 	cache, err := ristretto.NewCache(&ristretto.Config{
-		Metrics: metrics,
+		Metrics: enableMetrics,
 		OnEvict: func(item *ristretto.Item) {
 			log.Warn(fmt.Sprintf("cache evict %+v", item.Key))
 		},
@@ -38,8 +36,28 @@ func NewCache(name string, maxCost, numCounters int64, metrics bool) (*Cache, er
 		cache: cache,
 	}
 
-	if metrics {
-		go c.printMetrics()
+	if enableMetrics {
+		metrics.Register(fmt.Sprintf("cache_%s_hits", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.Hits())
+		}))
+		metrics.Register(fmt.Sprintf("cache_%s_misses", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.Misses())
+		}))
+		metrics.Register(fmt.Sprintf("cache_%s_keys_added", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.KeysAdded())
+		}))
+		metrics.Register(fmt.Sprintf("cache_%s_keys_evicted", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.KeysEvicted())
+		}))
+		metrics.Register(fmt.Sprintf("cache_%s_cost_added", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.CostAdded())
+		}))
+		metrics.Register(fmt.Sprintf("cache_%s_cost_evicted", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.CostEvicted())
+		}))
+		metrics.Register(fmt.Sprintf("cache_%s_ratio", name), metrics.NewFunctionalGauge(func() int64 {
+			return int64(cache.Metrics.Ratio())
+		}))
 	}
 
 	return c, nil
@@ -63,24 +81,4 @@ func (its *Cache) Delete(key string) {
 
 func (its *Cache) Close() {
 	its.cache.Close()
-}
-
-func (its *Cache) printMetrics() {
-	ticker := time.NewTicker(time.Second * 30)
-	for {
-		select {
-		case <-ticker.C:
-			{
-				t := table.NewWriter()
-				t.SetOutputMirror(os.Stdout)
-				t.AppendHeader(table.Row{"Cache Name", "Metrics"})
-				t.AppendRows([]table.Row{{
-					its.name,
-					its.cache.Metrics},
-				})
-				t.AppendSeparator()
-				t.Render()
-			}
-		}
-	}
 }

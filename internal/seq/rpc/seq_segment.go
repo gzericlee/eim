@@ -8,8 +8,8 @@ import (
 	"go.uber.org/zap"
 
 	storagerpc "eim/internal/storage/rpc"
+	"eim/pkg/log"
 	"eim/pkg/snowflake"
-	"eim/util/log"
 )
 
 type segmentSeq struct {

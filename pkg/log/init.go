@@ -3,7 +3,7 @@ package log
 func init() {
 	logger = newZapLogger(Config{
 		ConsoleEnabled: true,
-		ConsoleLevel:   "DEBUG",
+		ConsoleLevel:   "INFO",
 		ConsoleJson:    false,
 		FileEnabled:    false,
 		FileJson:       true,

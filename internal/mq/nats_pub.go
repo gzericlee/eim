@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type natsProducer struct {
@@ -30,14 +30,14 @@ func newNatsProducer(endpoints []string) (IProducer, error) {
 		nats.Name("eim"),
 		nats.ReconnectWait(10*time.Second),
 		nats.MaxReconnects(5),
-		nats.PingInterval(10*time.Second),
+		nats.PingInterval(20*time.Second),
 		nats.MaxPingsOutstanding(3),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("connect nats server -> %w", err)
 	}
 
-	jsContext, err := conn.JetStream(nats.PublishAsyncMaxPending(1024))
+	jsContext, err := conn.JetStream(nats.PublishAsyncMaxPending(5000))
 	if err != nil {
 		return nil, fmt.Errorf("get jetstream context -> %w", err)
 	}

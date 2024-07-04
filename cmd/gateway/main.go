@@ -15,8 +15,9 @@ import (
 	"eim/internal/gateway/handler"
 	"eim/internal/gateway/server"
 	"eim/internal/mq"
+	"eim/pkg/log"
+	eimmetrics "eim/pkg/metrics"
 	"eim/pkg/pprof"
-	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -69,6 +70,8 @@ func newCliApp() *cli.App {
 		log.Info("New mq consumers successfully")
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
+
+		eimmetrics.EnableMetrics(32003)
 
 		select {}
 

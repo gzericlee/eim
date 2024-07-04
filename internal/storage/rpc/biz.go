@@ -10,7 +10,7 @@ import (
 	"eim/internal/model"
 	"eim/internal/redis"
 	"eim/pkg/cache"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type BizArgs struct {

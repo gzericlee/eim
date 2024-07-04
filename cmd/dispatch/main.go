@@ -13,8 +13,9 @@ import (
 	"eim/internal/dispatch"
 	"eim/internal/mq"
 	storagerpc "eim/internal/storage/rpc"
+	"eim/pkg/log"
+	eimmetrics "eim/pkg/metrics"
 	"eim/pkg/pprof"
-	"eim/util/log"
 )
 
 func newCliApp() *cli.App {
@@ -77,6 +78,8 @@ func newCliApp() *cli.App {
 		log.Info("New mq consumers successfully", zap.Strings("subjects", []string{mq.UserMessageSubject, mq.GroupMessageSubject}))
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
+
+		eimmetrics.EnableMetrics(32003)
 
 		select {}
 

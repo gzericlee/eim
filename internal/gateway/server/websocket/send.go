@@ -8,7 +8,7 @@ import (
 
 	"eim/internal/gateway/protocol"
 	"eim/internal/gateway/session"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func (its *Server) Send(sess *session.Session, cmd int, body []byte) {

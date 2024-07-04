@@ -13,7 +13,7 @@ import (
 	"eim/internal/gateway/protocol"
 	"eim/internal/gateway/session"
 	"eim/internal/model"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func (its *Server) connect(w http.ResponseWriter, r *http.Request) {

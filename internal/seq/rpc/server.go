@@ -5,10 +5,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rpcxio/rpcx-etcd/serverplugin"
+	"github.com/rcrowley/go-metrics"
+	etcdplugin "github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
+	rpcxplugin "github.com/smallnest/rpcx/serverplugin"
 
 	storagerpc "eim/internal/storage/rpc"
+	eimmetrics "eim/pkg/metrics"
 	"eim/pkg/snowflake"
 )
 
@@ -27,18 +30,23 @@ type Config struct {
 
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
+	svr.AsyncWrite = true
 
-	plugin := &serverplugin.EtcdV3RegisterPlugin{
+	metricsPlugin := rpcxplugin.NewMetricsPlugin(metrics.DefaultRegistry)
+
+	etcdPlugin := &etcdplugin.EtcdV3RegisterPlugin{
 		ServiceAddress: fmt.Sprintf("tcp@%v:%v", cfg.Ip, cfg.Port),
 		EtcdServers:    cfg.EtcdEndpoints,
 		BasePath:       basePath,
 		UpdateInterval: time.Minute,
 	}
-	err := plugin.Start()
+	err := etcdPlugin.Start()
 	if err != nil {
 		return fmt.Errorf("start etcd v3 register plugin -> %w", err)
 	}
-	svr.Plugins.Add(plugin)
+
+	svr.Plugins.Add(etcdPlugin)
+	svr.Plugins.Add(metricsPlugin)
 
 	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
 	if err != nil {
@@ -60,6 +68,8 @@ func StartServer(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("register seq service -> %w", err)
 	}
+
+	eimmetrics.EnableMetrics(32003)
 
 	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
 	if err != nil {

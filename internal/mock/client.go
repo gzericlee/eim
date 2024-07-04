@@ -10,7 +10,7 @@ import (
 
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type client struct {

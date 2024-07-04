@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rpcxio/rpcx-etcd/serverplugin"
+	"github.com/rcrowley/go-metrics"
+	etcdplugin "github.com/rpcxio/rpcx-etcd/serverplugin"
 	"github.com/smallnest/rpcx/server"
+	rpcxplugin "github.com/smallnest/rpcx/serverplugin"
 	"golang.org/x/sync/singleflight"
 
 	"eim/internal/database"
 	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/lock"
+	eimmetrics "eim/pkg/metrics"
 )
 
 const (
@@ -53,7 +56,6 @@ type Config struct {
 
 func StartServer(cfg Config) error {
 	svr := server.NewServer()
-
 	svr.AsyncWrite = true
 
 	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
@@ -71,17 +73,21 @@ func StartServer(cfg Config) error {
 		return fmt.Errorf("new redis manager -> %w", err)
 	}
 
-	plugin := &serverplugin.EtcdV3RegisterPlugin{
+	metricsPlugin := rpcxplugin.NewMetricsPlugin(metrics.DefaultRegistry)
+
+	etcdPlugin := &etcdplugin.EtcdV3RegisterPlugin{
 		ServiceAddress: fmt.Sprintf("tcp@%v:%v", cfg.Ip, cfg.Port),
 		EtcdServers:    cfg.EtcdEndpoints,
 		BasePath:       basePath,
 		UpdateInterval: time.Minute,
 	}
-	err = plugin.Start()
+	err = etcdPlugin.Start()
 	if err != nil {
 		return fmt.Errorf("start etcd v3 register plugin -> %w", err)
 	}
-	svr.Plugins.Add(plugin)
+
+	svr.Plugins.Add(etcdPlugin)
+	svr.Plugins.Add(metricsPlugin)
 
 	deviceCache, err := cache.NewCache("device", 3*1024*1024*1024, 1000000, true)
 	if err != nil {
@@ -143,6 +149,8 @@ func StartServer(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("new storage rpc client -> %w", err)
 	}
+
+	eimmetrics.EnableMetrics(32003)
 
 	err = svr.Serve("tcp", fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port))
 	if err != nil {

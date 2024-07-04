@@ -13,9 +13,9 @@ import (
 	"eim"
 	"eim/internal/config"
 	seqrpc "eim/internal/seq/rpc"
+	"eim/pkg/log"
+	"eim/pkg/netutil"
 	"eim/pkg/pprof"
-	"eim/util/log"
-	"eim/util/net"
 )
 
 func newCliApp() *cli.App {
@@ -39,7 +39,7 @@ func newCliApp() *cli.App {
 
 		//获取随机端口
 		for {
-			port, err := net.RandomPort()
+			port, err := netutil.RandomPort()
 			if err != nil {
 				log.Error("Error get random port", zap.Error(err))
 				time.Sleep(time.Second * 5)

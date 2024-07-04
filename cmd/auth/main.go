@@ -11,9 +11,9 @@ import (
 	"eim"
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
+	"eim/pkg/log"
+	"eim/pkg/netutil"
 	"eim/pkg/pprof"
-	"eim/util/log"
-	"eim/util/net"
 )
 
 func newCliApp() *cli.App {
@@ -36,7 +36,7 @@ func newCliApp() *cli.App {
 		pprof.EnablePProf()
 
 		//获取随机端口
-		port, err := net.RandomPort()
+		port, err := netutil.RandomPort()
 		if err != nil {
 			panic(fmt.Errorf("get random port -> %w", err))
 		}

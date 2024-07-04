@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/model"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 const (

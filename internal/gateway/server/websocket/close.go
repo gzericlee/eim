@@ -7,7 +7,7 @@ import (
 
 	"eim/internal/gateway/session"
 	"eim/internal/model"
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 func (its *Server) close(conn *websocket.Conn, err error) {

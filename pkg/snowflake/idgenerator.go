@@ -7,7 +7,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"go.uber.org/zap"
 
-	"eim/util/log"
+	"eim/pkg/log"
 )
 
 type GeneratorConfig struct {
