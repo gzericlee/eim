@@ -6,6 +6,8 @@ import (
 )
 
 func init() {
+	redirectStderr()
+
 	logger = newZapLogger(Config{
 		ConsoleEnabled: true,
 		ConsoleLevel:   "INFO",
@@ -27,7 +29,7 @@ func Default() *Logger {
 	return logger
 }
 
-func RedirectStderr() (err error) {
+func redirectStderr() (err error) {
 	logFile, err := os.OpenFile("./crash.log", os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 	if err != nil {
 		return

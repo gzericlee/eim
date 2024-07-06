@@ -51,8 +51,6 @@ func Printf() {
 		MaxAge:         30,
 	})
 
-	go log.RedirectStderr()
-
 	template := `
 {{ .Title "` + ServiceName + `" "" 0 }}
 {{ .AnsiColor.BrightCyan }}Enterprise Instant Messaging{{ .AnsiColor.Default }}
