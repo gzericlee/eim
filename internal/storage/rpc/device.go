@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -21,6 +20,7 @@ type DeviceArgs struct {
 
 type UserArgs struct {
 	UserId   string
+	TenantId string
 	DeviceId string
 }
 
@@ -34,7 +34,7 @@ type DeviceReply struct {
 
 type Device struct {
 	lock         *lock.KeyLock
-	storageCache *cache.Cache
+	storageCache *cache.Cache[string, []*model.Device]
 	redisManager *redis.Manager
 	database     database.IDatabase
 }
@@ -45,7 +45,7 @@ func (its *Device) SaveDevice(ctx context.Context, args *DeviceArgs, reply *Devi
 		return fmt.Errorf("save device -> %w", err)
 	}
 
-	key := fmt.Sprintf(cacheKeyFormat, deviceCachePool, args.Device.UserId, "*")
+	key := fmt.Sprintf(deviceCacheKeyFormat, deviceCachePool, args.Device.UserId, args.Device.TenantId, "*")
 
 	err = storageRpc.RefreshDevicesCache(key, args.Device, ActionSave)
 	if err != nil {
@@ -56,23 +56,18 @@ func (its *Device) SaveDevice(ctx context.Context, args *DeviceArgs, reply *Devi
 }
 
 func (its *Device) GetDevices(ctx context.Context, args *UserArgs, reply *DevicesReply) error {
-	key := fmt.Sprintf(cacheKeyFormat, deviceCachePool, args.UserId, "*")
+	key := fmt.Sprintf(deviceCacheKeyFormat, deviceCachePool, args.UserId, args.TenantId, "*")
 
-	for {
-		if its.lock.TryLock(key) {
-			break
-		}
-		time.Sleep(time.Millisecond * 10)
-	}
-	defer its.lock.Unlock(key)
+	_, unlock := its.lock.Lock(key, nil)
+	defer unlock()
 
-	if cacheItem, ok := its.storageCache.Get(key); ok {
-		reply.Devices = cacheItem.([]*model.Device)
+	if devices, exist := its.storageCache.Get(key); exist {
+		reply.Devices = devices
 		return nil
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		devices, err := its.redisManager.GetDevices(args.UserId)
+		devices, err := its.redisManager.GetDevices(args.UserId, args.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get user devices -> %w", err)
 		}

@@ -7,8 +7,14 @@ import (
 )
 
 const (
-	ClientCount  = "CLIENT_COUNT"
-	MessageCount = "MESSAGE_COUNT"
+	ClientCount       = "CLIENT_COUNT"
+	UserMessageCount  = "USER_MESSAGE_COUNT"
+	GroupMessageCount = "GROUP_MESSAGE_COUNT"
+
+	StartUserId  = "START_USER_ID"
+	StartGroupId = "START_GROUP_ID"
+
+	SendCount = "SEND_COUNT"
 
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
@@ -32,11 +38,39 @@ func ParseFlags(app *cli.App) {
 			Destination: &config.SystemConfig.Mock.ClientCount,
 		},
 		&cli.IntFlag{
-			Name:        "message-count",
+			Name:        "start-user-id",
 			Value:       1,
-			Usage:       "Mock one client sent message count",
-			EnvVars:     []string{MessageCount},
-			Destination: &config.SystemConfig.Mock.MessageCount,
+			Usage:       "Mock start user id",
+			EnvVars:     []string{StartUserId},
+			Destination: &config.SystemConfig.Mock.StartUserId,
+		},
+		&cli.IntFlag{
+			Name:        "send-count",
+			Value:       1,
+			Usage:       "Mock send count",
+			EnvVars:     []string{SendCount},
+			Destination: &config.SystemConfig.Mock.SendCount,
+		},
+		&cli.IntFlag{
+			Name:        "start-group-id",
+			Value:       1,
+			Usage:       "Mock start group id",
+			EnvVars:     []string{StartGroupId},
+			Destination: &config.SystemConfig.Mock.StartGroupId,
+		},
+		&cli.IntFlag{
+			Name:        "user-message-count",
+			Value:       1,
+			Usage:       "Mock one client send user message count",
+			EnvVars:     []string{UserMessageCount},
+			Destination: &config.SystemConfig.Mock.UserMessageCount,
+		},
+		&cli.IntFlag{
+			Name:        "group-message-count",
+			Value:       1,
+			Usage:       "Mock one client send group message count",
+			EnvVars:     []string{GroupMessageCount},
+			Destination: &config.SystemConfig.Mock.GroupMessageCount,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",

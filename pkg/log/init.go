@@ -1,5 +1,10 @@
 package log
 
+import (
+	"os"
+	"syscall"
+)
+
 func init() {
 	logger = newZapLogger(Config{
 		ConsoleEnabled: true,
@@ -20,4 +25,16 @@ func New(cfg Config) *Logger {
 
 func Default() *Logger {
 	return logger
+}
+
+func RedirectStderr() (err error) {
+	logFile, err := os.OpenFile("./crash.log", os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
+	if err != nil {
+		return
+	}
+	err = syscall.Dup3(int(logFile.Fd()), int(os.Stderr.Fd()), 0)
+	if err != nil {
+		return
+	}
+	return
 }

@@ -14,7 +14,7 @@ const (
 	ActionAdd    = "add"
 )
 
-type RefreshDeviceArgs struct {
+type RefreshDevicesArgs struct {
 	Key    string
 	Device *model.Device
 	Action string
@@ -26,48 +26,46 @@ type RefreshBizArgs struct {
 	Action string
 }
 
-type RefreshBizMemberArgs struct {
+type RefreshBizMembersArgs struct {
 	Key       string
 	BizMember *model.BizMember
 	Action    string
 }
 
 type Refresher struct {
-	lock           *lock.KeyLock
-	deviceCache    *cache.Cache
-	bizCache       *cache.Cache
-	bizMemberCache *cache.Cache
+	lock            *lock.KeyLock
+	devicesCache    *cache.Cache[string, []*model.Device]
+	bizCache        *cache.Cache[string, *model.Biz]
+	bizMembersCache *cache.Cache[string, []string]
 }
 
-func (its *Refresher) RefreshDevicesCache(ctx context.Context, args *RefreshDeviceArgs, reply *EmptyReply) error {
-	its.lock.Lock(args.Key)
-	defer its.lock.Unlock(args.Key)
+func (its *Refresher) RefreshDevicesCache(ctx context.Context, args *RefreshDevicesArgs, reply *EmptyReply) error {
+	_, unlock := its.lock.Lock(args.Key, nil)
+	defer unlock()
 
 	switch args.Action {
 	case ActionSave:
 		{
-			if cachedItem, exist := its.deviceCache.Get(args.Key); exist {
-				devices := cachedItem.([]*model.Device)
+			if devices, exist := its.devicesCache.Get(args.Key); exist {
 				for i := range devices {
 					if devices[i].DeviceId == args.Device.DeviceId {
 						devices[i] = args.Device
 						break
 					}
 				}
-				its.deviceCache.Set(args.Key, devices)
+				its.devicesCache.Set(args.Key, devices)
 			}
 		}
 	case ActionDelete:
 		{
-			if cachedItem, exist := its.deviceCache.Get(args.Key); exist {
-				devices := cachedItem.([]*model.Device)
+			if devices, exist := its.devicesCache.Get(args.Key); exist {
 				for i := range devices {
 					if devices[i].DeviceId == args.Device.DeviceId {
 						devices = append(devices[:i], devices[i+1:]...)
 						break
 					}
 				}
-				its.deviceCache.Set(args.Key, devices)
+				its.devicesCache.Set(args.Key, devices)
 			}
 		}
 	}
@@ -75,64 +73,42 @@ func (its *Refresher) RefreshDevicesCache(ctx context.Context, args *RefreshDevi
 	return nil
 }
 
-func (its *Refresher) RefreshBizsCache(ctx context.Context, args *RefreshBizArgs, reply *EmptyReply) error {
-	its.lock.Lock(args.Key)
-	defer its.lock.Unlock(args.Key)
+func (its *Refresher) RefreshBizCache(ctx context.Context, args *RefreshBizArgs, reply *EmptyReply) error {
+	_, unlock := its.lock.Lock(args.Key, nil)
+	defer unlock()
 
 	switch args.Action {
 	case ActionSave:
 		{
-			if cachedItem, exist := its.bizCache.Get(args.Key); exist {
-				bizs := cachedItem.([]*model.Biz)
-				for i := range bizs {
-					if bizs[i].BizId == args.Biz.BizId && bizs[i].TenantId == args.Biz.TenantId {
-						bizs[i] = args.Biz
-						break
-					}
-				}
-			}
-		}
-	case ActionDelete:
-		{
-			if cachedItem, exist := its.bizCache.Get(args.Key); exist {
-				bizs := cachedItem.([]*model.Biz)
-				for i := range bizs {
-					if bizs[i].BizId == args.Biz.BizId && bizs[i].TenantId == args.Biz.TenantId {
-						bizs = append(bizs[:i], bizs[i+1:]...)
-						break
-					}
-				}
-				its.bizCache.Set(args.Key, bizs)
-			}
+			its.bizCache.Set(args.Key, args.Biz)
 		}
 	}
 
 	return nil
 }
 
-func (its *Refresher) RefreshBizMembersCache(ctx context.Context, args *RefreshBizMemberArgs, reply *EmptyReply) error {
-	its.lock.Lock(args.Key)
-	defer its.lock.Unlock(args.Key)
+func (its *Refresher) RefreshBizMembersCache(ctx context.Context, args *RefreshBizMembersArgs, reply *EmptyReply) error {
+	_, unlock := its.lock.Lock(args.Key, nil)
+	defer unlock()
+
 	switch args.Action {
 	case ActionAdd:
 		{
-			if cachedItem, exist := its.bizMemberCache.Get(args.Key); exist {
-				members := cachedItem.([]string)
+			if members, exist := its.bizMembersCache.Get(args.Key); exist {
 				members = append(members, args.BizMember.MemberId)
-				its.bizMemberCache.Set(args.Key, members)
+				its.bizMembersCache.Set(args.Key, members)
 			}
 		}
 	case ActionDelete:
 		{
-			if cachedItem, exist := its.bizMemberCache.Get(args.Key); exist {
-				members := cachedItem.([]string)
+			if members, exist := its.bizMembersCache.Get(args.Key); exist {
 				for i := range members {
 					if members[i] == args.BizMember.MemberId {
 						members = append(members[:i], members[i+1:]...)
 						break
 					}
 				}
-				its.bizMemberCache.Set(args.Key, members)
+				its.bizMembersCache.Set(args.Key, members)
 			}
 		}
 	}

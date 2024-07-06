@@ -12,9 +12,9 @@ const (
 )
 
 func (its *Manager) AddBizMember(member *model.BizMember) error {
-	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.TenantId)
+	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.BizTenantId)
 
-	err := its.redisClient.SAdd(context.Background(), key, member.MemberId).Err()
+	err := its.redisClient.SAdd(context.Background(), key, fmt.Sprintf("%s@%s", member.MemberId, member.MemberTenantId)).Err()
 	if err != nil {
 		return fmt.Errorf("redis sadd(%s) -> %w", key, err)
 	}
@@ -23,9 +23,9 @@ func (its *Manager) AddBizMember(member *model.BizMember) error {
 }
 
 func (its *Manager) RemoveBizMember(member *model.BizMember) error {
-	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.TenantId)
+	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.BizTenantId)
 
-	err := its.redisClient.SRem(context.Background(), key, member.MemberId).Err()
+	err := its.redisClient.SRem(context.Background(), key, fmt.Sprintf("%s@%s", member.MemberId, member.MemberTenantId)).Err()
 	if err != nil {
 		return fmt.Errorf("redis srem(%s) -> %w", key, err)
 	}

@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"eim/internal/database"
+	"eim/internal/model"
 	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/lock"
@@ -32,7 +33,8 @@ const (
 	deviceCachePool    = "devices"
 	bizMemberCachePool = "biz_members"
 
-	cacheKeyFormat = "%s:%s:%s"
+	deviceCacheKeyFormat = "%s:%s:%s:%s"
+	cacheKeyFormat       = "%s:%s:%s"
 )
 
 var (
@@ -89,24 +91,24 @@ func StartServer(cfg Config) error {
 	svr.Plugins.Add(etcdPlugin)
 	svr.Plugins.Add(metricsPlugin)
 
-	deviceCache, err := cache.NewCache("device", 3*1024*1024*1024, 1000000, true)
+	devicesCache, err := cache.NewCache[string, []*model.Device]("devices", 1000000)
 	if err != nil {
 		panic(err)
 	}
 
-	bizCache, err := cache.NewCache("biz", 3*1024*1024*1024, 500000, true)
+	bizCache, err := cache.NewCache[string, *model.Biz]("biz", 1000000)
 	if err != nil {
 		panic(err)
 	}
 
-	bizMemberCache, err := cache.NewCache("biz_member", 3*1024*1024*1024, 1000000, true)
+	bizMembersCache, err := cache.NewCache[string, []string]("biz_members", 1000000)
 	if err != nil {
 		panic(err)
 	}
 
 	keyLock := lock.NewKeyLock()
 
-	err = svr.RegisterName(refresherServicePath, &Refresher{deviceCache: deviceCache, bizCache: bizCache, bizMemberCache: bizMemberCache, lock: keyLock}, "")
+	err = svr.RegisterName(refresherServicePath, &Refresher{devicesCache: devicesCache, bizCache: bizCache, bizMembersCache: bizMembersCache, lock: keyLock}, "")
 	if err != nil {
 		return fmt.Errorf("register service(%s) -> %w", refresherServicePath, err)
 	}
@@ -116,7 +118,7 @@ func StartServer(cfg Config) error {
 		switch service {
 		case deviceServicePath:
 			{
-				rcvr = &Device{storageCache: deviceCache, database: db, redisManager: redisManager, lock: keyLock}
+				rcvr = &Device{storageCache: devicesCache, database: db, redisManager: redisManager, lock: keyLock}
 			}
 		case messageServicePath:
 			{
@@ -128,7 +130,7 @@ func StartServer(cfg Config) error {
 			}
 		case bizMemberServicePath:
 			{
-				rcvr = &BizMember{storageCache: bizMemberCache, redisManager: redisManager}
+				rcvr = &BizMember{storageCache: bizMembersCache, redisManager: redisManager}
 			}
 		case gatewayServicePath:
 			{

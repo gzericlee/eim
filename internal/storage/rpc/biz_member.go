@@ -21,7 +21,7 @@ type BizMembersReply struct {
 }
 
 type BizMember struct {
-	storageCache *cache.Cache
+	storageCache *cache.Cache[string, []string]
 	redisManager *redis.Manager
 }
 
@@ -31,7 +31,7 @@ func (its *BizMember) AddBizMember(ctx context.Context, args *BizMemberArgs, rep
 		return fmt.Errorf("add biz_member -> %w", err)
 	}
 
-	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.TenantId)
+	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
 
 	err = storageRpc.RefreshBizMembersCache(key, args.BizMember, ActionAdd)
 	if err != nil {
@@ -47,7 +47,7 @@ func (its *BizMember) RemoveBizMember(ctx context.Context, args *BizMemberArgs, 
 		return fmt.Errorf("remove biz_member -> %w", err)
 	}
 
-	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.TenantId)
+	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
 
 	err = storageRpc.RefreshBizMembersCache(key, args.BizMember, ActionDelete)
 	if err != nil {
@@ -58,15 +58,15 @@ func (its *BizMember) RemoveBizMember(ctx context.Context, args *BizMemberArgs, 
 }
 
 func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, reply *BizMembersReply) error {
-	key := fmt.Sprintf(cacheKeyFormat, bizMemberCachePool, args.BizMember.BizId, args.BizMember.TenantId)
+	key := fmt.Sprintf(cacheKeyFormat, bizMemberCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
 
-	if cacheItem, exist := its.storageCache.Get(key); exist {
-		reply.Members = cacheItem.([]string)
+	if members, exist := its.storageCache.Get(key); exist {
+		reply.Members = members
 		return nil
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		members, err := its.redisManager.GetBizMembers(args.BizMember.BizId, args.BizMember.TenantId)
+		members, err := its.redisManager.GetBizMembers(args.BizMember.BizId, args.BizMember.BizTenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get biz_members -> %w", err)
 		}

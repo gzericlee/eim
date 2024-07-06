@@ -93,7 +93,7 @@ func (its *Client) GetDevice(userId, deviceId string) (*model.Device, error) {
 	return reply.Device, nil
 }
 
-func (its *Client) GetDevices(userId string) ([]*model.Device, error) {
+func (its *Client) GetDevices(userId, tenantId string) ([]*model.Device, error) {
 	reply := &DevicesReply{}
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	err := its.devicePool.Get().Call(ctx, "GetDevices", &UserArgs{UserId: userId}, reply)
@@ -190,7 +190,7 @@ func (its *Client) RemoveBizMember(member *model.BizMember) error {
 func (its *Client) GetBizMembers(bizId, tenantId string) ([]string, error) {
 	reply := &BizMembersReply{}
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.bizMemberPool.Get().Call(ctx, "GetBizMembers", &BizMemberArgs{BizMember: &model.BizMember{BizId: bizId, TenantId: tenantId}}, reply)
+	err := its.bizMemberPool.Get().Call(ctx, "GetBizMembers", &BizMemberArgs{BizMember: &model.BizMember{BizId: bizId, BizTenantId: tenantId}}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call GetBizMembers -> %w", err)
 	}
@@ -228,16 +228,16 @@ func (its *Client) GetSegment(bizId, tenantId string) (*model.Segment, error) {
 
 func (its *Client) RefreshDevicesCache(key string, device *model.Device, action string) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.refresherPool.Get().Broadcast(ctx, "RefreshDevicesCache", &RefreshDeviceArgs{Key: key, Device: device, Action: action}, &EmptyReply{})
+	err := its.refresherPool.Get().Broadcast(ctx, "RefreshDevicesCache", &RefreshDevicesArgs{Key: key, Device: device, Action: action}, &EmptyReply{})
 	if err != nil {
 		return fmt.Errorf("call RefreshDevicesCache -> %w", err)
 	}
 	return nil
 }
 
-func (its *Client) RefreshBizsCache(key string, biz *model.Biz, action string) error {
+func (its *Client) RefreshBizCache(key string, biz *model.Biz, action string) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.refresherPool.Get().Broadcast(ctx, "RefreshBizsCache", &RefreshBizArgs{Key: key, Biz: biz, Action: action}, &EmptyReply{})
+	err := its.refresherPool.Get().Broadcast(ctx, "RefreshBizCache", &RefreshBizArgs{Key: key, Biz: biz, Action: action}, &EmptyReply{})
 	if err != nil {
 		return fmt.Errorf("call RefreshBizsCache -> %w", err)
 	}
@@ -246,7 +246,7 @@ func (its *Client) RefreshBizsCache(key string, biz *model.Biz, action string) e
 
 func (its *Client) RefreshBizMembersCache(key string, bizMember *model.BizMember, action string) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.refresherPool.Get().Broadcast(ctx, "RefreshBizMembersCache", &RefreshBizMemberArgs{Key: key, BizMember: bizMember, Action: action}, &EmptyReply{})
+	err := its.refresherPool.Get().Broadcast(ctx, "RefreshBizMembersCache", &RefreshBizMembersArgs{Key: key, BizMember: bizMember, Action: action}, &EmptyReply{})
 	if err != nil {
 		return fmt.Errorf("call RefreshBizMembersCache -> %w", err)
 	}

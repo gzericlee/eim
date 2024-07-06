@@ -10,9 +10,12 @@ message Message {
   int64 from_type = 5;
   string from_id = 6;
   string from_device = 7;
-  int64 to_type = 8;
-  string to_id = 9;
-  string to_device = 10;
-  int64 send_time = 11;
-  string user_id = 12;
+  string from_tenant_id = 8;
+  int64 to_type = 9;
+  string to_id = 10;
+  string to_device = 11;
+  string to_tenant_id = 12;
+  int64 send_time = 13;
+  string user_id = 14;
+  string tenant_id = 15;
 }

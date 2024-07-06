@@ -6,10 +6,11 @@ import "google/protobuf/timestamp.proto";
 message Device {
   string device_id = 1;
   string user_id = 2;
-  string device_type = 3;
-  string device_version = 4;
-  string gateway_address = 5;
-  google.protobuf.Timestamp online_at = 6;
-  google.protobuf.Timestamp offline_at = 7;
-  int32 state = 8;
+  string tenant_id = 3;
+  string device_type = 4;
+  string device_version = 5;
+  string gateway_address = 6;
+  google.protobuf.Timestamp online_at = 7;
+  google.protobuf.Timestamp offline_at = 8;
+  int32 state = 9;
 }

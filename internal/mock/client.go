@@ -13,7 +13,7 @@ import (
 	"eim/pkg/log"
 )
 
-type client struct {
+type Client struct {
 	token         string
 	userId        string
 	deviceId      string
@@ -24,17 +24,27 @@ type client struct {
 	connected     chan bool
 }
 
-func upgrader(cli *client) *websocket.Upgrader {
+func (its *Server) upgrade(cli *Client) *websocket.Upgrader {
 	u := websocket.NewUpgrader()
 	u.SetPongHandler(func(conn *websocket.Conn, s string) {
-		hbCount.Add(1)
+		its.hbCount.Add(1)
 	})
+
+	var ackHandler = func(conn *websocket.Conn, msg *model.Message) {
+		err := conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10))))
+		if err != nil {
+			log.Error("Error sending ack", zap.Error(err))
+			return
+		}
+		its.ackCount.Add(1)
+	}
+
 	u.OnMessage(func(conn *websocket.Conn, messageType websocket.MessageType, data []byte) {
 		cmd, data := protocol.WebsocketCodec.Decode(data)
 		switch cmd {
 		case protocol.Ack:
 			{
-				ackCount.Add(1)
+				its.ackCount.Add(1)
 			}
 		case protocol.Connected:
 			{
@@ -46,10 +56,11 @@ func upgrader(cli *client) *websocket.Upgrader {
 				err := proto.Unmarshal(data, msg)
 				if err != nil {
 					log.Error("Error unmarshal message", zap.Error(err))
-					invalidCount.Add(1)
+					its.invalidCount.Add(1)
 					return
 				}
-				msgHandler(conn, msg)
+				ackHandler(conn, msg)
+				its.msgCount.Add(1)
 			}
 		case protocol.Messages:
 			{
@@ -57,30 +68,21 @@ func upgrader(cli *client) *websocket.Upgrader {
 				err := json.Unmarshal(data, &msgs)
 				if err != nil {
 					log.Error("Error unmarshal messages", zap.Error(err))
-					invalidCount.Add(1)
+					its.invalidCount.Add(1)
 					return
 				}
 				for _, msg := range msgs {
-					msgHandler(conn, msg)
+					ackHandler(conn, msg)
 				}
+				its.msgCount.Add(int64(len(msgs)))
 			}
 		}
 	})
 
 	u.OnClose(func(conn *websocket.Conn, err error) {
-		connectedCount.Add(-1)
+		its.connectedCount.Add(-1)
 		log.Error("Connection closed", zap.Error(err))
 	})
 
 	return u
-}
-
-func msgHandler(conn *websocket.Conn, msg *model.Message) {
-	err := conn.WriteMessage(websocket.BinaryMessage, protocol.WebsocketCodec.Encode(protocol.Ack, []byte(strconv.FormatInt(msg.MsgId, 10))))
-	if err != nil {
-		log.Error("Error sending ack", zap.Error(err))
-		return
-	}
-	ackCount.Add(1)
-	msgCount.Add(1)
 }

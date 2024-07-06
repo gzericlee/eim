@@ -1,8 +1,6 @@
 package dispatch
 
 import (
-	"sync/atomic"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 
@@ -33,7 +31,7 @@ func (its *SaveMessageHandler) Process(m *nats.Msg) error {
 
 	its.storageRpc.SaveMessages([]*model.Message{msg})
 
-	atomic.AddInt64(&savedMsgTotal, 1)
+	savedMsgTotal.Add(1)
 
 	return m.Ack()
 }

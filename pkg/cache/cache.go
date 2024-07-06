@@ -2,83 +2,55 @@ package cache
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/dgraph-io/ristretto"
-	"github.com/rcrowley/go-metrics"
+	"github.com/Yiling-J/theine-go"
 
 	"eim/pkg/log"
 )
 
-type Cache struct {
+type Cache[K comparable, V any] struct {
 	name  string
-	cache *ristretto.Cache
+	cache *theine.Cache[K, V]
 }
 
-func NewCache(name string, maxCost, numCounters int64, enableMetrics bool) (*Cache, error) {
-	cache, err := ristretto.NewCache(&ristretto.Config{
-		Metrics: enableMetrics,
-		OnEvict: func(item *ristretto.Item) {
-			log.Warn(fmt.Sprintf("cache evict %+v", item.Key))
-		},
-		OnReject: func(item *ristretto.Item) {
-			log.Warn(fmt.Sprintf("cache reject %+v", item.Key))
-		},
-		NumCounters: numCounters,
-		MaxCost:     maxCost,
-		BufferItems: 64,
-	})
+func NewCache[K comparable, V any](name string, capacity int) (*Cache[K, V], error) {
+	builder := theine.NewBuilder[K, V](int64(capacity))
+	cache, err := builder.Build()
 	if err != nil {
 		return nil, fmt.Errorf("new ristretto cache -> %w", err)
 	}
 
-	c := &Cache{
+	c := &Cache[K, V]{
 		name:  name,
 		cache: cache,
-	}
-
-	if enableMetrics {
-		metrics.Register(fmt.Sprintf("cache_%s_hits", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.Hits())
-		}))
-		metrics.Register(fmt.Sprintf("cache_%s_misses", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.Misses())
-		}))
-		metrics.Register(fmt.Sprintf("cache_%s_keys_added", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.KeysAdded())
-		}))
-		metrics.Register(fmt.Sprintf("cache_%s_keys_evicted", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.KeysEvicted())
-		}))
-		metrics.Register(fmt.Sprintf("cache_%s_cost_added", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.CostAdded())
-		}))
-		metrics.Register(fmt.Sprintf("cache_%s_cost_evicted", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.CostEvicted())
-		}))
-		metrics.Register(fmt.Sprintf("cache_%s_ratio", name), metrics.NewFunctionalGauge(func() int64 {
-			return int64(cache.Metrics.Ratio())
-		}))
 	}
 
 	return c, nil
 }
 
-func (its *Cache) Set(key string, value interface{}) {
+func (its *Cache[K, V]) Set(key K, value V) {
 	ok := its.cache.Set(key, value, 1)
 	if !ok {
 		log.Warn("cache set failed")
 	}
-	its.cache.Wait()
 }
 
-func (its *Cache) Get(key string) (interface{}, bool) {
+func (its *Cache[K, V]) SetWithTTL(key K, value V, ttl time.Duration) {
+	ok := its.cache.SetWithTTL(key, value, 1, ttl)
+	if !ok {
+		log.Warn("cache set failed")
+	}
+}
+
+func (its *Cache[K, V]) Get(key K) (V, bool) {
 	return its.cache.Get(key)
 }
 
-func (its *Cache) Delete(key string) {
-	its.cache.Del(key)
+func (its *Cache[K, V]) Delete(key K) {
+	its.cache.Delete(key)
 }
 
-func (its *Cache) Close() {
+func (its *Cache[K, V]) Close() {
 	its.cache.Close()
 }

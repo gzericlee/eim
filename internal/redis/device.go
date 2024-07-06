@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	devicesKeyFormat = "devices:%s"
+	devicesKeyFormat = "devices:%s:%s"
 )
 
 func (its *Manager) SaveDevice(device *model.Device) error {
-	key := fmt.Sprintf(devicesKeyFormat, device.UserId)
+	key := fmt.Sprintf(devicesKeyFormat, device.UserId, device.TenantId)
 
 	body, err := proto.Marshal(device)
 	if err != nil {
@@ -31,8 +31,8 @@ func (its *Manager) SaveDevice(device *model.Device) error {
 	return nil
 }
 
-func (its *Manager) GetDevices(userId string) ([]*model.Device, error) {
-	key := fmt.Sprintf(devicesKeyFormat, userId)
+func (its *Manager) GetDevices(userId, tenantId string) ([]*model.Device, error) {
+	key := fmt.Sprintf(devicesKeyFormat, userId, tenantId)
 
 	values, err := its.redisClient.HGetAll(context.Background(), key).Result()
 
@@ -51,7 +51,7 @@ func (its *Manager) GetDevices(userId string) ([]*model.Device, error) {
 }
 
 func (its *Manager) GetAllDevices() ([]*model.Device, error) {
-	key := fmt.Sprintf(devicesKeyFormat, "*")
+	key := fmt.Sprintf(devicesKeyFormat, "*", "*")
 
 	values, err := its.redisClient.HGetAll(context.Background(), key).Result()
 	if err != nil {
@@ -72,8 +72,8 @@ func (its *Manager) GetAllDevices() ([]*model.Device, error) {
 	return devices, nil
 }
 
-func (its *Manager) GetDevice(userId, deviceId string) (*model.Device, error) {
-	key := fmt.Sprintf(devicesKeyFormat, userId)
+func (its *Manager) GetDevice(userId, tenantId, deviceId string) (*model.Device, error) {
+	key := fmt.Sprintf(devicesKeyFormat, userId, tenantId)
 
 	value, err := its.redisClient.HGet(context.Background(), key, deviceId).Result()
 	if err != nil {
@@ -89,8 +89,8 @@ func (its *Manager) GetDevice(userId, deviceId string) (*model.Device, error) {
 	return device, nil
 }
 
-func (its *Manager) RemoveDevice(userId, deviceId string) error {
-	key := fmt.Sprintf(devicesKeyFormat, userId)
+func (its *Manager) RemoveDevice(userId, tenantId, deviceId string) error {
+	key := fmt.Sprintf(devicesKeyFormat, userId, tenantId)
 
 	err := its.redisClient.HDel(context.Background(), key, deviceId).Err()
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"eim/internal/metric"
 	"eim/internal/model"
 )
 
@@ -30,7 +29,7 @@ func init() {
 }
 
 func TestManager_GetDevice(t *testing.T) {
-	device, err := manager.GetDevice("user-1000", "device-1000")
+	device, err := manager.GetDevice("user-1000", "bingo", "device-1000")
 	if err != nil {
 		t.Error(err)
 		return
@@ -40,7 +39,7 @@ func TestManager_GetDevice(t *testing.T) {
 }
 
 func TestManager_GetDevices(t *testing.T) {
-	devices, err := manager.GetDevices("user-1")
+	devices, err := manager.GetDevices("user-1", "bingo")
 	if err != nil {
 		t.Error(err)
 		return
@@ -71,6 +70,18 @@ func TestManager_SaveUser(t *testing.T) {
 	}
 }
 
+func TestManager_SaveGroup(t *testing.T) {
+	for i := 1; i <= 10000; i++ {
+		t.Log(manager.SaveBiz(&model.Biz{
+			BizId:      fmt.Sprintf("group-%d", i),
+			BizType:    model.Biz_GROUP,
+			BizName:    fmt.Sprintf("群组-%d", i),
+			TenantId:   "bingo",
+			TenantName: "品高软件",
+		}))
+	}
+}
+
 func BenchmarkManager_SaveUser(b *testing.B) {
 	b.N = 1000000
 	b.RunParallel(func(pb *testing.PB) {
@@ -93,11 +104,39 @@ func TestManager_GetUser(t *testing.T) {
 
 func TestManager_AppendBizMember(t *testing.T) {
 	for i := 1; i <= 1000; i++ {
-		t.Log(manager.AddBizMember(&model.BizMember{
-			BizId:    "group-1",
-			MemberId: fmt.Sprintf("user-%d", i),
-			TenantId: "bingo",
-		}))
+		for j := 1; j <= 100; j++ {
+			err := manager.AddBizMember(&model.BizMember{
+				BizId:          fmt.Sprintf("group-%d", i),
+				MemberId:       fmt.Sprintf("user-%d", j),
+				BizTenantId:    "bingo",
+				MemberTenantId: "bingo",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		for j := 1; j <= 100; j++ {
+			err := manager.AddBizMember(&model.BizMember{
+				BizId:          fmt.Sprintf("group-%d", i+1000),
+				MemberId:       fmt.Sprintf("user-%d", j),
+				BizTenantId:    "bingo",
+				MemberTenantId: "bingo",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		for j := 1; j <= 1000; j++ {
+			err := manager.AddBizMember(&model.BizMember{
+				BizId:          fmt.Sprintf("group-%d", i+2000),
+				MemberId:       fmt.Sprintf("user-%d", j),
+				BizTenantId:    "bingo",
+				MemberTenantId: "bingo",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
 }
 
@@ -113,19 +152,6 @@ func BenchmarkGetBizMembers(b *testing.B) {
 			_, _ = manager.GetBizMembers("group", "group-1")
 		}
 	})
-}
-
-func TestManager_SaveGateway(t *testing.T) {
-	mMetric, err := metric.GetMachineMetric()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(manager.RegisterGateway(&model.Gateway{
-		Ip:      "10.200.20.14",
-		MemUsed: float32(mMetric.MemUsed),
-		CpuUsed: float32(mMetric.CpuUsed),
-	}, time.Second*10), err)
 }
 
 func TestManager_GetGateways(t *testing.T) {
@@ -159,12 +185,12 @@ func TestManager_SaveOfflineMessages(t *testing.T) {
 func BenchmarkManager_GetDevices(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		idx := rand.Int64N(9999)
-		_, _ = manager.GetDevices(fmt.Sprintf("user-%d", idx))
+		_, _ = manager.GetDevices(fmt.Sprintf("user-%d", idx), "bingo")
 	}
 }
 
 func TestManager_RemoveDevice(t *testing.T) {
-	keys, _ := manager.getAllKeys("devices:*")
+	keys, _ := manager.getAllKeys("*offline*")
 	for _, key := range keys {
 		manager.redisClient.Del(context.Background(), key).Err()
 	}

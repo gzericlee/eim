@@ -12,6 +12,7 @@ import (
 	"eim"
 	"eim/internal/config"
 	"eim/internal/mock"
+	seqrpc "eim/internal/seq/rpc"
 	"eim/pkg/log"
 	"eim/pkg/pprof"
 )
@@ -35,11 +36,31 @@ func newCliApp() *cli.App {
 		//开启PProf服务
 		pprof.EnablePProf()
 
-		log.Info("Mock info", zap.Int("client_number", config.SystemConfig.Mock.ClientCount), zap.Int("send_number", config.SystemConfig.Mock.MessageCount))
+		log.Info("Mock client count", zap.Int("count", config.SystemConfig.Mock.ClientCount))
+		log.Info("Mock user message count", zap.Int("count", config.SystemConfig.Mock.UserMessageCount))
+		log.Info("Mock group message count", zap.Int("count", config.SystemConfig.Mock.GroupMessageCount))
+		log.Info("Mock start user id", zap.Int("id", config.SystemConfig.Mock.StartUserId))
+		log.Info("Mock start group id", zap.Int("id", config.SystemConfig.Mock.StartGroupId))
+		log.Info("Mock send count", zap.Int("count", config.SystemConfig.Mock.SendCount))
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 
-		mock.Do()
+		seqRpc, err := seqrpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+		if err != nil {
+			panic(err)
+		}
+
+		server := mock.NewMockServer(
+			seqRpc,
+			config.SystemConfig.Mock.UserMessageCount,
+			config.SystemConfig.Mock.GroupMessageCount,
+			config.SystemConfig.Mock.ClientCount,
+			config.SystemConfig.Mock.StartUserId,
+			config.SystemConfig.Mock.StartGroupId,
+			config.SystemConfig.Mock.SendCount,
+		)
+
+		server.Start()
 
 		select {}
 	}

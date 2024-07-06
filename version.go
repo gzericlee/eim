@@ -7,7 +7,7 @@ import (
 	"github.com/dimiro1/banner"
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable"
 
-	log2 "eim/pkg/log"
+	"eim/pkg/log"
 
 	"eim/internal/config"
 )
@@ -37,7 +37,7 @@ func Printf() {
 		Date = "unknown"
 	}
 
-	log2.SetConfig(log2.Config{
+	log.SetConfig(log.Config{
 		ConsoleEnabled: true,
 		ConsoleLevel:   config.SystemConfig.LogLevel,
 		ConsoleJson:    false,
@@ -50,6 +50,8 @@ func Printf() {
 		MaxBackups:     10,
 		MaxAge:         30,
 	})
+
+	go log.RedirectStderr()
 
 	template := `
 {{ .Title "` + ServiceName + `" "" 0 }}

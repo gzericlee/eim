@@ -10,6 +10,6 @@ func (its *Server) preload(sess *session.Session) {
 	user := sess.GetUser()
 
 	//缓存预热
-	_, _ = its.storageRpc.GetDevices(user.BizId)
+	_, _ = its.storageRpc.GetDevices(user.BizId, user.TenantId)
 	_, _ = its.seqRpc.IncrId(user.BizId, user.TenantId)
 }

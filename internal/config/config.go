@@ -36,8 +36,12 @@ type systemConfig struct {
 		WebSocketPort int
 	}
 	Mock struct {
-		ClientCount  int
-		MessageCount int
+		StartUserId       int
+		StartGroupId      int
+		ClientCount       int
+		UserMessageCount  int
+		GroupMessageCount int
+		SendCount         int
 	}
 	Database struct {
 		Driver     string

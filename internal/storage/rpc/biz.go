@@ -22,7 +22,7 @@ type BizReply struct {
 }
 
 type Biz struct {
-	storageCache *cache.Cache
+	storageCache *cache.Cache[string, *model.Biz]
 	redisManager *redis.Manager
 	database     database.IDatabase
 }
@@ -35,7 +35,7 @@ func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) e
 
 	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
 
-	err = storageRpc.RefreshBizsCache(key, args.Biz, ActionSave)
+	err = storageRpc.RefreshBizCache(key, args.Biz, ActionSave)
 	if err != nil {
 		log.Error("Error refresh biz cache: %v", zap.Error(err))
 	}
@@ -46,8 +46,8 @@ func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) e
 func (its *Biz) GetBiz(ctx context.Context, args *BizArgs, reply *BizReply) error {
 	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
 
-	if cacheItem, exist := its.storageCache.Get(key); exist {
-		reply.Biz = cacheItem.(*model.Biz)
+	if biz, exist := its.storageCache.Get(key); exist {
+		reply.Biz = biz
 		return nil
 	}
 
