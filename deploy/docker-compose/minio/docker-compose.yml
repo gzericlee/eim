@@ -1,6 +1,7 @@
 x-minio-common: &minio-common
   image: quay.io/minio/minio
   command: server --console-address ":9001" http://minio{1...4}/data{1...2}
+  restart: always
   expose:
     - "9000"
     - "9001"

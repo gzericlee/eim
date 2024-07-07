@@ -58,6 +58,18 @@ type Logger struct {
 	*zap.Logger
 }
 
+func (its *Logger) Errorf(format string, v ...interface{}) {
+	its.Error(fmt.Sprintf(format, v...))
+}
+
+func (its *Logger) Warnf(format string, v ...interface{}) {
+	its.Warn(fmt.Sprintf(format, v...))
+}
+
+func (its *Logger) Debugf(format string, v ...interface{}) {
+	its.Debug(fmt.Sprintf(format, v...))
+}
+
 func (its *Logger) Printf(format string, v ...interface{}) {
 	its.Debug(fmt.Sprintf(format, v...))
 }
