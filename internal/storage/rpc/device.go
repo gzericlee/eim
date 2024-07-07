@@ -85,17 +85,6 @@ func (its *Device) GetDevices(ctx context.Context, args *UserArgs, reply *Device
 	return nil
 }
 
-func (its *Device) GetAllDevices(ctx context.Context, args *EmptyArgs, reply *DevicesReply) error {
-	devices, err := its.redisManager.GetAllDevices()
-	if err != nil {
-		return fmt.Errorf("get all devices -> %w", err)
-	}
-
-	reply.Devices = devices
-
-	return nil
-}
-
 func (its *Device) GetDevice(ctx context.Context, args *UserArgs, reply *DeviceReply) error {
 	result := &DevicesReply{}
 
