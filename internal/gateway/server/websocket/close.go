@@ -25,7 +25,7 @@ func (its *Server) close(conn *websocket.Conn, err error) {
 	}()
 
 	device.OfflineAt = timestamppb.Now()
-	device.State = model.OfflineState
+	device.State = model.Offline
 
 	err = its.storageRpc.SaveDevice(device)
 	if err != nil {

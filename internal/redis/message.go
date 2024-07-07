@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	offlineMessagesKeyFormat = "offline:messages:%s:%s"
+	offlineMessagesKeyFormat = "messages:offline:%s:%s"
 )
 
 func (its *Manager) SaveOfflineMessages(msgs []*model.Message, userId, deviceId string) error {

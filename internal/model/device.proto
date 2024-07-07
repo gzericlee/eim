@@ -2,6 +2,7 @@ syntax = "proto3";
 option go_package = "../model";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 
 message Device {
   string device_id = 1;
@@ -13,4 +14,5 @@ message Device {
   google.protobuf.Timestamp online_at = 7;
   google.protobuf.Timestamp offline_at = 8;
   int32 state = 9;
+  map<string, google.protobuf.Any> attributes = 10;
 }

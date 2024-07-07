@@ -41,29 +41,7 @@ func (its *Manager) GetDevices(userId, tenantId string) ([]*model.Device, error)
 		device := &model.Device{}
 		err = proto.Unmarshal([]byte(value), device)
 		if err != nil {
-			log.Error("Error proto unmarshal. Drop it", zap.Error(err))
-			continue
-		}
-		devices = append(devices, device)
-	}
-
-	return devices, nil
-}
-
-func (its *Manager) GetAllDevices() ([]*model.Device, error) {
-	key := fmt.Sprintf(devicesKeyFormat, "*", "*")
-
-	values, err := its.redisClient.HGetAll(context.Background(), key).Result()
-	if err != nil {
-		return nil, fmt.Errorf("redis hgetall(%s) -> %w", key, err)
-	}
-
-	var devices []*model.Device
-	for _, value := range values {
-		device := &model.Device{}
-		err = proto.Unmarshal([]byte(value), device)
-		if err != nil {
-			log.Error("Error proto unmarshal. Drop it", zap.Error(err))
+			log.Error("Error proto unmarshal", zap.Error(err))
 			continue
 		}
 		devices = append(devices, device)

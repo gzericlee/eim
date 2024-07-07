@@ -28,6 +28,24 @@ func init() {
 	}
 }
 
+func TestManager_SaveDevice(t *testing.T) {
+	for i := 1; i <= 1000000; i++ {
+		err := manager.SaveDevice(&model.Device{
+			DeviceId:       fmt.Sprintf("device-%d", i),
+			UserId:         fmt.Sprintf("user-%d", i),
+			TenantId:       "bingo",
+			DeviceType:     model.LinuxDevice,
+			DeviceVersion:  "1.0.0",
+			GatewayAddress: "192.168.3.1:10081",
+			State:          model.Enabled,
+		})
+		if err != nil {
+			t.Fatal(err)
+			return
+		}
+	}
+}
+
 func TestManager_GetDevice(t *testing.T) {
 	device, err := manager.GetDevice("user-1000", "bingo", "device-1000")
 	if err != nil {
@@ -48,58 +66,125 @@ func TestManager_GetDevices(t *testing.T) {
 	t.Log(len(devices), string(body), err)
 }
 
-func TestManager_GetAllDevices(t *testing.T) {
-	devices, err := manager.GetAllDevices()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(len(devices), err)
-}
-
 func TestManager_SaveUser(t *testing.T) {
 	for i := 1; i <= 1000000; i++ {
-		t.Log(manager.SaveBiz(&model.Biz{
+		err := manager.SaveBiz(&model.Biz{
 			BizId:      fmt.Sprintf("user-%d", i),
-			BizType:    model.Biz_USER,
+			BizType:    model.BizUser,
 			BizName:    fmt.Sprintf("用户-%d", i),
 			TenantId:   "bingo",
 			TenantName: "品高软件",
+			State:      model.Enabled,
 			Attributes: map[string]*anypb.Any{"password": {Value: []byte("pass@word1")}},
-		}))
+		})
+		if err != nil {
+			t.Fatal(err)
+			return
+		}
 	}
 }
 
 func TestManager_SaveGroup(t *testing.T) {
 	for i := 1; i <= 10000; i++ {
-		t.Log(manager.SaveBiz(&model.Biz{
+		err := manager.SaveBiz(&model.Biz{
 			BizId:      fmt.Sprintf("group-%d", i),
-			BizType:    model.Biz_GROUP,
+			BizType:    model.BizGroup,
+			State:      model.Enabled,
 			BizName:    fmt.Sprintf("群组-%d", i),
 			TenantId:   "bingo",
 			TenantName: "品高软件",
-		}))
-	}
-}
-
-func BenchmarkManager_SaveUser(b *testing.B) {
-	b.N = 1000000
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			_ = manager.SaveBiz(&model.Biz{
-				BizId:      fmt.Sprintf("user-%d", b.N),
-				BizName:    fmt.Sprintf("用户-%d", b.N),
-				TenantId:   "bingo",
-				TenantName: "品高软件",
-				BizType:    model.Biz_USER,
-				Attributes: map[string]*anypb.Any{"password": {Value: []byte("pass@word1")}},
-			})
+		})
+		if err != nil {
+			t.Fatal(err)
+			return
 		}
-	})
+	}
 }
 
 func TestManager_GetUser(t *testing.T) {
 	t.Log(manager.GetBiz("user-1", "bingo"))
+}
+
+func TestManager_EnableBiz(t *testing.T) {
+	err := manager.EnableBiz("user-1", "bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	biz, err := manager.GetBiz("user-1", "bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(biz.BizId, biz.State)
+}
+
+func TestManager_DisableBiz(t *testing.T) {
+	err := manager.DisableBiz("user-1", "bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	biz, err := manager.GetBiz("user-1", "bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(biz.BizId, biz.State)
+}
+
+func TestManager_SaveTenant(t *testing.T) {
+	err := manager.SaveTenant(&model.Tenant{
+		TenantId:   "bingo",
+		TenantName: "广州市品高软件股份有限公司",
+		State:      model.Enabled,
+		Attributes: map[string]*anypb.Any{
+			"minio_user":     {Value: []byte("bingo")},
+			"minio_password": {Value: []byte("pass@word1")},
+			"minio_bucket":   {Value: []byte("bingo")},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestManager_GetTenant(t *testing.T) {
+	tenant, err := manager.GetTenant("bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(tenant.TenantId, tenant.TenantName, tenant.State, tenant.Attributes)
+}
+
+func TestManager_EnableTenant(t *testing.T) {
+	err := manager.EnableTenant("bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tenant, err := manager.GetTenant("bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(tenant.TenantId, tenant.TenantName, tenant.State, tenant.Attributes)
+}
+
+func TestManager_DisableTenant(t *testing.T) {
+	err := manager.DisableTenant("bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tenant, err := manager.GetTenant("bingo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(tenant.TenantId, tenant.TenantName, tenant.State, tenant.Attributes)
 }
 
 func TestManager_AppendBizMember(t *testing.T) {
@@ -145,15 +230,6 @@ func TestManager_GetBizMembers(t *testing.T) {
 	t.Log(len(members), members, err)
 }
 
-func BenchmarkGetBizMembers(b *testing.B) {
-	b.N = 100000
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			_, _ = manager.GetBizMembers("group", "group-1")
-		}
-	})
-}
-
 func TestManager_GetGateways(t *testing.T) {
 	gateways, err := manager.GetGateways()
 	if err != nil {
@@ -161,7 +237,7 @@ func TestManager_GetGateways(t *testing.T) {
 		return
 	}
 	for _, gateway := range gateways {
-		t.Log(gateway.Ip, gateway.MemUsed, gateway.CpuUsed)
+		t.Log(gateway.Ip)
 	}
 }
 
@@ -182,6 +258,26 @@ func TestManager_SaveOfflineMessages(t *testing.T) {
 	t.Log(manager.GetOfflineMessages("user-1", "device-1"))
 }
 
+func TestManager_RemoveAllByKeys(t *testing.T) {
+	keys, _ := manager.getAllKeys("bizs:*")
+	for _, key := range keys {
+		err := manager.redisClient.Del(context.Background(), key).Err()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+}
+
+func BenchmarkGetBizMembers(b *testing.B) {
+	b.N = 100000
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, _ = manager.GetBizMembers("group", "group-1")
+		}
+	})
+}
+
 func BenchmarkManager_GetDevices(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		idx := rand.Int64N(9999)
@@ -189,9 +285,18 @@ func BenchmarkManager_GetDevices(b *testing.B) {
 	}
 }
 
-func TestManager_RemoveDevice(t *testing.T) {
-	keys, _ := manager.getAllKeys("*offline*")
-	for _, key := range keys {
-		manager.redisClient.Del(context.Background(), key).Err()
-	}
+func BenchmarkManager_SaveUser(b *testing.B) {
+	b.N = 1000000
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = manager.SaveBiz(&model.Biz{
+				BizId:      fmt.Sprintf("user-%d", b.N),
+				BizName:    fmt.Sprintf("用户-%d", b.N),
+				TenantId:   "bingo",
+				TenantName: "品高软件",
+				BizType:    model.BizUser,
+				Attributes: map[string]*anypb.Any{"password": {Value: []byte("pass@word1")}},
+			})
+		}
+	})
 }

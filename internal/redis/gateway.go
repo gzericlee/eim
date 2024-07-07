@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	gatewayKeyFormat  = "gateway:%s:%d"
-	gatewaysKeyFormat = "gateway:*"
+	gatewayKeyFormat  = "gateways:%s:%d"
+	gatewaysKeyFormat = "gateways:*"
 )
 
 func (its *Manager) RegisterGateway(gateway *model.Gateway, expiration time.Duration) error {
@@ -46,7 +46,7 @@ func (its *Manager) GetGateways() ([]*model.Gateway, error) {
 		gateway := &model.Gateway{}
 		err = proto.Unmarshal([]byte(value), gateway)
 		if err != nil {
-			log.Error("Error proto unmarshal. Drop it", zap.Error(err))
+			log.Error("Error proto unmarshal", zap.Error(err))
 			continue
 		}
 		gateways = append(gateways, gateway)

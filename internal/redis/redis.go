@@ -122,8 +122,9 @@ func (its *Manager) getAllKeys(pattern string) ([]string, error) {
 }
 
 func (its *Manager) getAllValues(pattern string) ([]string, error) {
+	var mutex sync.Mutex
 	var errGroup errgroup.Group
-	results := &sync.Map{}
+	var allValues []string
 
 	var scan = func(ctx context.Context, client redis.UniversalClient) error {
 		var cursor uint64
@@ -143,9 +144,11 @@ func (its *Manager) getAllValues(pattern string) ([]string, error) {
 			if err != nil {
 				return fmt.Errorf("redis pipeline exec -> %w", err)
 			}
+			mutex.Lock()
 			for _, cmd := range cmds {
-				results.Store(cmd.(*redis.StringCmd).Val(), struct{}{})
+				allValues = append(allValues, cmd.(*redis.StringCmd).Val())
 			}
+			mutex.Unlock()
 			if cursor == 0 {
 				break
 			}
@@ -172,12 +175,6 @@ func (its *Manager) getAllValues(pattern string) ([]string, error) {
 	if err := errGroup.Wait(); err != nil {
 		return nil, fmt.Errorf("redis scan error -> %w", err)
 	}
-
-	var allValues []string
-	results.Range(func(key, _ interface{}) bool {
-		allValues = append(allValues, key.(string))
-		return true
-	})
 
 	return allValues, nil
 }

@@ -6,8 +6,7 @@ import (
 )
 
 func init() {
-	redirectStderr()
-
+	//redirectStderr()
 	logger = newZapLogger(Config{
 		ConsoleEnabled: true,
 		ConsoleLevel:   "INFO",

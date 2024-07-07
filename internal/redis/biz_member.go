@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	bizMemberKeyFormat = "biz:%s:%s:members"
+	bizMembersKeyFormat = "members:%s:%s"
 )
 
 func (its *Manager) AddBizMember(member *model.BizMember) error {
-	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.BizTenantId)
+	key := fmt.Sprintf(bizMembersKeyFormat, member.BizId, member.BizTenantId)
 
 	err := its.redisClient.SAdd(context.Background(), key, fmt.Sprintf("%s@%s", member.MemberId, member.MemberTenantId)).Err()
 	if err != nil {
@@ -23,7 +23,7 @@ func (its *Manager) AddBizMember(member *model.BizMember) error {
 }
 
 func (its *Manager) RemoveBizMember(member *model.BizMember) error {
-	key := fmt.Sprintf(bizMemberKeyFormat, member.BizId, member.BizTenantId)
+	key := fmt.Sprintf(bizMembersKeyFormat, member.BizId, member.BizTenantId)
 
 	err := its.redisClient.SRem(context.Background(), key, fmt.Sprintf("%s@%s", member.MemberId, member.MemberTenantId)).Err()
 	if err != nil {
@@ -34,7 +34,7 @@ func (its *Manager) RemoveBizMember(member *model.BizMember) error {
 }
 
 func (its *Manager) GetBizMembers(bizId, tenantId string) ([]string, error) {
-	key := fmt.Sprintf(bizMemberKeyFormat, bizId, tenantId)
+	key := fmt.Sprintf(bizMembersKeyFormat, bizId, tenantId)
 
 	result, err := its.redisClient.SMembers(context.Background(), key).Result()
 	if err != nil {

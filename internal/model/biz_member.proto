@@ -2,9 +2,13 @@ syntax = "proto3";
 package model;
 option go_package = "../model";
 
+import "google/protobuf/any.proto";
+
 message BizMember {
   string biz_id = 1;
   string member_id = 2;
-  string biz_tenant_id = 3;
-  string member_tenant_id = 4;
+  int32 member_type = 3;
+  string biz_tenant_id = 4;
+  string member_tenant_id = 5;
+  map<string, google.protobuf.Any> attributes = 6;
 }

@@ -2,6 +2,8 @@ syntax = "proto3";
 package model;
 option go_package = "../model";
 
+import "google/protobuf/any.proto";
+
 message Gateway {
   string ip = 1;
   int32 port = 2;
@@ -9,7 +11,5 @@ message Gateway {
   int64 send_total = 4;
   int64 received_total = 5;
   int64 invalid_total = 6;
-  int64 goroutine_total = 7;
-  float mem_used = 8;
-  float cpu_used= 9;
+  map<string, google.protobuf.Any> metrics = 7;
 }

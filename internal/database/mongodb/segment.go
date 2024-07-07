@@ -23,8 +23,10 @@ const (
 )
 
 func (its *Repository) GetSegment(bizId, tenantId string) (*model.Segment, error) {
+	var ctx = context.Background()
 	var seg *model.Segment
-	err := its.db.Collection("segment").FindOne(context.Background(), bson.M{"biz_id": bizId, "tenant_id": tenantId}).Decode(&seg)
+
+	err := its.db.Collection("segment").FindOne(ctx, bson.M{"biz_id": bizId, "tenant_id": tenantId}).Decode(&seg)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("find segment -> %w", err)
@@ -40,9 +42,11 @@ func (its *Repository) GetSegment(bizId, tenantId string) (*model.Segment, error
 		seg.MaxId = seg.MaxId + int64(seg.Step)
 		seg.UpdateAt = timestamppb.Now()
 	}
-	_, err = its.db.Collection("segment").ReplaceOne(context.Background(), bson.M{"biz_id": bizId, "tenant_id": tenantId}, seg, &options.ReplaceOptions{Upsert: &isTrue})
+
+	_, err = its.db.Collection("segment").ReplaceOne(ctx, bson.M{"biz_id": bizId, "tenant_id": tenantId}, seg, &options.ReplaceOptions{Upsert: &isTrue})
 	if err != nil {
 		return nil, fmt.Errorf("upsert segment -> %w", err)
 	}
+
 	return seg, nil
 }

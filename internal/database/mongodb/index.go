@@ -10,33 +10,9 @@ import (
 )
 
 func (its *Repository) initIndexes() error {
-	ctx := context.TODO()
+	ctx := context.Background()
 
-	_, err := its.db.Collection("device").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys:    bson.M{"device_id": 1},
-		Options: options.Index().SetUnique(true),
-	})
-	if err != nil {
-		return fmt.Errorf("create device(device_id) index -> %w", err)
-	}
-
-	_, err = its.db.Collection("device").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys:    bson.M{"user_id": 1},
-		Options: options.Index().SetUnique(false),
-	})
-	if err != nil {
-		return fmt.Errorf("create device(user_id) index -> %w", err)
-	}
-
-	_, err = its.db.Collection("device").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys:    bson.D{{"device_id", 1}, {"user_id", 1}},
-		Options: options.Index().SetUnique(true),
-	})
-	if err != nil {
-		return fmt.Errorf("create device(device_id,user_id) index -> %w", err)
-	}
-
-	_, err = its.db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
+	_, err := its.db.Collection("message").Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bson.M{"msg_id": 1},
 		Options: options.Index().SetUnique(true),
 	})
@@ -57,14 +33,6 @@ func (its *Repository) initIndexes() error {
 	})
 	if err != nil {
 		return fmt.Errorf("create message(seq_id) index -> %w", err)
-	}
-
-	_, err = its.db.Collection("biz").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys:    bson.D{{"biz_id", 1}, {"tenant_id", 1}},
-		Options: options.Index().SetUnique(true),
-	})
-	if err != nil {
-		return fmt.Errorf("create biz(biz_id,tenant_id) index -> %w", err)
 	}
 
 	return nil

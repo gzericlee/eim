@@ -1,0 +1,75 @@
+x-minio-common: &minio-common
+  image: quay.io/minio/minio
+  command: server --console-address ":9001" http://minio{1...4}/data{1...2}
+  expose:
+    - "9000"
+    - "9001"
+  environment:
+    MINIO_ROOT_USER: minioadmin
+    MINIO_ROOT_PASSWORD: minioadmin
+  healthcheck:
+    test: ["CMD", "mc", "ready", "local"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+services:
+  minio1:
+    <<: *minio-common
+    hostname: minio1
+    volumes:
+      - minio-1-data-1:/data1
+      - minio-1-data-2:/data2
+
+  minio2:
+    <<: *minio-common
+    hostname: minio2
+    volumes:
+      - minio-2-data-1:/data1
+      - minio-2-data-2:/data2
+
+  minio3:
+    <<: *minio-common
+    hostname: minio3
+    volumes:
+      - minio-3-data-1:/data1
+      - minio-3-data-2:/data2
+
+  minio4:
+    <<: *minio-common
+    hostname: minio4
+    volumes:
+      - minio-4-data-1:/data1
+      - minio-4-data-2:/data2
+
+  nginx:
+    image: nginx:1.19.2-alpine
+    hostname: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+      - minio4
+
+volumes:
+  minio-1-data-1:
+    driver: local
+  minio-1-data-2:
+    driver: local
+  minio-2-data-1:
+    driver: local
+  minio-2-data-2:
+    driver: local
+  minio-3-data-1:
+    driver: local
+  minio-3-data-2:
+    driver: local
+  minio-4-data-1:
+    driver: local
+  minio-4-data-2:
+    driver: local

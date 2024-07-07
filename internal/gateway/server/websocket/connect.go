@@ -56,7 +56,7 @@ func (its *Server) connect(w http.ResponseWriter, r *http.Request) {
 		DeviceId:       r.Header.Get("DeviceId"),
 		DeviceVersion:  r.Header.Get("DeviceVersion"),
 		DeviceType:     r.Header.Get("DeviceType"),
-		State:          model.OnlineState,
+		State:          model.Online,
 		GatewayAddress: fmt.Sprintf("%s:%d", its.ip, its.port),
 	}
 

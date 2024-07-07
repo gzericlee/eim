@@ -9,9 +9,20 @@ const (
 )
 
 const (
-	OfflineState = 0
-	OnlineState  = 1
-	LogoutState  = -1
+	BizUser    = 1
+	BizGroup   = 2
+	BizService = 3
+)
+
+const (
+	Offline = 0
+	Online  = 1
+	Logout  = -1
+)
+
+const (
+	Enabled  = 1
+	Disabled = 0
 )
 
 const (
@@ -31,10 +42,4 @@ const (
 	VideoMessage    = 5
 	LocationMessage = 6
 	ControlMessage  = 7
-)
-
-const (
-	BizGroup   = "group"
-	BizUser    = "user"
-	BizService = "service"
 )

@@ -25,13 +25,6 @@ var _ IDatabase = &mongodb.Repository{}
 var _ IDatabase = &mysql.Repository{}
 
 type IDatabase interface {
-	SaveDevice(device *model.Device) error
-	GetDevices(userId string) ([]*model.Device, error)
-	GetDevice(userId, deviceId string) (*model.Device, error)
-
-	SaveBiz(biz *model.Biz) error
-	GetBiz(bizId, tenantId string) (*model.Biz, error)
-
 	SaveMessage(message *model.Message) error
 	SaveMessages(messages []*model.Message) error
 	GetMessagesByIds(msgIds []int64) ([]*model.Message, error)

@@ -22,21 +22,27 @@ func (its *Repository) SaveMessages(messages []*model.Message) error {
 	for _, message := range messages {
 		objs = append(objs, message)
 	}
+
 	_, err := its.db.Collection("message").InsertMany(context.TODO(), objs)
 	if err != nil {
 		return fmt.Errorf("insert messages -> %w", err)
 	}
+
 	return nil
 }
 
 func (its *Repository) GetMessagesByIds(msgIds []int64) ([]*model.Message, error) {
+	var ctx = context.Background()
 	var messages []*model.Message
-	cursor, err := its.db.Collection("message").Find(context.TODO(), bson.M{"msg_id": bson.M{"$in": msgIds}})
+
+	cursor, err := its.db.Collection("message").Find(ctx, bson.M{"msg_id": bson.M{"$in": msgIds}})
 	if err != nil {
 		return nil, fmt.Errorf("get messages by ids -> %w", err)
 	}
-	if err = cursor.All(context.Background(), &messages); err != nil {
+
+	if err = cursor.All(ctx, &messages); err != nil {
 		return nil, fmt.Errorf("cursor all -> %w", err)
 	}
+
 	return messages, nil
 }
