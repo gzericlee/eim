@@ -56,7 +56,7 @@ func (its *Manager) DetachBucketPolicy(bucketName, userName string) error {
 		User:     userName,
 	})
 	if err != nil {
-		return fmt.Errorf("attach policy -> %w", err)
+		return fmt.Errorf("detach policy -> %w", err)
 	}
 
 	return nil
