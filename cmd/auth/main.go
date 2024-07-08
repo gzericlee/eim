@@ -11,6 +11,7 @@ import (
 	"eim"
 	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
+	"eim/pkg/exitutil"
 	"eim/pkg/log"
 	"eim/pkg/netutil"
 	"eim/pkg/pprof"
@@ -56,8 +57,11 @@ func newCliApp() *cli.App {
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName), zap.String("addr", fmt.Sprintf("%v:%v", config.SystemConfig.LocalIp, config.SystemConfig.AuthSvr.RpcPort)))
 
-		select {}
+		exitutil.WaitSignal(func() {
+			log.Info(fmt.Sprintf("%v service stopped successfully", eim.ServiceName))
+		})
 
+		return nil
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
 	return app

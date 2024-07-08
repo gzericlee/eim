@@ -7,5 +7,5 @@ import (
 )
 
 func RegisterAPIRoutes(engine *gin.Engine, redisManager *redis.Manager) {
-	regGatewayAPIs(engine, redisManager)
+	regUploadAPIs(engine, redisManager)
 }

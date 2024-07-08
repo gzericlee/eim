@@ -22,6 +22,16 @@ go build -o build/dist/eim_api -tags netgo -ldflags \
 -X 'eim.Date=${NOW}'" \
 ./cmd/api
 
+echo "Compiling eim_file_flex service..."
+go build -o build/dist/eim_file_flex -tags netgo -ldflags \
+"-s -w
+-X 'eim.ServiceName=EIM-FileFlex'
+-X 'eim.Version=${VERSION:-dev}'
+-X 'eim.Branch=${BRANCH:-master}'
+-X 'eim.Commit=${COMMIT:-dev}'
+-X 'eim.Date=${NOW}'" \
+./cmd/fileflex
+
 echo "Compiling eim_gateway service..."
 go build -o build/dist/eim_gateway -tags netgo -ldflags \
 "-s -w

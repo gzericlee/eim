@@ -3,7 +3,6 @@ package websocket
 import (
 	"fmt"
 	"net/http"
-	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -132,13 +131,12 @@ func (its *Server) IncrErrorTotal(count int64) {
 
 func (its *Server) RegistryGateway() {
 	err := its.storageRpc.RegisterGateway(&model.Gateway{
-		Ip:             its.ip,
-		Port:           int32(its.port),
-		ClientTotal:    its.clientTotal,
-		SendTotal:      its.sendMsgTotal,
-		ReceivedTotal:  its.receivedMsgTotal,
-		InvalidTotal:   its.invalidMsgTotal,
-		GoroutineTotal: int64(runtime.NumGoroutine()),
+		Ip:            its.ip,
+		Port:          int32(its.port),
+		ClientTotal:   its.clientTotal,
+		SendTotal:     its.sendMsgTotal,
+		ReceivedTotal: its.receivedMsgTotal,
+		InvalidTotal:  its.invalidMsgTotal,
 	}, time.Second*10)
 	if err != nil {
 		return

@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/emicklei/go-restful/v3"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	"eim/internal/redis"
@@ -14,12 +14,12 @@ type GatewayHandler struct {
 	RedisManager *redis.Manager
 }
 
-func (its *GatewayHandler) List(request *restful.Request, response *restful.Response) {
+func (its *GatewayHandler) List(c *gin.Context) {
 	gateways, err := its.RedisManager.GetGateways()
 	if err != nil {
 		log.Error("Error get gateways", zap.Error(err))
-		_ = response.WriteError(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	_ = response.WriteAsJson(gateways)
+	c.JSON(http.StatusOK, gateways)
 }

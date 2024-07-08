@@ -65,4 +65,7 @@ type systemConfig struct {
 	ApiSvr struct {
 		HttpPort int
 	}
+	FileFlexSvr struct {
+		HttpPort int
+	}
 }

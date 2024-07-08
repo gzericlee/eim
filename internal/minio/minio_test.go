@@ -1,6 +1,9 @@
 package minio
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 var manager *Manager
 
@@ -43,4 +46,23 @@ func TestManager_AttachBucketPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestManager_UploadObject(t *testing.T) {
+	file, err := os.Open("test.txt")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	err = manager.UploadObject("bingo", "test.txt", file)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	url, err := manager.ShareObject("bingo", "test.txt", 1)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	t.Log(url)
 }

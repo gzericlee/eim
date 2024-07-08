@@ -13,6 +13,7 @@ import (
 	"eim/internal/dispatch"
 	"eim/internal/mq"
 	storagerpc "eim/internal/storage/rpc"
+	"eim/pkg/exitutil"
 	"eim/pkg/log"
 	eimmetrics "eim/pkg/metrics"
 	"eim/pkg/pprof"
@@ -81,8 +82,11 @@ func newCliApp() *cli.App {
 
 		eimmetrics.EnableMetrics(32003)
 
-		select {}
+		exitutil.WaitSignal(func() {
+			log.Info(fmt.Sprintf("%v service stopped successfully", eim.ServiceName))
+		})
 
+		return nil
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
 	return app

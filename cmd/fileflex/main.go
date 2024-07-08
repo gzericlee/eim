@@ -20,8 +20,8 @@ import (
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
-	app.Name = "eim-api"
-	app.Usage = "EIM-API服务"
+	app.Name = "eim-file-flex"
+	app.Usage = "EIM-FILE-FLEX服务"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",
@@ -56,7 +56,7 @@ func newCliApp() *cli.App {
 				RedisManager: redisManager})
 		}()
 
-		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName), zap.Int("port", config.SystemConfig.ApiSvr.HttpPort))
+		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName), zap.Int("port", config.SystemConfig.FileFlexSvr.HttpPort))
 
 		exitutil.WaitSignal(func() {
 			httpServer.Stop()

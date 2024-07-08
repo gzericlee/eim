@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"eim/internal/api/router"
+	"eim/internal/fileflex/router"
 	"eim/internal/redis"
 	eimmetrics "eim/pkg/metrics"
 )
