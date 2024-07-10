@@ -4,11 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"eim/internal/api/handler"
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
 )
 
-func regGatewayAPIs(engine *gin.Engine, redisManager *redis.Manager) {
-	gatewayHandler := handler.GatewayHandler{RedisManager: redisManager}
+func regGatewayAPIs(engine *gin.Engine, storageRpc *storagerpc.Client) {
+	gatewayHandler := handler.NewGatewayHandler(storageRpc)
 
 	gateways := engine.Group("/gateways")
 	{

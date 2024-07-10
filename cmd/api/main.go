@@ -11,8 +11,10 @@ import (
 
 	"eim"
 	"eim/internal/api"
+	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
-	"eim/internal/redis"
+	"eim/internal/minio"
+	storagerpc "eim/internal/storage/rpc"
 	"eim/pkg/exitutil"
 	"eim/pkg/log"
 	"eim/pkg/pprof"
@@ -40,20 +42,34 @@ func newCliApp() *cli.App {
 		httpServer := api.HttpServer{}
 
 		go func() {
-			//开启Http服务
-			redisManager, err := redis.NewManager(redis.Config{
-				RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
-				RedisPassword:  config.SystemConfig.Redis.Password,
+			storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+			if err != nil {
+				panic(fmt.Errorf("new storage rpc client -> %w", err))
+			}
+
+			authRpc, err := authrpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+			if err != nil {
+				panic(fmt.Errorf("new auth rpc client -> %w", err))
+			}
+
+			minioManager, err := minio.NewManager(&minio.Config{
+				Endpoint:        config.SystemConfig.Minio.Endpoint,
+				AccessKeyId:     config.SystemConfig.Minio.AdminUserName,
+				SecretAccessKey: config.SystemConfig.Minio.AdminPassword,
+				UseSSL:          config.SystemConfig.Minio.UseSSL,
 			})
 			if err != nil {
-				panic(fmt.Errorf("new redis manager -> %w", err))
+				panic(fmt.Errorf("new minio manager -> %w", err))
 			}
 
 			log.Info("New redis manager successfully")
 
 			_ = httpServer.Run(api.Config{
 				Port:         config.SystemConfig.ApiSvr.HttpPort,
-				RedisManager: redisManager})
+				StorageRpc:   storageRpc,
+				AuthRpc:      authRpc,
+				MinioManager: minioManager,
+			})
 		}()
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName), zap.Int("port", config.SystemConfig.ApiSvr.HttpPort))

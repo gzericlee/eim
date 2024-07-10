@@ -68,4 +68,10 @@ type systemConfig struct {
 	FileFlexSvr struct {
 		HttpPort int
 	}
+	Minio struct {
+		Endpoint      string
+		AdminUserName string
+		AdminPassword string
+		UseSSL        bool
+	}
 }

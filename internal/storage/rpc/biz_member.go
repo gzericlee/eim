@@ -31,7 +31,7 @@ func (its *BizMember) AddBizMember(ctx context.Context, args *BizMemberArgs, rep
 		return fmt.Errorf("add biz_member -> %w", err)
 	}
 
-	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
+	key := fmt.Sprintf(bizMembersCacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
 
 	err = storageRpc.RefreshBizMembersCache(key, args.BizMember, ActionAdd)
 	if err != nil {
@@ -47,7 +47,7 @@ func (its *BizMember) RemoveBizMember(ctx context.Context, args *BizMemberArgs, 
 		return fmt.Errorf("remove biz_member -> %w", err)
 	}
 
-	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
+	key := fmt.Sprintf(bizMembersCacheKeyFormat, bizCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
 
 	err = storageRpc.RefreshBizMembersCache(key, args.BizMember, ActionDelete)
 	if err != nil {
@@ -58,7 +58,7 @@ func (its *BizMember) RemoveBizMember(ctx context.Context, args *BizMemberArgs, 
 }
 
 func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, reply *BizMembersReply) error {
-	key := fmt.Sprintf(cacheKeyFormat, bizMemberCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
+	key := fmt.Sprintf(bizMembersCacheKeyFormat, bizMemberCachePool, args.BizMember.BizId, args.BizMember.BizTenantId)
 
 	if members, exist := its.storageCache.Get(key); exist {
 		reply.Members = members
@@ -73,7 +73,7 @@ func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, re
 		return members, nil
 	})
 	if err != nil {
-		return fmt.Errorf("biz_member single group do -> %w", err)
+		return fmt.Errorf("single group do -> %w", err)
 	}
 
 	members := result.([]string)

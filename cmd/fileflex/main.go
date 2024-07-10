@@ -10,9 +10,10 @@ import (
 	"go.uber.org/zap"
 
 	"eim"
-	"eim/internal/api"
+	authrpc "eim/internal/auth/rpc"
 	"eim/internal/config"
-	"eim/internal/redis"
+	"eim/internal/fileflex"
+	storagerpc "eim/internal/storage/rpc"
 	"eim/pkg/exitutil"
 	"eim/pkg/log"
 	"eim/pkg/pprof"
@@ -37,23 +38,27 @@ func newCliApp() *cli.App {
 		//开启PProf服务
 		pprof.EnablePProf()
 
-		httpServer := api.HttpServer{}
+		httpServer := fileflex.HttpServer{}
 
 		go func() {
-			//开启Http服务
-			redisManager, err := redis.NewManager(redis.Config{
-				RedisEndpoints: config.SystemConfig.Redis.Endpoints.Value(),
-				RedisPassword:  config.SystemConfig.Redis.Password,
-			})
+			storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
-				panic(fmt.Errorf("new redis manager -> %w", err))
+				panic(fmt.Errorf("new storage rpc client -> %w", err))
+			}
+
+			authRpc, err := authrpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+			if err != nil {
+				panic(fmt.Errorf("new auth rpc client -> %w", err))
 			}
 
 			log.Info("New redis manager successfully")
 
-			_ = httpServer.Run(api.Config{
-				Port:         config.SystemConfig.ApiSvr.HttpPort,
-				RedisManager: redisManager})
+			_ = httpServer.Run(fileflex.Config{
+				Port:          config.SystemConfig.ApiSvr.HttpPort,
+				MinioEndpoint: config.SystemConfig.Minio.Endpoint,
+				AuthRpc:       authRpc,
+				StorageRpc:    storageRpc,
+			})
 		}()
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName), zap.Int("port", config.SystemConfig.FileFlexSvr.HttpPort))

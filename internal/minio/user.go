@@ -13,3 +13,12 @@ func (its *Manager) CreateUser(userName, password string) error {
 
 	return nil
 }
+
+func (its *Manager) RemoveUser(userName string) error {
+	err := its.adminClient.RemoveUser(context.Background(), userName)
+	if err != nil {
+		return fmt.Errorf("remove user -> %w", err)
+	}
+
+	return nil
+}

@@ -93,7 +93,7 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.StringSliceFlag{
 			Name:        "registry-services",
-			Value:       cli.NewStringSlice("device", "message", "biz", "biz_member", "gateway", "segment"),
+			Value:       cli.NewStringSlice("device", "message", "biz", "biz_member", "gateway", "segment", "tenant"),
 			Usage:       "Registry services",
 			EnvVars:     []string{RegistryServices},
 			Destination: &config.SystemConfig.StorageSvr.RegistryServices,

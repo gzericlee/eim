@@ -14,6 +14,7 @@ func init() {
 		AccessKeyId:     "minioadmin",
 		SecretAccessKey: "minioadmin",
 		UseSSL:          false,
+		ExpiryDays:      7,
 	})
 	if err != nil {
 		panic(err)
@@ -59,7 +60,7 @@ func TestManager_UploadObject(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	url, err := manager.ShareObject("bingo", "test.txt", 1)
+	url, err := manager.ShareObject("bingo", "test.txt")
 	if err != nil {
 		t.Fatal(err)
 		return

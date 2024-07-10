@@ -30,10 +30,10 @@ type Biz struct {
 func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) error {
 	err := its.redisManager.SaveBiz(args.Biz)
 	if err != nil {
-		return fmt.Errorf("save user -> %w", err)
+		return fmt.Errorf("save biz -> %w", err)
 	}
 
-	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
+	key := fmt.Sprintf(bizCacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
 
 	err = storageRpc.RefreshBizCache(key, args.Biz, ActionSave)
 	if err != nil {
@@ -44,7 +44,7 @@ func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) e
 }
 
 func (its *Biz) GetBiz(ctx context.Context, args *BizArgs, reply *BizReply) error {
-	key := fmt.Sprintf(cacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
+	key := fmt.Sprintf(bizCacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
 
 	if biz, exist := its.storageCache.Get(key); exist {
 		reply.Biz = biz
@@ -52,14 +52,14 @@ func (its *Biz) GetBiz(ctx context.Context, args *BizArgs, reply *BizReply) erro
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		user, err := its.redisManager.GetBiz(args.Biz.BizId, args.Biz.TenantId)
+		biz, err := its.redisManager.GetBiz(args.Biz.BizId, args.Biz.TenantId)
 		if err != nil {
-			return nil, fmt.Errorf("get user -> %w", err)
+			return nil, fmt.Errorf("get biz -> %w", err)
 		}
-		return user, nil
+		return biz, nil
 	})
 	if err != nil {
-		return fmt.Errorf("biz single group do -> %w", err)
+		return fmt.Errorf("single group do -> %w", err)
 	}
 
 	reply.Biz = result.(*model.Biz)

@@ -13,6 +13,7 @@ type Config struct {
 	AccessKeyId     string
 	SecretAccessKey string
 	UseSSL          bool
+	ExpiryDays      int
 }
 
 type Manager struct {
@@ -22,6 +23,7 @@ type Manager struct {
 	endpoint    string
 	accessKeyId string
 	secretKey   string
+	expiryDays  int
 }
 
 func NewManager(cfg *Config) (*Manager, error) {
@@ -48,5 +50,6 @@ func NewManager(cfg *Config) (*Manager, error) {
 		endpoint:    cfg.Endpoint,
 		accessKeyId: cfg.AccessKeyId,
 		secretKey:   cfg.SecretAccessKey,
+		expiryDays:  cfg.ExpiryDays,
 	}, nil
 }

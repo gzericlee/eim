@@ -1,4 +1,4 @@
-package api
+package fileflex
 
 import (
 	"context"
@@ -9,15 +9,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	authrpc "eim/internal/auth/rpc"
 	"eim/internal/fileflex/router"
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
+	"eim/pkg/log"
 	eimmetrics "eim/pkg/metrics"
+	"eim/pkg/middleware"
 )
 
 type Config struct {
-	Ip           string
-	Port         int
-	RedisManager *redis.Manager
+	Ip            string
+	Port          int
+	AuthRpc       *authrpc.Client
+	StorageRpc    *storagerpc.Client
+	MinioEndpoint string
 }
 
 type HttpServer struct {
@@ -27,23 +32,18 @@ type HttpServer struct {
 func (its *HttpServer) Run(cfg Config) error {
 	gin.SetMode("release")
 
-	engine := gin.Default()
+	engine := gin.New()
 
-	engine.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
-			param.ClientIP,
-			param.TimeStamp.Format(time.DateTime),
-			param.Method,
-			param.Path,
-			param.Request.Proto,
-			param.StatusCode,
-			param.Latency,
-			param.Request.UserAgent(),
-			param.ErrorMessage,
-		)
-	}))
+	ginMiddleware := middleware.NewGinMiddleware(cfg.AuthRpc)
 
-	router.RegisterAPIRoutes(engine, cfg.RedisManager)
+	engine.Use(gin.Recovery(), ginMiddleware.LogFormatter(), ginMiddleware.Auth)
+
+	router.RegisterAPIRoutes(engine, cfg.StorageRpc, cfg.MinioEndpoint)
+
+	routeInfo := engine.Routes()
+	for _, ri := range routeInfo {
+		log.Info(fmt.Sprintf("%-6s %-25s --> %s", ri.Method, ri.Path, ri.Handler))
+	}
 
 	its.server = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: engine}
 

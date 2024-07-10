@@ -28,13 +28,17 @@ const (
 	gatewayServicePath   = "gateway"
 	segmentServicePath   = "segment"
 	refresherServicePath = "refresher"
+	tenantServicePath    = "tenant"
 
+	tenantCachePool    = "tenants"
 	bizCachePool       = "bizs"
 	deviceCachePool    = "devices"
 	bizMemberCachePool = "biz_members"
 
-	deviceCacheKeyFormat = "%s:%s:%s:%s"
-	cacheKeyFormat       = "%s:%s:%s"
+	deviceCacheKeyFormat     = "%s:%s:%s:%s"
+	bizCacheKeyFormat        = "%s:%s:%s"
+	bizMembersCacheKeyFormat = "%s:%s:%s"
+	tenantCacheKeyFormat     = "%s:%s"
 )
 
 var (
@@ -106,6 +110,11 @@ func StartServer(cfg Config) error {
 		panic(err)
 	}
 
+	tenantCache, err := cache.NewCache[string, *model.Tenant]("tenant", 100000)
+	if err != nil {
+		panic(err)
+	}
+
 	keyLock := lock.NewKeyLock()
 
 	err = svr.RegisterName(refresherServicePath, &Refresher{devicesCache: devicesCache, bizCache: bizCache, bizMembersCache: bizMembersCache, lock: keyLock}, "")
@@ -139,6 +148,10 @@ func StartServer(cfg Config) error {
 		case segmentServicePath:
 			{
 				rcvr = &Segment{database: db}
+			}
+		case tenantServicePath:
+			{
+				rcvr = &Tenant{storageCache: tenantCache, redisManager: redisManager, database: db}
 			}
 		}
 		err = svr.RegisterName(service, rcvr, "")

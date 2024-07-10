@@ -74,7 +74,7 @@ func (its *Device) GetDevices(ctx context.Context, args *UserArgs, reply *Device
 		return devices, nil
 	})
 	if err != nil {
-		return fmt.Errorf("device single group do -> %w", err)
+		return fmt.Errorf("single group do -> %w", err)
 	}
 
 	devices := result.([]*model.Device)
@@ -90,7 +90,7 @@ func (its *Device) GetDevice(ctx context.Context, args *UserArgs, reply *DeviceR
 
 	err := its.GetDevices(ctx, args, result)
 	if err != nil {
-		return fmt.Errorf("get user devices -> %w", err)
+		return fmt.Errorf("get devices -> %w", err)
 	}
 
 	for _, device := range result.Devices {

@@ -17,8 +17,8 @@ func (its *Manager) UploadObject(bucketName, objectName string, reader io.ReadCl
 	return err
 }
 
-func (its *Manager) ShareObject(bucketName, objectName string, days int) (string, error) {
-	expiryDuration := time.Duration(days) * 24 * time.Hour
+func (its *Manager) ShareObject(bucketName, objectName string) (string, error) {
+	expiryDuration := time.Duration(its.expiryDays) * 24 * time.Hour
 
 	presignedUrl, err := its.minioClient.PresignedGetObject(context.Background(), bucketName, objectName, expiryDuration, nil)
 	if err != nil {

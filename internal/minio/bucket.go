@@ -17,6 +17,15 @@ func (its *Manager) CreateBucket(name string) error {
 	return nil
 }
 
+func (its *Manager) RemoveBucket(name string) error {
+	err := its.minioClient.RemoveBucket(context.Background(), name)
+	if err != nil {
+		return fmt.Errorf("remove bucket -> %w", err)
+	}
+
+	return nil
+}
+
 func (its *Manager) AttachBucketPolicy(bucketName, userName string) error {
 	ctx := context.Background()
 	policy := fmt.Sprintf(`{

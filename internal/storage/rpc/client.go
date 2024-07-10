@@ -14,7 +14,8 @@ import (
 type Client struct {
 	devicePool    *rpcxclient.XClientPool
 	messagePool   *rpcxclient.XClientPool
-	userPool      *rpcxclient.XClientPool
+	bizPool       *rpcxclient.XClientPool
+	tenantPool    *rpcxclient.XClientPool
 	bizMemberPool *rpcxclient.XClientPool
 	gatewayPool   *rpcxclient.XClientPool
 	segmentPool   *rpcxclient.XClientPool
@@ -63,14 +64,20 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 		return nil, fmt.Errorf("new etcd v3 discovery for refresher service -> %w", err)
 	}
 
+	d8, err := rpcxetcdclient.NewEtcdV3Discovery(basePath, tenantServicePath, etcdEndpoints, false, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new etcd v3 discovery for refresher service -> %w", err)
+	}
+
 	return &Client{
 		devicePool:    rpcxclient.NewXClientPool(100, deviceServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d1, rpcxclient.DefaultOption),
 		messagePool:   rpcxclient.NewXClientPool(100, messageServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d2, rpcxclient.DefaultOption),
-		userPool:      rpcxclient.NewXClientPool(100, bizServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d3, rpcxclient.DefaultOption),
+		bizPool:       rpcxclient.NewXClientPool(100, bizServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d3, rpcxclient.DefaultOption),
 		bizMemberPool: rpcxclient.NewXClientPool(100, bizMemberServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d4, rpcxclient.DefaultOption),
 		gatewayPool:   rpcxclient.NewXClientPool(100, gatewayServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d5, rpcxclient.DefaultOption),
 		segmentPool:   rpcxclient.NewXClientPool(100, segmentServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d6, rpcxclient.DefaultOption),
 		refresherPool: rpcxclient.NewXClientPool(100, refresherServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d7, rpcxclient.DefaultOption),
+		tenantPool:    rpcxclient.NewXClientPool(100, tenantServicePath, rpcxclient.Failover, rpcxclient.RoundRobin, d8, rpcxclient.DefaultOption),
 	}, nil
 }
 
@@ -152,7 +159,7 @@ func (its *Client) GetOfflineMessages(userId, deviceId string) ([]*model.Message
 
 func (its *Client) SaveBiz(biz *model.Biz) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.userPool.Get().Call(ctx, "SaveBiz", &BizArgs{Biz: biz}, &EmptyReply{})
+	err := its.bizPool.Get().Call(ctx, "SaveBiz", &BizArgs{Biz: biz}, &EmptyReply{})
 	if err != nil {
 		return fmt.Errorf("call SaveBiz -> %w", err)
 	}
@@ -162,11 +169,30 @@ func (its *Client) SaveBiz(biz *model.Biz) error {
 func (its *Client) GetBiz(bizId, tenantId string) (*model.Biz, error) {
 	reply := &BizReply{}
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.userPool.Get().Call(ctx, "GetBiz", &BizArgs{Biz: &model.Biz{BizId: bizId, TenantId: tenantId}}, reply)
+	err := its.bizPool.Get().Call(ctx, "GetBiz", &BizArgs{Biz: &model.Biz{BizId: bizId, TenantId: tenantId}}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call GetBiz -> %w", err)
 	}
 	return reply.Biz, nil
+}
+
+func (its *Client) SaveTenant(tenant *model.Tenant) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.tenantPool.Get().Call(ctx, "SaveTenant", &TenantArgs{Tenant: tenant}, &EmptyReply{})
+	if err != nil {
+		return fmt.Errorf("call SaveTenant -> %w", err)
+	}
+	return nil
+}
+
+func (its *Client) GetTenant(tenantId string) (*model.Tenant, error) {
+	reply := &TenantReply{}
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.tenantPool.Get().Call(ctx, "GetTenant", &TenantArgs{Tenant: &model.Tenant{TenantId: tenantId}}, reply)
+	if err != nil {
+		return nil, fmt.Errorf("call GetTenant -> %w", err)
+	}
+	return reply.Tenant, nil
 }
 
 func (its *Client) AddBizMember(member *model.BizMember) error {
@@ -249,6 +275,15 @@ func (its *Client) RefreshBizMembersCache(key string, bizMember *model.BizMember
 	err := its.refresherPool.Get().Broadcast(ctx, "RefreshBizMembersCache", &RefreshBizMembersArgs{Key: key, BizMember: bizMember, Action: action}, &EmptyReply{})
 	if err != nil {
 		return fmt.Errorf("call RefreshBizMembersCache -> %w", err)
+	}
+	return nil
+}
+
+func (its *Client) RefreshTenantCache(key string, tenant *model.Tenant, action string) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.refresherPool.Get().Broadcast(ctx, "RefreshTenantCache", &RefreshTenantArgs{Key: key, Tenant: tenant, Action: action}, &EmptyReply{})
+	if err != nil {
+		return fmt.Errorf("call RefreshTenantCache -> %w", err)
 	}
 	return nil
 }

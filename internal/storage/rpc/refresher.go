@@ -26,6 +26,12 @@ type RefreshBizArgs struct {
 	Action string
 }
 
+type RefreshTenantArgs struct {
+	Key    string
+	Tenant *model.Tenant
+	Action string
+}
+
 type RefreshBizMembersArgs struct {
 	Key       string
 	BizMember *model.BizMember
@@ -37,6 +43,7 @@ type Refresher struct {
 	devicesCache    *cache.Cache[string, []*model.Device]
 	bizCache        *cache.Cache[string, *model.Biz]
 	bizMembersCache *cache.Cache[string, []string]
+	tenantCache     *cache.Cache[string, *model.Tenant]
 }
 
 func (its *Refresher) RefreshDevicesCache(ctx context.Context, args *RefreshDevicesArgs, reply *EmptyReply) error {
@@ -81,6 +88,20 @@ func (its *Refresher) RefreshBizCache(ctx context.Context, args *RefreshBizArgs,
 	case ActionSave:
 		{
 			its.bizCache.Set(args.Key, args.Biz)
+		}
+	}
+
+	return nil
+}
+
+func (its *Refresher) RefreshTenantCache(ctx context.Context, args *RefreshTenantArgs, reply *EmptyReply) error {
+	_, unlock := its.lock.Lock(args.Key, nil)
+	defer unlock()
+
+	switch args.Action {
+	case ActionSave:
+		{
+			its.tenantCache.Set(args.Key, args.Tenant)
 		}
 	}
 

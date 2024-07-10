@@ -6,16 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
 	"eim/pkg/log"
 )
 
 type GatewayHandler struct {
-	RedisManager *redis.Manager
+	storageRpc *storagerpc.Client
+}
+
+func NewGatewayHandler(storageRpc *storagerpc.Client) *GatewayHandler {
+	return &GatewayHandler{storageRpc: storageRpc}
 }
 
 func (its *GatewayHandler) List(c *gin.Context) {
-	gateways, err := its.RedisManager.GetGateways()
+	gateways, err := its.storageRpc.GetGateways()
 	if err != nil {
 		log.Error("Error get gateways", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

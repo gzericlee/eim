@@ -12,6 +12,12 @@ const (
 	RedisEndpoint = "REDIS_ENDPOINT"
 	RedisPassword = "REDIS_PASSWORD"
 
+	EtcdEndpoints = "ETCD_ENDPOINTS"
+
+	MinioEndpoint      = "MINIO_ENDPOINT"
+	MinioAdminUserName = "MINIO_ADMIN_USER_NAME"
+	MinioAdminPassword = "MINIO_ADMIN_PASSWORD"
+
 	LogLevel = "LOG_LEVEL"
 )
 
@@ -37,6 +43,34 @@ func ParseFlags(app *cli.App) {
 			Usage:       "Redis passwd",
 			EnvVars:     []string{RedisPassword},
 			Destination: &config.SystemConfig.Redis.Password,
+		},
+		&cli.StringSliceFlag{
+			Name:        "etcd-endpoints",
+			Value:       cli.NewStringSlice("127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"),
+			Usage:       "Redis cluster endpoints",
+			EnvVars:     []string{EtcdEndpoints},
+			Destination: &config.SystemConfig.Etcd.Endpoints,
+		},
+		&cli.StringFlag{
+			Name:        "minio-endpoint",
+			Value:       "127.0.0.1:9000",
+			Usage:       "Minio endpoint",
+			EnvVars:     []string{MinioEndpoint},
+			Destination: &config.SystemConfig.Minio.Endpoint,
+		},
+		&cli.StringFlag{
+			Name:        "minio-admin-user-name",
+			Value:       "minioadmin",
+			Usage:       "Minio admin user name",
+			EnvVars:     []string{MinioAdminUserName},
+			Destination: &config.SystemConfig.Minio.AdminUserName,
+		},
+		&cli.StringFlag{
+			Name:        "minio-admin-password",
+			Value:       "minioadmin",
+			Usage:       "Minio admin password",
+			EnvVars:     []string{MinioAdminPassword},
+			Destination: &config.SystemConfig.Minio.AdminPassword,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",

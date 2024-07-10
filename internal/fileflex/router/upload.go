@@ -4,11 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"eim/internal/fileflex/handler"
-	"eim/internal/redis"
+	storagerpc "eim/internal/storage/rpc"
 )
 
-func regUploadAPIs(engine *gin.Engine, redisManager *redis.Manager) {
-	uploadHandler := handler.UploadHandler{RedisManager: redisManager}
+func regUploadAPIs(engine *gin.Engine, storageRpc *storagerpc.Client, minioEndpoint string) {
+	uploadHandler := handler.NewUploadHandler(storageRpc, minioEndpoint)
 
 	upload := engine.Group("/upload")
 	{
