@@ -105,7 +105,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 				}
 				offlineMsgTotal.Add(offlineMsgCount)
 				//TODO Push notification
-				log.Debug("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
+				log.Info("Push notification", zap.String("userId", msg.UserId), zap.String("deviceId", device.DeviceId), zap.Int64("count", offlineMsgCount))
 			}
 		}
 	}

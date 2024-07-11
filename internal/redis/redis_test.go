@@ -52,7 +52,7 @@ func TestManager_SaveOfflineMessages(t *testing.T) {
 }
 
 func TestManager_RemoveAllByKeys(t *testing.T) {
-	keys, _ := manager.getAllKeys("bizs:*")
+	keys, _ := manager.getAllKeys("members:*")
 	for _, key := range keys {
 		err := manager.redisClient.Del(context.Background(), key).Err()
 		if err != nil {

@@ -52,13 +52,14 @@ func (its *Server) connect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device := &model.Device{
-		UserId:         user.BizId,
-		OnlineAt:       timestamppb.Now(),
 		DeviceId:       r.Header.Get("DeviceId"),
-		DeviceVersion:  r.Header.Get("DeviceVersion"),
+		UserId:         user.BizId,
+		TenantId:       user.TenantId,
 		DeviceType:     r.Header.Get("DeviceType"),
-		State:          consts.StatusOnline,
+		DeviceVersion:  r.Header.Get("DeviceVersion"),
 		GatewayAddress: fmt.Sprintf("%s:%d", its.ip, its.port),
+		OnlineAt:       timestamppb.Now(),
+		State:          consts.StatusOnline,
 	}
 
 	err = its.storageRpc.SaveDevice(device)

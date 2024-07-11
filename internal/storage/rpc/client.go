@@ -103,7 +103,7 @@ func (its *Client) GetDevice(userId, deviceId string) (*model.Device, error) {
 func (its *Client) GetDevices(userId, tenantId string) ([]*model.Device, error) {
 	reply := &DevicesReply{}
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.devicePool.Get().Call(ctx, "GetDevices", &UserArgs{UserId: userId}, reply)
+	err := its.devicePool.Get().Call(ctx, "GetDevices", &UserArgs{UserId: userId, TenantId: tenantId}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call GetDevices -> %w", err)
 	}
@@ -235,7 +235,7 @@ func (its *Client) RegisterGateway(gateway *model.Gateway, expiration time.Durat
 func (its *Client) GetGateways() ([]*model.Gateway, error) {
 	reply := &GatewaysReply{}
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.bizMemberPool.Get().Call(ctx, "GetGateways", &EmptyArgs{}, reply)
+	err := its.gatewayPool.Get().Call(ctx, "GetGateways", &EmptyArgs{}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call GetGateways -> %w", err)
 	}

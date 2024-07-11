@@ -1,10 +1,9 @@
 package mock
 
 import (
+	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -26,7 +25,9 @@ import (
 	"eim/internal/config"
 	"eim/internal/gateway/protocol"
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	seqrpc "eim/internal/seq/rpc"
+	"eim/pkg/httputil"
 	"eim/pkg/log"
 )
 
@@ -83,20 +84,12 @@ func (its *Server) Start() {
 	concurrency := make(chan struct{}, 500)
 	its.connectionStart = time.Now()
 
-	resp, err := http.Get("http://127.0.0.1:10060/gateways")
+	gateways, err := httputil.DoRequest[[]*model.Gateway](context.Background(), "http://127.0.0.1:10060/gateways", http.MethodGet, http.Header{
+		"Authorization": []string{"Basic " + base64.StdEncoding.EncodeToString([]byte("user-1@bingo:"+"pass@word1"))},
+	}, nil, true)
 	if err != nil {
-		log.Error("Error getting gateway list", zap.Error(err))
-		return
+		panic(err)
 	}
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error("Error reading response body", zap.Error(err))
-		return
-	}
-
-	var gateways []*model.Gateway
-	json.Unmarshal(data, &gateways)
 
 	go its.printStats()
 

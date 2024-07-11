@@ -159,14 +159,14 @@ func TestListGroups(t *testing.T) {
 }
 
 func TestListDevices(t *testing.T) {
-	filter := map[string]interface{}{"tenant_id": "bingo"}
+	filter := map[string]interface{}{"tenant_id": "bingo", "state": consts.StatusOnline}
 	devices, total, err := db.ListDevices(filter, 20, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(total)
 	for _, device := range devices {
-		t.Log(device.DeviceId)
+		t.Logf("%+v", device)
 	}
 }
 
