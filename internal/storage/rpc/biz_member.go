@@ -6,8 +6,8 @@ import (
 
 	"go.uber.org/zap"
 
+	"eim/internal/database"
 	"eim/internal/model"
-	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/log"
 )
@@ -22,11 +22,11 @@ type BizMembersReply struct {
 
 type BizMember struct {
 	storageCache *cache.Cache[string, []string]
-	redisManager *redis.Manager
+	database     database.IDatabase
 }
 
 func (its *BizMember) AddBizMember(ctx context.Context, args *BizMemberArgs, reply *EmptyReply) error {
-	err := its.redisManager.AddBizMember(args.BizMember)
+	err := its.database.InsertBizMember(args.BizMember)
 	if err != nil {
 		return fmt.Errorf("add biz_member -> %w", err)
 	}
@@ -42,7 +42,7 @@ func (its *BizMember) AddBizMember(ctx context.Context, args *BizMemberArgs, rep
 }
 
 func (its *BizMember) RemoveBizMember(ctx context.Context, args *BizMemberArgs, reply *EmptyReply) error {
-	err := its.redisManager.RemoveBizMember(args.BizMember)
+	err := its.database.DeleteBizMember(args.BizMember.BizId, args.BizMember.BizTenantId, args.BizMember.MemberId)
 	if err != nil {
 		return fmt.Errorf("remove biz_member -> %w", err)
 	}
@@ -66,7 +66,7 @@ func (its *BizMember) GetBizMembers(ctx context.Context, args *BizMemberArgs, re
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		members, err := its.redisManager.GetBizMembers(args.BizMember.BizId, args.BizMember.BizTenantId)
+		members, err := its.database.GetBizMembers(args.BizMember.BizId, args.BizMember.BizTenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get biz_members -> %w", err)
 		}

@@ -8,7 +8,6 @@ import (
 
 	"eim/internal/database"
 	"eim/internal/model"
-	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/log"
 )
@@ -23,12 +22,11 @@ type BizReply struct {
 
 type Biz struct {
 	storageCache *cache.Cache[string, *model.Biz]
-	redisManager *redis.Manager
 	database     database.IDatabase
 }
 
 func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) error {
-	err := its.redisManager.SaveBiz(args.Biz)
+	err := its.database.SaveBiz(args.Biz)
 	if err != nil {
 		return fmt.Errorf("save biz -> %w", err)
 	}
@@ -52,7 +50,7 @@ func (its *Biz) GetBiz(ctx context.Context, args *BizArgs, reply *BizReply) erro
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		biz, err := its.redisManager.GetBiz(args.Biz.BizId, args.Biz.TenantId)
+		biz, err := its.database.GetBiz(args.Biz.BizId, args.Biz.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get biz -> %w", err)
 		}

@@ -13,6 +13,7 @@ import (
 	"eim/internal/gateway/protocol"
 	"eim/internal/gateway/session"
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	"eim/pkg/log"
 )
 
@@ -56,7 +57,7 @@ func (its *Server) connect(w http.ResponseWriter, r *http.Request) {
 		DeviceId:       r.Header.Get("DeviceId"),
 		DeviceVersion:  r.Header.Get("DeviceVersion"),
 		DeviceType:     r.Header.Get("DeviceType"),
-		State:          model.Online,
+		State:          consts.StatusOnline,
 		GatewayAddress: fmt.Sprintf("%s:%d", its.ip, its.port),
 	}
 

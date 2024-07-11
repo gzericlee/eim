@@ -26,12 +26,12 @@ type BizMember struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	BizId          string                `protobuf:"bytes,1,opt,name=biz_id,json=bizId,proto3" json:"biz_id,omitempty"`
-	MemberId       string                `protobuf:"bytes,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
-	MemberType     int32                 `protobuf:"varint,3,opt,name=member_type,json=memberType,proto3" json:"member_type,omitempty"`
-	BizTenantId    string                `protobuf:"bytes,4,opt,name=biz_tenant_id,json=bizTenantId,proto3" json:"biz_tenant_id,omitempty"`
-	MemberTenantId string                `protobuf:"bytes,5,opt,name=member_tenant_id,json=memberTenantId,proto3" json:"member_tenant_id,omitempty"`
-	Attributes     map[string]*anypb.Any `protobuf:"bytes,6,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	BizId          string                `protobuf:"bytes,1,opt,name=biz_id,json=bizId,proto3" json:"biz_id,omitempty" bson:"biz_id"`
+	MemberId       string                `protobuf:"bytes,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty" bson:"member_id"`
+	MemberType     int32                 `protobuf:"varint,3,opt,name=member_type,json=memberType,proto3" json:"member_type,omitempty" bson:"member_type"`
+	BizTenantId    string                `protobuf:"bytes,4,opt,name=biz_tenant_id,json=bizTenantId,proto3" json:"biz_tenant_id,omitempty" bson:"biz_tenant_id"`
+	MemberTenantId string                `protobuf:"bytes,5,opt,name=member_tenant_id,json=memberTenantId,proto3" json:"member_tenant_id,omitempty" bson:"member_tenant_id"`
+	Attributes     map[string]*anypb.Any `protobuf:"bytes,6,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3" bson:"attributes"`
 }
 
 func (x *BizMember) Reset() {

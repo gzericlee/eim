@@ -127,7 +127,7 @@ func StartServer(cfg Config) error {
 		switch service {
 		case deviceServicePath:
 			{
-				rcvr = &Device{storageCache: devicesCache, database: db, redisManager: redisManager, lock: keyLock}
+				rcvr = &Device{storageCache: devicesCache, database: db, lock: keyLock}
 			}
 		case messageServicePath:
 			{
@@ -135,11 +135,11 @@ func StartServer(cfg Config) error {
 			}
 		case bizServicePath:
 			{
-				rcvr = &Biz{storageCache: bizCache, database: db, redisManager: redisManager}
+				rcvr = &Biz{storageCache: bizCache, database: db}
 			}
 		case bizMemberServicePath:
 			{
-				rcvr = &BizMember{storageCache: bizMembersCache, redisManager: redisManager}
+				rcvr = &BizMember{storageCache: bizMembersCache, database: db}
 			}
 		case gatewayServicePath:
 			{
@@ -151,7 +151,7 @@ func StartServer(cfg Config) error {
 			}
 		case tenantServicePath:
 			{
-				rcvr = &Tenant{storageCache: tenantCache, redisManager: redisManager, database: db}
+				rcvr = &Tenant{storageCache: tenantCache, database: db}
 			}
 		}
 		err = svr.RegisterName(service, rcvr, "")

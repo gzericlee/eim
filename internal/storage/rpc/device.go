@@ -8,7 +8,6 @@ import (
 
 	"eim/internal/database"
 	"eim/internal/model"
-	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/lock"
 	"eim/pkg/log"
@@ -35,12 +34,11 @@ type DeviceReply struct {
 type Device struct {
 	lock         *lock.KeyLock
 	storageCache *cache.Cache[string, []*model.Device]
-	redisManager *redis.Manager
 	database     database.IDatabase
 }
 
 func (its *Device) SaveDevice(ctx context.Context, args *DeviceArgs, reply *DeviceReply) error {
-	err := its.redisManager.SaveDevice(args.Device)
+	err := its.database.SaveDevice(args.Device)
 	if err != nil {
 		return fmt.Errorf("save device -> %w", err)
 	}
@@ -67,7 +65,7 @@ func (its *Device) GetDevices(ctx context.Context, args *UserArgs, reply *Device
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		devices, err := its.redisManager.GetDevices(args.UserId, args.TenantId)
+		devices, err := its.database.GetDevicesByUser(args.UserId, args.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get user devices -> %w", err)
 		}

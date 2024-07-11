@@ -8,7 +8,6 @@ import (
 
 	"eim/internal/database"
 	"eim/internal/model"
-	"eim/internal/redis"
 	"eim/pkg/cache"
 	"eim/pkg/log"
 )
@@ -23,12 +22,11 @@ type TenantReply struct {
 
 type Tenant struct {
 	storageCache *cache.Cache[string, *model.Tenant]
-	redisManager *redis.Manager
 	database     database.IDatabase
 }
 
 func (its *Tenant) SaveTenant(ctx context.Context, args *TenantArgs, reply *EmptyReply) error {
-	err := its.redisManager.SaveTenant(args.Tenant)
+	err := its.database.SaveTenant(args.Tenant)
 	if err != nil {
 		return fmt.Errorf("save tenant -> %w", err)
 	}
@@ -52,7 +50,7 @@ func (its *Tenant) GetTenant(ctx context.Context, args *TenantArgs, reply *Tenan
 	}
 
 	result, err, _ := singleGroup.Do(key, func() (interface{}, error) {
-		user, err := its.redisManager.GetTenant(args.Tenant.TenantId)
+		user, err := its.database.GetTenant(args.Tenant.TenantId)
 		if err != nil {
 			return nil, fmt.Errorf("get tenant -> %w", err)
 		}

@@ -26,13 +26,13 @@ type Biz struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	BizId      string                `protobuf:"bytes,1,opt,name=biz_id,json=bizId,proto3" json:"biz_id,omitempty"`
-	BizType    int32                 `protobuf:"varint,2,opt,name=biz_type,json=bizType,proto3" json:"biz_type,omitempty"`
-	BizName    string                `protobuf:"bytes,3,opt,name=biz_name,json=bizName,proto3" json:"biz_name,omitempty"`
-	TenantId   string                `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	TenantName string                `protobuf:"bytes,5,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty"`
-	State      int32                 `protobuf:"varint,6,opt,name=state,proto3" json:"state,omitempty"`
-	Attributes map[string]*anypb.Any `protobuf:"bytes,7,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	BizId      string                `protobuf:"bytes,1,opt,name=biz_id,json=bizId,proto3" json:"biz_id,omitempty" bson:"biz_id"`
+	BizType    int32                 `protobuf:"varint,2,opt,name=biz_type,json=bizType,proto3" json:"biz_type,omitempty" bson:"biz_type"`
+	BizName    string                `protobuf:"bytes,3,opt,name=biz_name,json=bizName,proto3" json:"biz_name,omitempty" bson:"biz_name"`
+	TenantId   string                `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty" bson:"tenant_id"`
+	TenantName string                `protobuf:"bytes,5,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty" bson:"tenant_name"`
+	State      int32                 `protobuf:"varint,6,opt,name=state,proto3" json:"state,omitempty" bson:"state"`
+	Attributes map[string]*anypb.Any `protobuf:"bytes,7,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3" bson:"attributes"`
 }
 
 func (x *Biz) Reset() {

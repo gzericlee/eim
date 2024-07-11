@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	"eim/internal/mq"
 	storagerpc "eim/internal/storage/rpc"
 	"eim/pkg/log"
@@ -83,7 +84,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 		}
 
 		switch device.State {
-		case model.Online:
+		case consts.StatusOnline:
 			{
 				fmtAddr := strings.Replace(device.GatewayAddress, ".", "-", -1)
 				fmtAddr = strings.Replace(fmtAddr, ":", "-", -1)
@@ -95,7 +96,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 				onlineMsgTotal.Add(1)
 				log.Debug("Online message", zap.String("gateway", device.GatewayAddress), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
 			}
-		case model.Offline:
+		case consts.StatusOffline:
 			{
 				offlineMsgCount, err := its.storageRpc.GetOfflineMessagesCount(msg.UserId, device.DeviceId)
 				if err != nil {

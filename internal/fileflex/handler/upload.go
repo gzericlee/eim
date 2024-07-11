@@ -9,6 +9,7 @@ import (
 
 	"eim/internal/minio"
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	storagerpc "eim/internal/storage/rpc"
 )
 
@@ -29,9 +30,9 @@ func (its *UploadHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	bucketName := tenant.Attributes["fileflex_bucket"].String()
-	userName := tenant.Attributes["fileflex_user"].String()
-	password := tenant.Attributes["fileflex_password"].String()
+	bucketName := tenant.Attributes[consts.FileflexBucket].String()
+	userName := tenant.Attributes[consts.FileflexUser].String()
+	password := tenant.Attributes[consts.FileflexPasswd].String()
 
 	minioManager, err := minio.NewManager(&minio.Config{
 		Endpoint:        its.minioEndpoint,

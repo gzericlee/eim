@@ -27,16 +27,16 @@ type Device struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DeviceId       string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	UserId         string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	TenantId       string                 `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	DeviceType     string                 `protobuf:"bytes,4,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
-	DeviceVersion  string                 `protobuf:"bytes,5,opt,name=device_version,json=deviceVersion,proto3" json:"device_version,omitempty"`
-	GatewayAddress string                 `protobuf:"bytes,6,opt,name=gateway_address,json=gatewayAddress,proto3" json:"gateway_address,omitempty"`
-	OnlineAt       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=online_at,json=onlineAt,proto3" json:"online_at,omitempty"`
-	OfflineAt      *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=offline_at,json=offlineAt,proto3" json:"offline_at,omitempty"`
-	State          int32                  `protobuf:"varint,9,opt,name=state,proto3" json:"state,omitempty"`
-	Attributes     map[string]*anypb.Any  `protobuf:"bytes,10,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	DeviceId       string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" bson:"device_id"`
+	UserId         string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" bson:"user_id"`
+	TenantId       string                 `protobuf:"bytes,3,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty" bson:"tenant_id"`
+	DeviceType     string                 `protobuf:"bytes,4,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty" bson:"device_type"`
+	DeviceVersion  string                 `protobuf:"bytes,5,opt,name=device_version,json=deviceVersion,proto3" json:"device_version,omitempty" bson:"device_version"`
+	GatewayAddress string                 `protobuf:"bytes,6,opt,name=gateway_address,json=gatewayAddress,proto3" json:"gateway_address,omitempty" bson:"gateway_address"`
+	OnlineAt       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=online_at,json=onlineAt,proto3" json:"online_at,omitempty" bson:"online_at"`
+	OfflineAt      *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=offline_at,json=offlineAt,proto3" json:"offline_at,omitempty" bson:"offline_at"`
+	State          int32                  `protobuf:"varint,9,opt,name=state,proto3" json:"state,omitempty" bson:"state"`
+	Attributes     map[string]*anypb.Any  `protobuf:"bytes,10,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3" bson:"attributes"`
 }
 
 func (x *Device) Reset() {

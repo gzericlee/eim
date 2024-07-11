@@ -10,6 +10,7 @@ import (
 
 	"eim/internal/minio"
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	storagerpc "eim/internal/storage/rpc"
 	"eim/pkg/stringsutil"
 )
@@ -36,7 +37,7 @@ func (its *TenantHandler) Register(c *gin.Context) {
 		return
 	}
 
-	tenant.State = model.Enabled
+	tenant.State = consts.StatusEnabled
 	err = its.storageRpc.SaveTenant(tenant)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("save tenant -> %w", err).Error()})
@@ -108,10 +109,10 @@ func (its *TenantHandler) EnableFileFlex(c *gin.Context) {
 		return
 	}
 
-	tenant.Attributes["fileflex_enabled"], _ = anypb.New(&wrapperspb.BoolValue{Value: true})
-	tenant.Attributes["fileflex_bucket"], _ = anypb.New(&wrapperspb.StringValue{Value: bucketName})
-	tenant.Attributes["fileflex_username"], _ = anypb.New(&wrapperspb.StringValue{Value: userName})
-	tenant.Attributes["fileflex_password"], _ = anypb.New(&wrapperspb.StringValue{Value: password})
+	tenant.Attributes[consts.FileflexEnabled], _ = anypb.New(&wrapperspb.BoolValue{Value: true})
+	tenant.Attributes[consts.FileflexBucket], _ = anypb.New(&wrapperspb.StringValue{Value: bucketName})
+	tenant.Attributes[consts.FileflexUser], _ = anypb.New(&wrapperspb.StringValue{Value: userName})
+	tenant.Attributes[consts.FileflexPasswd], _ = anypb.New(&wrapperspb.StringValue{Value: password})
 	err = its.storageRpc.SaveTenant(tenant)
 	if err != nil {
 		_ = its.minioManager.DetachBucketPolicy(bucketName, userName)

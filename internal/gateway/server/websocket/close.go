@@ -6,7 +6,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"eim/internal/gateway/session"
-	"eim/internal/model"
+	"eim/internal/model/consts"
 	"eim/pkg/log"
 )
 
@@ -25,7 +25,7 @@ func (its *Server) close(conn *websocket.Conn, err error) {
 	}()
 
 	device.OfflineAt = timestamppb.Now()
-	device.State = model.Offline
+	device.State = consts.StatusOffline
 
 	err = its.storageRpc.SaveDevice(device)
 	if err != nil {

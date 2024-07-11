@@ -26,10 +26,10 @@ type Tenant struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TenantId   string                `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	TenantName string                `protobuf:"bytes,2,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty"`
-	State      int32                 `protobuf:"varint,3,opt,name=state,proto3" json:"state,omitempty"`
-	Attributes map[string]*anypb.Any `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	TenantId   string                `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty" bson:"tenant_id"`
+	TenantName string                `protobuf:"bytes,2,opt,name=tenant_name,json=tenantName,proto3" json:"tenant_name,omitempty" bson:"tenant_name"`
+	State      int32                 `protobuf:"varint,3,opt,name=state,proto3" json:"state,omitempty" bson:"state"`
+	Attributes map[string]*anypb.Any `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3" bson:"attributes"`
 }
 
 func (x *Tenant) Reset() {

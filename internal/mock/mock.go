@@ -118,7 +118,7 @@ func (its *Server) Start() {
 			deviceId := "device-" + id
 			deviceName := "linux-" + id
 			deviceVersion := "1.0.0"
-			deviceType := model.LinuxDevice
+			deviceType := consts.LinuxDevice
 
 			auth := base64.StdEncoding.EncodeToString([]byte(userId + "@bingo:" + "pass@word1"))
 			token := "Basic " + auth
@@ -222,13 +222,13 @@ func (its *Server) mockUserMessage() {
 					}
 					msg := &model.Message{
 						MsgId:        msgId,
-						MsgType:      model.TextMessage,
+						MsgType:      consts.TextMessage,
 						Content:      time.Now().String(),
-						FromType:     model.FromUser,
+						FromType:     consts.FromUser,
 						FromId:       client.userId,
 						FromDevice:   client.deviceId,
 						FromTenantId: "bingo",
-						ToType:       model.ToUser,
+						ToType:       consts.ToUser,
 						ToId:         toId,
 						ToTenantId:   "bingo",
 					}
@@ -266,13 +266,13 @@ func (its *Server) mockGroupMessage() {
 					}
 					msg := &model.Message{
 						MsgId:        msgId,
-						MsgType:      model.TextMessage,
+						MsgType:      consts.TextMessage,
 						Content:      time.Now().String(),
-						FromType:     model.FromUser,
+						FromType:     consts.FromUser,
 						FromId:       client.userId,
 						FromDevice:   client.deviceId,
 						FromTenantId: "bingo",
-						ToType:       model.ToGroup,
+						ToType:       consts.ToGroup,
 						ToId:         toId,
 						ToTenantId:   "bingo",
 					}

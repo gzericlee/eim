@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	"eim/internal/storage/rpc"
 )
 
@@ -74,7 +75,7 @@ func TestSaveUser(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		t.Log(rpcClient.SaveBiz(&model.Biz{
 			BizId:      fmt.Sprintf("user-%d", i),
-			BizType:    model.Biz_USER,
+			BizType:    consts.BizUser,
 			BizName:    fmt.Sprintf("用户-%d", i),
 			TenantId:   "bingo",
 			TenantName: "品高软件",

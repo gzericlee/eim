@@ -11,6 +11,7 @@ import (
 	"eim/internal/gateway/protocol"
 	"eim/internal/gateway/session"
 	"eim/internal/model"
+	"eim/internal/model/consts"
 	"eim/internal/mq"
 	"eim/pkg/log"
 )
@@ -67,9 +68,9 @@ func (its *Server) receive(conn *websocket.Conn, _ websocket.MessageType, data [
 			}
 
 			switch msg.ToType {
-			case model.ToUser:
+			case consts.ToUser:
 				err = its.producer.Publish(mq.UserMessageSubject, body)
-			case model.ToGroup:
+			case consts.ToGroup:
 				err = its.producer.Publish(mq.GroupMessageSubject, body)
 			}
 			if err != nil {
