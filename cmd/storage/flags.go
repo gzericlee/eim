@@ -9,9 +9,9 @@ import (
 const (
 	MqEndpoints = "MQ_ENDPOINTS"
 
-	DatabaseDriver     = "DATABASE_DRIVER"
-	DatabaseName       = "DATABASE_NAME"
-	DatabaseConnection = "DATABASE_CONNECTION"
+	DatabaseDriver      = "DATABASE_DRIVER"
+	DatabaseName        = "DATABASE_NAME"
+	DatabaseConnections = "DATABASE_CONNECTIONS"
 
 	RedisEndpoint = "REDIS_ENDPOINT"
 	RedisPassword = "REDIS_PASSWORD"
@@ -37,8 +37,8 @@ func ParseFlags(app *cli.App) {
 		},
 		&cli.StringFlag{
 			Name:        "database-driver",
-			Value:       "mongodb",
-			Usage:       "database driver",
+			Value:       "postgres",
+			Usage:       "database driver(mongodb || postgres)",
 			EnvVars:     []string{DatabaseDriver},
 			Destination: &config.SystemConfig.Database.Driver,
 		},
@@ -49,12 +49,13 @@ func ParseFlags(app *cli.App) {
 			EnvVars:     []string{DatabaseName},
 			Destination: &config.SystemConfig.Database.Name,
 		},
-		&cli.StringFlag{
-			Name:        "database-connection",
-			Value:       "mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct",
+		&cli.StringSliceFlag{
+			Name: "database-connection",
+			//Value:       cli.NewStringSlice("mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct"),
+			Value:       cli.NewStringSlice("postgres://eim:pass@word1@127.0.0.1:15430/eim?sslmode=disable", "postgres://eim:pass@word1@127.0.0.1:15431/eim?sslmode=disable", "postgres://eim:pass@word1@127.0.0.1:15432/eim?sslmode=disable"),
 			Usage:       "database connection",
-			EnvVars:     []string{DatabaseConnection},
-			Destination: &config.SystemConfig.Database.Connection,
+			EnvVars:     []string{DatabaseConnections},
+			Destination: &config.SystemConfig.Database.Connections,
 		},
 		&cli.StringSliceFlag{
 			Name:        "redis-endpoint",

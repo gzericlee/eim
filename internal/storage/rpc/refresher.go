@@ -54,11 +54,15 @@ func (its *Refresher) RefreshDevicesCache(ctx context.Context, args *RefreshDevi
 	case ActionSave:
 		{
 			if devices, exist := its.devicesCache.Get(args.Key); exist {
-				for i := range devices {
-					if devices[i].DeviceId == args.Device.DeviceId {
-						devices[i] = args.Device
-						break
+				if devices != nil {
+					for i := range devices {
+						if devices[i].DeviceId == args.Device.DeviceId {
+							devices[i] = args.Device
+							break
+						}
 					}
+				} else {
+					devices = append(devices, args.Device)
 				}
 				its.devicesCache.Set(args.Key, devices)
 			}

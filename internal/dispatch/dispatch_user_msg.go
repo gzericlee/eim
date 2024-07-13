@@ -39,14 +39,14 @@ func (its *UserMessageHandler) Process(m *nats.Msg) error {
 	}
 
 	msg.UserId = msg.FromId
-	msg.TenantId = msg.FromTenantId
+	msg.TenantId = msg.FromTenant
 	err = its.publish(*msg)
 	if err != nil {
 		return fmt.Errorf("dispatch user message to send user -> %w", err)
 	}
 
 	msg.UserId = msg.ToId
-	msg.TenantId = msg.ToTenantId
+	msg.TenantId = msg.ToTenant
 	err = its.publish(*msg)
 	if err != nil {
 		return fmt.Errorf("dispatch user message to receive user -> %w", err)
@@ -86,7 +86,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 		switch device.State {
 		case consts.StatusOnline:
 			{
-				fmtAddr := strings.Replace(device.GatewayAddress, ".", "-", -1)
+				fmtAddr := strings.Replace(device.GatewayAddr, ".", "-", -1)
 				fmtAddr = strings.Replace(fmtAddr, ":", "-", -1)
 				err = its.producer.Publish(fmt.Sprintf(mq.SendMessageSubjectFormat, fmtAddr), body)
 				if err != nil {
@@ -94,7 +94,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 					continue
 				}
 				onlineMsgTotal.Add(1)
-				log.Debug("Online message", zap.String("gateway", device.GatewayAddress), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
+				log.Debug("Online message", zap.String("gateway", device.GatewayAddr), zap.String("userId", msg.UserId), zap.String("toId", msg.ToId), zap.String("deviceId", device.DeviceId), zap.Int64("seq", msg.SeqId))
 			}
 		case consts.StatusOffline:
 			{

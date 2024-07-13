@@ -1,0 +1,26 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message BizMember {
+  // @gotags: bson:"biz_id" json:"biz_id" xorm:"pk"
+  string biz_id = 1;
+  // @gotags: bson:"member_id" json:"member_id" xorm:"pk"
+  string member_id = 2;
+  // @gotags: bson:"member_type" json:"member_type"
+  int32 member_type = 3;
+  // @gotags: bson:"biz_tenant_id" json:"biz_tenant_id" xorm:"pk"
+  string biz_tenant_id = 4;
+  // @gotags: bson:"member_tenant_id" json:"member_tenant_id" xorm:"pk"
+  string member_tenant_id = 5;
+  // @gotags: bson:"created_at" json:"created_at" xorm:"created"
+  int64 created_at = 6;
+  // @gotags: bson:"updated_at" json:"updated_at" xorm:"updated"
+  int64 updated_at = 7;
+  // @gotags: bson:"created_by" json:"created_by"
+  string created_by = 8;
+  // @gotags: bson:"updated_by" json:"updated_by"
+  string updated_by = 9;
+  // @gotags: bson:"attributes" json:"attributes"
+  map<string, string> attributes = 10;
+}

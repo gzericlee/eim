@@ -6,8 +6,6 @@ require (
 	github.com/Yiling-J/theine-go v0.3.2
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/dimiro1/banner v1.1.0
-	github.com/emicklei/go-restful-openapi/v2 v2.10.2
-	github.com/emicklei/go-restful/v3 v3.12.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redsync/redsync/v4 v4.13.0
 	github.com/go-resty/resty/v2 v2.13.1
@@ -15,6 +13,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.5.8
 	github.com/lesismal/nbio v1.5.8
+	github.com/lib/pq v1.10.7
 	github.com/minio/madmin-go/v3 v3.0.58
 	github.com/minio/minio-go/v7 v7.0.73
 	github.com/nats-io/nats.go v1.34.1
@@ -30,9 +29,9 @@ require (
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.7.0
-	google.golang.org/protobuf v1.34.1
+	google.golang.org/protobuf v1.34.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	gorm.io/gorm v1.25.10
+	xorm.io/xorm v1.3.9
 )
 
 require (
@@ -62,10 +61,6 @@ require (
 	github.com/go-echarts/go-echarts/v2 v2.3.3 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-openapi/jsonpointer v0.21.0 // indirect
-	github.com/go-openapi/jsonreference v0.21.0 // indirect
-	github.com/go-openapi/spec v0.21.0 // indirect
-	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-ping/ping v1.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
@@ -85,9 +80,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/jamiealquiza/tachymeter v2.0.0+incompatible // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
@@ -95,11 +87,11 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/klauspost/reedsolomon v1.12.1 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lesismal/llib v1.1.13 // indirect
 	github.com/libp2p/go-sockaddr v0.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240408141607-282e7b5d6b74 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -122,6 +114,7 @@ require (
 	github.com/prometheus/prom2json v1.3.3 // indirect
 	github.com/quic-go/quic-go v0.42.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/rpcxio/libkv v0.5.1 // indirect
 	github.com/rs/cors v1.11.0 // indirect
 	github.com/rs/xid v1.5.0 // indirect
@@ -134,6 +127,7 @@ require (
 	github.com/smallnest/quick v0.1.0 // indirect
 	github.com/smallnest/statsview v1.0.1 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
+	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
 	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
 	github.com/tinylib/msgp v1.1.9 // indirect
@@ -170,4 +164,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
 	google.golang.org/grpc v1.63.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	xorm.io/builder v0.3.11-0.20220531020008-1bd24a7dc978 // indirect
 )

@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -10,7 +11,7 @@ import (
 	"eim/internal/model"
 )
 
-func (its *Repository) SaveMessage(message *model.Message) error {
+func (its *Repository) InsertMessage(message *model.Message) error {
 	_, err := its.db.Collection("message").InsertOne(context.Background(), message)
 	if err != nil {
 		return fmt.Errorf("insert message -> %w", err)
@@ -18,7 +19,7 @@ func (its *Repository) SaveMessage(message *model.Message) error {
 	return nil
 }
 
-func (its *Repository) SaveMessages(messages []*model.Message) error {
+func (its *Repository) InsertMessages(messages []*model.Message) error {
 	var objs []interface{}
 	for _, message := range messages {
 		objs = append(objs, message)
@@ -48,10 +49,20 @@ func (its *Repository) GetMessagesByIds(msgIds []int64) ([]*model.Message, error
 	return messages, nil
 }
 
-func (its *Repository) ListHistoryMessages(filter map[string]interface{}, minSeq, maxSeq, limit, offset int64) ([]*model.Message, error) {
+func (its *Repository) ListHistoryMessages(filter map[string]interface{}, order []string, minSeq, maxSeq, limit, offset int64) ([]*model.Message, error) {
 	var messages []*model.Message
 
 	bm := bson.M(filter)
+
+	var orderBy = map[string]interface{}{}
+	for _, by := range order {
+		col := strings.Split(by, " ")[0]
+		orderBy[col] = -1
+		sort := strings.Split(by, " ")[1]
+		if strings.EqualFold(sort, "asc") {
+			orderBy[col] = 1
+		}
+	}
 
 	if minSeq > 0 && maxSeq > 0 && maxSeq > minSeq {
 		bm["$and"] = []interface{}{
@@ -60,7 +71,7 @@ func (its *Repository) ListHistoryMessages(filter map[string]interface{}, minSeq
 		}
 	}
 
-	result, err := its.db.Collection("message").Find(context.Background(), bm, &options.FindOptions{Limit: &limit, Skip: &offset})
+	result, err := its.db.Collection("message").Find(context.Background(), bm, &options.FindOptions{Limit: &limit, Skip: &offset, Sort: bson.M(orderBy)})
 	if err != nil {
 		return nil, fmt.Errorf("find messages -> %w", err)
 	}

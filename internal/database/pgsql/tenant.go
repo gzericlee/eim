@@ -1,17 +1,14 @@
-package mongodb
+package pgsql
 
 import (
-	"context"
 	"fmt"
-
-	"go.mongodb.org/mongo-driver/bson"
 
 	"eim/internal/model"
 	"eim/internal/model/consts"
 )
 
 func (its *Repository) InsertTenant(tenant *model.Tenant) error {
-	_, err := its.db.Collection("tenant").InsertOne(context.Background(), tenant)
+	_, err := its.db.Insert(tenant)
 	if err != nil {
 		return fmt.Errorf("insert tenant -> %w", err)
 	}
@@ -19,7 +16,7 @@ func (its *Repository) InsertTenant(tenant *model.Tenant) error {
 }
 
 func (its *Repository) UpdateTenant(tenant *model.Tenant) error {
-	_, err := its.db.Collection("tenant").UpdateOne(context.Background(), bson.M{"tenant_id": tenant.TenantId}, tenant)
+	_, err := its.db.Where("tenant_id = ?", tenant.TenantId).Update(tenant)
 	if err != nil {
 		return fmt.Errorf("update tenant -> %w", err)
 	}
@@ -27,10 +24,10 @@ func (its *Repository) UpdateTenant(tenant *model.Tenant) error {
 }
 
 func (its *Repository) GetTenant(tenantId string) (*model.Tenant, error) {
-	var tenant *model.Tenant
-	err := its.db.Collection("tenant").FindOne(context.Background(), bson.M{"tenant_id": tenantId}).Decode(&tenant)
+	var tenant = &model.Tenant{}
+	_, err := its.db.Where("tenant_id = ?", tenantId).Get(tenant)
 	if err != nil {
-		return nil, fmt.Errorf("find one tenant -> %w", err)
+		return nil, fmt.Errorf("select tenant -> %w", err)
 	}
 	return tenant, nil
 }

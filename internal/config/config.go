@@ -44,9 +44,9 @@ type systemConfig struct {
 		SendCount         int
 	}
 	Database struct {
-		Driver     string
-		Name       string
-		Connection string
+		Driver      string
+		Name        string
+		Connections cli.StringSlice
 	}
 	Mq struct {
 		Endpoints cli.StringSlice

@@ -81,19 +81,28 @@ func NewClient(etcdEndpoints []string) (*Client, error) {
 	}, nil
 }
 
-func (its *Client) SaveDevice(device *model.Device) error {
+func (its *Client) InsertDevice(device *model.Device) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.devicePool.Get().Call(ctx, "SaveDevice", &DeviceArgs{Device: device}, &EmptyReply{})
+	err := its.devicePool.Get().Call(ctx, "InsertDevice", &DeviceArgs{Device: device}, &EmptyReply{})
 	if err != nil {
-		return fmt.Errorf("call SaveDevice -> %w", err)
+		return fmt.Errorf("call InsertDevice -> %w", err)
 	}
 	return nil
 }
 
-func (its *Client) GetDevice(userId, deviceId string) (*model.Device, error) {
+func (its *Client) UpdateDevice(device *model.Device) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.devicePool.Get().Call(ctx, "UpdateDevice", &DeviceArgs{Device: device}, &EmptyReply{})
+	if err != nil {
+		return fmt.Errorf("call UpdateDevice -> %w", err)
+	}
+	return nil
+}
+
+func (its *Client) GetDevice(userId, tenantId, deviceId string) (*model.Device, error) {
 	reply := &DeviceReply{}
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.devicePool.Get().Call(ctx, "GetDevice", &UserArgs{UserId: userId, DeviceId: deviceId}, reply)
+	err := its.devicePool.Get().Call(ctx, "GetDevice", &UserArgs{UserId: userId, TenantId: tenantId, DeviceId: deviceId}, reply)
 	if err != nil {
 		return nil, fmt.Errorf("call GetDevice -> %w", err)
 	}
@@ -110,11 +119,20 @@ func (its *Client) GetDevices(userId, tenantId string) ([]*model.Device, error) 
 	return reply.Devices, nil
 }
 
-func (its *Client) SaveMessages(messages []*model.Message) error {
+func (its *Client) InsertMessage(message *model.Message) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.messagePool.Get().Call(ctx, "SaveMessages", &MessagesArgs{Messages: messages}, &EmptyReply{})
+	err := its.messagePool.Get().Call(ctx, "InsertMessage", &MessageArgs{Message: message}, &EmptyReply{})
 	if err != nil {
-		return fmt.Errorf("call SaveMessages -> %w", err)
+		return fmt.Errorf("call InsertMessages -> %w", err)
+	}
+	return nil
+}
+
+func (its *Client) InsertMessages(messages []*model.Message) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.messagePool.Get().Call(ctx, "InsertMessages", &MessagesArgs{Messages: messages}, &EmptyReply{})
+	if err != nil {
+		return fmt.Errorf("call InsertMessages -> %w", err)
 	}
 	return nil
 }
@@ -157,11 +175,20 @@ func (its *Client) GetOfflineMessages(userId, deviceId string) ([]*model.Message
 	return reply.Messages, nil
 }
 
-func (its *Client) SaveBiz(biz *model.Biz) error {
+func (its *Client) InsertBiz(biz *model.Biz) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.bizPool.Get().Call(ctx, "SaveBiz", &BizArgs{Biz: biz}, &EmptyReply{})
+	err := its.bizPool.Get().Call(ctx, "InsertBiz", &BizArgs{Biz: biz}, &EmptyReply{})
 	if err != nil {
-		return fmt.Errorf("call SaveBiz -> %w", err)
+		return fmt.Errorf("call InsertBiz -> %w", err)
+	}
+	return nil
+}
+
+func (its *Client) UpdateBiz(biz *model.Biz) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.bizPool.Get().Call(ctx, "UpdateBiz", &BizArgs{Biz: biz}, &EmptyReply{})
+	if err != nil {
+		return fmt.Errorf("call UpdateBiz -> %w", err)
 	}
 	return nil
 }
@@ -176,11 +203,20 @@ func (its *Client) GetBiz(bizId, tenantId string) (*model.Biz, error) {
 	return reply.Biz, nil
 }
 
-func (its *Client) SaveTenant(tenant *model.Tenant) error {
+func (its *Client) InsertTenant(tenant *model.Tenant) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := its.tenantPool.Get().Call(ctx, "SaveTenant", &TenantArgs{Tenant: tenant}, &EmptyReply{})
+	err := its.tenantPool.Get().Call(ctx, "InsertTenant", &TenantArgs{Tenant: tenant}, &EmptyReply{})
 	if err != nil {
-		return fmt.Errorf("call SaveTenant -> %w", err)
+		return fmt.Errorf("call InsertTenant -> %w", err)
+	}
+	return nil
+}
+
+func (its *Client) UpdateTenant(tenant *model.Tenant) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := its.tenantPool.Get().Call(ctx, "UpdateTenant", &TenantArgs{Tenant: tenant}, &EmptyReply{})
+	if err != nil {
+		return fmt.Errorf("call UpdateTenant -> %w", err)
 	}
 	return nil
 }

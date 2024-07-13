@@ -40,8 +40,8 @@ func (its *Authenticator) CheckToken(token string) (*model.Biz, error) {
 	}
 
 	if biz.Attributes != nil {
-		if attr := biz.Attributes["password"]; attr != nil {
-			if string(attr.Value) == passwd {
+		if password := biz.Attributes["password"]; password != "" {
+			if password == passwd {
 				return biz, nil
 			}
 			return nil, fmt.Errorf("password is incorrect")

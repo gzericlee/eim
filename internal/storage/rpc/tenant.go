@@ -25,17 +25,33 @@ type Tenant struct {
 	database     database.IDatabase
 }
 
-func (its *Tenant) SaveTenant(ctx context.Context, args *TenantArgs, reply *EmptyReply) error {
-	err := its.database.SaveTenant(args.Tenant)
+func (its *Tenant) InsertTenant(ctx context.Context, args *TenantArgs, reply *EmptyReply) error {
+	err := its.database.InsertTenant(args.Tenant)
 	if err != nil {
-		return fmt.Errorf("save tenant -> %w", err)
+		return fmt.Errorf("insert tenant -> %w", err)
 	}
 
 	key := fmt.Sprintf(tenantCacheKeyFormat, tenantCachePool, args.Tenant.TenantId)
 
 	err = storageRpc.RefreshTenantCache(key, args.Tenant, ActionSave)
 	if err != nil {
-		log.Error("Error refresh biz cache: %v", zap.Error(err))
+		log.Error("Error refresh tenant cache: %v", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (its *Tenant) UpdateTenant(ctx context.Context, args *TenantArgs, reply *EmptyReply) error {
+	err := its.database.UpdateTenant(args.Tenant)
+	if err != nil {
+		return fmt.Errorf("update tenant -> %w", err)
+	}
+
+	key := fmt.Sprintf(tenantCacheKeyFormat, tenantCachePool, args.Tenant.TenantId)
+
+	err = storageRpc.RefreshTenantCache(key, args.Tenant, ActionSave)
+	if err != nil {
+		log.Error("Error refresh tenant cache: %v", zap.Error(err))
 	}
 
 	return nil

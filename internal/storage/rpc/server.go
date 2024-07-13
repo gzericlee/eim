@@ -51,7 +51,7 @@ type Config struct {
 	Port                 int
 	EtcdEndpoints        []string
 	DatabaseDriver       database.Driver
-	DatabaseConnection   string
+	DatabaseConnections  []string
 	DatabaseName         string
 	RedisEndpoints       []string
 	RedisPassword        string
@@ -64,7 +64,7 @@ func StartServer(cfg Config) error {
 	svr := server.NewServer()
 	svr.AsyncWrite = true
 
-	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnection, cfg.DatabaseName)
+	db, err := database.NewDatabase(cfg.DatabaseDriver, cfg.DatabaseConnections, cfg.DatabaseName)
 	if err != nil {
 		return fmt.Errorf("new database -> %w", err)
 	}

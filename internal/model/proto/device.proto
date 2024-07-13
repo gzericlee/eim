@@ -1,0 +1,33 @@
+syntax = "proto3";
+option go_package = "../model";
+
+message Device {
+  // @gotags: bson:"device_id" json:"device_id" xorm:"pk"
+  string device_id = 1;
+  // @gotags: bson:"user_id" json:"user_id" xorm:"pk"
+  string user_id = 2;
+  // @gotags: bson:"tenant_id" json:"tenant_id" xorm:"pk"
+  string tenant_id = 3;
+  // @gotags: bson:"device_type" json:"device_type"
+  string device_type = 4;
+  // @gotags: bson:"device_version" json:"device_version"
+  string device_version = 5;
+  // @gotags: bson:"gateway_addr" json:"gateway_addr"
+  string gateway_addr = 6;
+  // @gotags: bson:"online_at" json:"online_at"
+  int64 online_at = 7;
+  // @gotags: bson:"offline_at" json:"offline_at"
+  int64 offline_at = 8;
+  // @gotags: bson:"state" json:"state"
+  int32 state = 9;
+  // @gotags: bson:"created_at" json:"created_at" xorm:"created"
+  int64 created_at = 10;
+  // @gotags: bson:"updated_at" json:"updated_at" xorm:"updated"
+  int64 updated_at = 11;
+  // @gotags: bson:"created_by" json:"created_by"
+  string created_by = 12;
+  // @gotags: bson:"updated_by" json:"updated_by"
+  string updated_by = 13;
+  // @gotags: bson:"attributes" json:"attributes"
+  map<string, string> attributes = 14;
+}

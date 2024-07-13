@@ -1,6 +1,8 @@
 package dispatch
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 
@@ -29,7 +31,10 @@ func (its *SaveMessageHandler) Process(m *nats.Msg) error {
 		return m.Ack()
 	}
 
-	its.storageRpc.SaveMessages([]*model.Message{msg})
+	err = its.storageRpc.InsertMessage(msg)
+	if err != nil {
+		return fmt.Errorf("insert message -> %w", err)
+	}
 
 	savedMsgTotal.Add(1)
 

@@ -49,7 +49,7 @@ func (its *GroupMessageHandler) Process(m *nats.Msg) error {
 
 func (its *GroupMessageHandler) publish(msg *model.Message) error {
 	// 获取群组成员,ToId，ToTenantId，是指群组ID和群组的租户ID
-	members, err := its.storageRpc.GetBizMembers(msg.ToId, msg.ToTenantId)
+	members, err := its.storageRpc.GetBizMembers(msg.ToId, msg.ToTenant)
 	if err != nil {
 		return fmt.Errorf("get group members -> %w", err)
 	}

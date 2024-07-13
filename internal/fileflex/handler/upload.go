@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,9 +31,15 @@ func (its *UploadHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	bucketName := tenant.Attributes[consts.FileflexBucket].String()
-	userName := tenant.Attributes[consts.FileflexUser].String()
-	password := tenant.Attributes[consts.FileflexPasswd].String()
+	enabled, _ := strconv.ParseBool(tenant.Attributes[consts.FileflexEnabled])
+	if !enabled {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "fileflex is disabled"})
+		return
+	}
+
+	bucketName := tenant.Attributes[consts.FileflexBucket]
+	userName := tenant.Attributes[consts.FileflexUser]
+	password := tenant.Attributes[consts.FileflexPasswd]
 
 	minioManager, err := minio.NewManager(&minio.Config{
 		Endpoint:        its.minioEndpoint,

@@ -1,9 +1,9 @@
 package consts
 
 const (
-	StatusOffline = 0
+	StatusOffline = -1
 	StatusOnline  = 1
-	StatusLogout  = -1
+	StatusLogout  = -2
 )
 
 const (

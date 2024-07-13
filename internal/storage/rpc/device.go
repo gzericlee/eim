@@ -37,10 +37,26 @@ type Device struct {
 	database     database.IDatabase
 }
 
-func (its *Device) SaveDevice(ctx context.Context, args *DeviceArgs, reply *DeviceReply) error {
-	err := its.database.SaveDevice(args.Device)
+func (its *Device) InsertDevice(ctx context.Context, args *DeviceArgs, reply *DeviceReply) error {
+	err := its.database.InsertDevice(args.Device)
 	if err != nil {
-		return fmt.Errorf("save device -> %w", err)
+		return fmt.Errorf("insert device -> %w", err)
+	}
+
+	key := fmt.Sprintf(deviceCacheKeyFormat, deviceCachePool, args.Device.UserId, args.Device.TenantId, "*")
+
+	err = storageRpc.RefreshDevicesCache(key, args.Device, ActionSave)
+	if err != nil {
+		log.Error("Error refresh device cache: %v", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (its *Device) UpdateDevice(ctx context.Context, args *DeviceArgs, reply *DeviceReply) error {
+	err := its.database.UpdateDevice(args.Device)
+	if err != nil {
+		return fmt.Errorf("update device -> %w", err)
 	}
 
 	key := fmt.Sprintf(deviceCacheKeyFormat, deviceCachePool, args.Device.UserId, args.Device.TenantId, "*")
@@ -94,9 +110,8 @@ func (its *Device) GetDevice(ctx context.Context, args *UserArgs, reply *DeviceR
 	for _, device := range result.Devices {
 		if device.DeviceId == args.DeviceId {
 			reply.Device = device
-			return nil
 		}
 	}
 
-	return fmt.Errorf("device not found")
+	return nil
 }

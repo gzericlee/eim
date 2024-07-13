@@ -214,16 +214,16 @@ func (its *Server) mockUserMessage() {
 						continue
 					}
 					msg := &model.Message{
-						MsgId:        msgId,
-						MsgType:      consts.TextMessage,
-						Content:      time.Now().String(),
-						FromType:     consts.FromUser,
-						FromId:       client.userId,
-						FromDevice:   client.deviceId,
-						FromTenantId: "bingo",
-						ToType:       consts.ToUser,
-						ToId:         toId,
-						ToTenantId:   "bingo",
+						MsgId:      msgId,
+						MsgType:    consts.TextMessage,
+						Content:    time.Now().String(),
+						FromType:   consts.FromUser,
+						FromId:     client.userId,
+						FromDevice: client.deviceId,
+						FromTenant: "bingo",
+						ToType:     consts.ToUser,
+						ToId:       toId,
+						ToTenant:   "bingo",
 					}
 					its.sendMessage(client, msg)
 					msgTotal--
@@ -258,16 +258,16 @@ func (its *Server) mockGroupMessage() {
 						continue
 					}
 					msg := &model.Message{
-						MsgId:        msgId,
-						MsgType:      consts.TextMessage,
-						Content:      time.Now().String(),
-						FromType:     consts.FromUser,
-						FromId:       client.userId,
-						FromDevice:   client.deviceId,
-						FromTenantId: "bingo",
-						ToType:       consts.ToGroup,
-						ToId:         toId,
-						ToTenantId:   "bingo",
+						MsgId:      msgId,
+						MsgType:    consts.TextMessage,
+						Content:    time.Now().String(),
+						FromType:   consts.FromUser,
+						FromId:     client.userId,
+						FromDevice: client.deviceId,
+						FromTenant: "bingo",
+						ToType:     consts.ToGroup,
+						ToId:       toId,
+						ToTenant:   "bingo",
 					}
 					its.sendMessage(client, msg)
 					msgTotal--

@@ -1,0 +1,36 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message Message {
+  // @gotags: bson:"msg_id" json:"msg_id" xorm:"pk"
+  int64 msg_id = 1;
+  // @gotags: bson:"seq_id" json:"seq_id"
+  int64 seq_id = 2;
+  // @gotags: bson:"msg_type" json:"msg_type"
+  int64 msg_type = 3;
+  // @gotags: bson:"content" json:"content"
+  string content = 4;
+  // @gotags: bson:"from_type" json:"from_type"
+  int64 from_type = 5;
+  // @gotags: bson:"from_id" json:"from_id"
+  string from_id = 6;
+  // @gotags: bson:"from_device" json:"from_device"
+  string from_device = 7;
+  // @gotags: bson:"from_tenant_id" json:"from_tenant_id"
+  string from_tenant = 8;
+  // @gotags: bson:"to_type" json:"to_type"
+  int64 to_type = 9;
+  // @gotags: bson:"to_id" json:"to_id"
+  string to_id = 10;
+  // @gotags: bson:"to_device" json:"to_device"
+  string to_device = 11;
+  // @gotags: bson:"to_tenant_id" json:"to_tenant_id"
+  string to_tenant = 12;
+  // @gotags: bson:"send_time" json:"send_time"
+  int64 send_time = 13;
+  // @gotags: bson:"-" json:"-"
+  string user_id = 14;
+  // @gotags: bson:"-" json:"-"
+  string tenant_id = 15;
+}

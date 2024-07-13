@@ -1,9 +1,10 @@
 package websocket
 
 import (
+	"time"
+
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"eim/internal/gateway/session"
 	"eim/internal/model/consts"
@@ -24,12 +25,12 @@ func (its *Server) close(conn *websocket.Conn, err error) {
 		//log.Warn("Device disconnected", zap.String("userId", device.UserId), zap.String("deviceId", device.DeviceId), zap.String("version", device.DeviceVersion))
 	}()
 
-	device.OfflineAt = timestamppb.Now()
+	device.OfflineAt = time.Now().Unix()
 	device.State = consts.StatusOffline
 
-	err = its.storageRpc.SaveDevice(device)
+	err = its.storageRpc.UpdateDevice(device)
 	if err != nil {
-		log.Error("Error save device", zap.Error(err))
+		log.Error("Error update device", zap.Error(err))
 		return
 	}
 }

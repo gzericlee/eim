@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"eim/internal/minio"
 	"eim/internal/model"
@@ -31,14 +29,14 @@ func (its *TenantHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("bind json -> %w", err).Error()})
 		return
 	}
+
 	err = its.checkTenant(tenant.TenantId)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "tenant already exists"})
 		return
 	}
 
-	tenant.State = consts.StatusEnabled
-	err = its.storageRpc.SaveTenant(tenant)
+	err = its.storageRpc.InsertTenant(tenant)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("save tenant -> %w", err).Error()})
 		return
@@ -63,7 +61,7 @@ func (its *TenantHandler) Update(c *gin.Context) {
 	}
 
 	tenant.TenantId = tenantId
-	err = its.storageRpc.SaveTenant(tenant)
+	err = its.storageRpc.UpdateTenant(tenant)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("save tenant -> %w", err).Error()})
 		return
@@ -79,6 +77,7 @@ func (its *TenantHandler) EnableFileFlex(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("check tenant -> %w", err).Error()})
 		return
 	}
+
 	tenant, err := its.storageRpc.GetTenant(tenantId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("get tenant -> %w", err).Error()})
@@ -109,11 +108,11 @@ func (its *TenantHandler) EnableFileFlex(c *gin.Context) {
 		return
 	}
 
-	tenant.Attributes[consts.FileflexEnabled], _ = anypb.New(&wrapperspb.BoolValue{Value: true})
-	tenant.Attributes[consts.FileflexBucket], _ = anypb.New(&wrapperspb.StringValue{Value: bucketName})
-	tenant.Attributes[consts.FileflexUser], _ = anypb.New(&wrapperspb.StringValue{Value: userName})
-	tenant.Attributes[consts.FileflexPasswd], _ = anypb.New(&wrapperspb.StringValue{Value: password})
-	err = its.storageRpc.SaveTenant(tenant)
+	tenant.Attributes[consts.FileflexEnabled] = fmt.Sprintf("%v", true)
+	tenant.Attributes[consts.FileflexBucket] = bucketName
+	tenant.Attributes[consts.FileflexUser] = userName
+	tenant.Attributes[consts.FileflexPasswd] = password
+	err = its.storageRpc.UpdateTenant(tenant)
 	if err != nil {
 		_ = its.minioManager.DetachBucketPolicy(bucketName, userName)
 		_ = its.minioManager.RemoveUser(userName)

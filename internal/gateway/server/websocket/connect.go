@@ -8,7 +8,6 @@ import (
 
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"eim/internal/gateway/protocol"
 	"eim/internal/gateway/session"
@@ -47,26 +46,51 @@ func (its *Server) connect(w http.ResponseWriter, r *http.Request) {
 
 	user, err := its.authRpc.CheckToken(token)
 	if err != nil {
+		_ = conn.Close()
 		log.Error("Error check auth token", zap.Error(err))
 		return
 	}
 
-	device := &model.Device{
-		DeviceId:       r.Header.Get("DeviceId"),
-		UserId:         user.BizId,
-		TenantId:       user.TenantId,
-		DeviceType:     r.Header.Get("DeviceType"),
-		DeviceVersion:  r.Header.Get("DeviceVersion"),
-		GatewayAddress: fmt.Sprintf("%s:%d", its.ip, its.port),
-		OnlineAt:       timestamppb.Now(),
-		State:          consts.StatusOnline,
-	}
+	gatewayAddr := fmt.Sprintf("%s:%d", its.ip, its.port)
+	deviceId := r.Header.Get("DeviceId")
+	deviceType := r.Header.Get("DeviceType")
+	deviceVersion := r.Header.Get("DeviceVersion")
 
-	err = its.storageRpc.SaveDevice(device)
+	device, err := its.storageRpc.GetDevice(user.BizId, user.TenantId, deviceId)
 	if err != nil {
 		_ = conn.Close()
-		log.Error("Error save device", zap.Error(err))
+		log.Error("Error get device", zap.Error(err))
 		return
+	}
+	if device != nil && device.DeviceId == deviceId {
+		device.DeviceVersion = deviceVersion
+		device.GatewayAddr = gatewayAddr
+		device.DeviceType = deviceType
+		device.OnlineAt = time.Now().Unix()
+		device.State = consts.StatusOnline
+		err = its.storageRpc.UpdateDevice(device)
+		if err != nil {
+			_ = conn.Close()
+			log.Error("Error update device", zap.Error(err))
+			return
+		}
+	} else {
+		device = &model.Device{
+			DeviceId:      deviceId,
+			UserId:        user.BizId,
+			TenantId:      user.TenantId,
+			DeviceType:    deviceType,
+			DeviceVersion: deviceVersion,
+			GatewayAddr:   gatewayAddr,
+			OnlineAt:      time.Now().Unix(),
+			State:         consts.StatusOnline,
+		}
+		err = its.storageRpc.InsertDevice(device)
+		if err != nil {
+			_ = conn.Close()
+			log.Error("Error insert device", zap.Error(err))
+			return
+		}
 	}
 
 	sess := session.NewSession(user, device, conn)

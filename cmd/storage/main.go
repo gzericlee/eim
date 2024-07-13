@@ -52,7 +52,7 @@ func newCliApp() *cli.App {
 				DatabaseName:         config.SystemConfig.Database.Name,
 				EtcdEndpoints:        config.SystemConfig.Etcd.Endpoints.Value(),
 				DatabaseDriver:       database.Driver(config.SystemConfig.Database.Driver),
-				DatabaseConnection:   config.SystemConfig.Database.Connection,
+				DatabaseConnections:  config.SystemConfig.Database.Connections.Value(),
 				RedisEndpoints:       config.SystemConfig.Redis.Endpoints.Value(),
 				RedisPassword:        config.SystemConfig.Redis.Password,
 				OfflineMessageExpire: config.SystemConfig.Redis.OfflineMessageExpire,

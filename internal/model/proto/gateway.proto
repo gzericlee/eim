@@ -1,0 +1,20 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message Gateway {
+  // @gotags: bson:"ip" json:"ip" xorm:"pk"
+  string ip = 1;
+  // @gotags: bson:"port" json:"port" xorm:"pk"
+  int32 port = 2;
+  // @gotags: bson:"client_total" json:"client_total"
+  int64 client_total = 3;
+  // @gotags: bson:"send_total" json:"send_total"
+  int64 send_total = 4;
+  // @gotags: bson:"received_total" json:"received_total"
+  int64 received_total = 5;
+  // @gotags: bson:"invalid_total" json:"invalid_total"
+  int64 invalid_total = 6;
+  // @gotags: bson:"attributes" json:"attributes"
+  map<string, string> attributes = 7;
+}

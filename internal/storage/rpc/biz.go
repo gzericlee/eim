@@ -25,10 +25,26 @@ type Biz struct {
 	database     database.IDatabase
 }
 
-func (its *Biz) SaveBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) error {
-	err := its.database.SaveBiz(args.Biz)
+func (its *Biz) InsertBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) error {
+	err := its.database.InsertBiz(args.Biz)
 	if err != nil {
-		return fmt.Errorf("save biz -> %w", err)
+		return fmt.Errorf("insert biz -> %w", err)
+	}
+
+	key := fmt.Sprintf(bizCacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)
+
+	err = storageRpc.RefreshBizCache(key, args.Biz, ActionSave)
+	if err != nil {
+		log.Error("Error refresh biz cache: %v", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (its *Biz) UpdateBiz(ctx context.Context, args *BizArgs, reply *EmptyReply) error {
+	err := its.database.UpdateBiz(args.Biz)
+	if err != nil {
+		return fmt.Errorf("update biz -> %w", err)
 	}
 
 	key := fmt.Sprintf(bizCacheKeyFormat, bizCachePool, args.Biz.BizId, args.Biz.TenantId)

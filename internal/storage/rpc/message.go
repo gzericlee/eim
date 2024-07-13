@@ -20,6 +20,10 @@ type MessageIdsArgs struct {
 	DeviceId   string
 }
 
+type MessageArgs struct {
+	Message *model.Message
+}
+
 type MessagesArgs struct {
 	Messages []*model.Message
 	UserId   string
@@ -39,8 +43,17 @@ type MessagesReply struct {
 	Messages []*model.Message
 }
 
-func (its *Message) SaveMessages(ctx context.Context, args *MessagesArgs, reply *EmptyReply) error {
-	err := its.database.SaveMessages(args.Messages)
+func (its *Message) InsertMessage(ctx context.Context, args *MessageArgs, reply *EmptyReply) error {
+	err := its.database.InsertMessage(args.Message)
+	if err != nil {
+		return fmt.Errorf("save message -> %w", err)
+	}
+
+	return nil
+}
+
+func (its *Message) InsertMessages(ctx context.Context, args *MessagesArgs, reply *EmptyReply) error {
+	err := its.database.InsertMessages(args.Messages)
 	if err != nil {
 		return fmt.Errorf("save messages -> %w", err)
 	}
