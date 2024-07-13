@@ -8,5 +8,5 @@ const (
 
 const (
 	StatusEnabled  = 1
-	StatusDisabled = 0
+	StatusDisabled = -1
 )
