@@ -6,20 +6,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"eim/internal/minio"
-	"eim/internal/model"
-	"eim/internal/model/consts"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/stringsutil"
+	"github.com/gzericlee/eim/internal/minio"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
+	"github.com/gzericlee/eim/pkg/stringsutil"
 )
 
 type TenantHandler struct {
 	minioManager *minio.Manager
-	storageRpc   *storagerpc.Client
+	tenantRpc    *storagerpc.TenantClient
 }
 
-func NewTenantHandler(storageRpc *storagerpc.Client, minioManager *minio.Manager) *TenantHandler {
-	return &TenantHandler{storageRpc: storageRpc, minioManager: minioManager}
+func NewTenantHandler(tenantRpc *storagerpc.TenantClient, minioManager *minio.Manager) *TenantHandler {
+	return &TenantHandler{tenantRpc: tenantRpc, minioManager: minioManager}
 }
 
 func (its *TenantHandler) Register(c *gin.Context) {
@@ -36,7 +36,7 @@ func (its *TenantHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err = its.storageRpc.InsertTenant(tenant)
+	err = its.tenantRpc.InsertTenant(tenant)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("save tenant -> %w", err).Error()})
 		return
@@ -61,7 +61,7 @@ func (its *TenantHandler) Update(c *gin.Context) {
 	}
 
 	tenant.TenantId = tenantId
-	err = its.storageRpc.UpdateTenant(tenant)
+	err = its.tenantRpc.UpdateTenant(tenant)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("save tenant -> %w", err).Error()})
 		return
@@ -78,7 +78,7 @@ func (its *TenantHandler) EnableFileFlex(c *gin.Context) {
 		return
 	}
 
-	tenant, err := its.storageRpc.GetTenant(tenantId)
+	tenant, err := its.tenantRpc.GetTenant(tenantId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("get tenant -> %w", err).Error()})
 		return
@@ -112,7 +112,7 @@ func (its *TenantHandler) EnableFileFlex(c *gin.Context) {
 	tenant.Attributes[consts.FileflexBucket] = bucketName
 	tenant.Attributes[consts.FileflexUser] = userName
 	tenant.Attributes[consts.FileflexPasswd] = password
-	err = its.storageRpc.UpdateTenant(tenant)
+	err = its.tenantRpc.UpdateTenant(tenant)
 	if err != nil {
 		_ = its.minioManager.DetachBucketPolicy(bucketName, userName)
 		_ = its.minioManager.RemoveUser(userName)
@@ -128,7 +128,7 @@ func (its *TenantHandler) checkTenant(tenantId string) error {
 	if tenantId == "" {
 		return fmt.Errorf("tenantId is empty")
 	}
-	_, err := its.storageRpc.GetTenant(tenantId)
+	_, err := its.tenantRpc.GetTenant(tenantId)
 	if err != nil {
 		return fmt.Errorf("get tenant -> %w", err)
 	}

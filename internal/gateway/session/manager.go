@@ -3,7 +3,7 @@ package session
 import (
 	"fmt"
 
-	"eim/pkg/cache"
+	"github.com/gzericlee/eim/pkg/cache"
 )
 
 type Manager struct {

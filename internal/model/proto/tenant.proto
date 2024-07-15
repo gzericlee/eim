@@ -13,10 +13,6 @@ message Tenant {
   int64 created_at = 4;
   // @gotags: bson:"updated_at" json:"updated_at" xorm:"updated"
   int64 updated_at = 5;
-  // @gotags: bson:"created_by" json:"created_by"
-  string created_by = 6;
-  // @gotags: bson:"updated_by" json:"updated_by"
-  string updated_by = 7;
   // @gotags: bson:"attributes" json:"attributes"
   map<string, string> attributes = 8;
 }

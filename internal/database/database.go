@@ -11,9 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"xorm.io/xorm"
 
-	"eim/internal/database/mongodb"
-	"eim/internal/database/pgsql"
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/database/mongodb"
+	"github.com/gzericlee/eim/internal/database/pgsql"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 type Driver string
@@ -33,6 +33,8 @@ type IDatabase interface {
 	IBizMember
 	ISegment
 	ITenant
+	IFile
+	IFileThumb
 }
 
 type ISegment interface {
@@ -63,6 +65,7 @@ type IBizMember interface {
 }
 
 type IDevice interface {
+	SaveDevice(device *model.Device) (bool, error)
 	InsertDevice(device *model.Device) error
 	UpdateDevice(device *model.Device) error
 	GetDevicesByUser(userId, tenantId string) ([]*model.Device, error)
@@ -76,6 +79,19 @@ type IMessage interface {
 	InsertMessages(messages []*model.Message) error
 	GetMessagesByIds(msgIds []int64) ([]*model.Message, error)
 	ListHistoryMessages(filter map[string]interface{}, order []string, minSeq, maxSeq, limit, offset int64) ([]*model.Message, error)
+}
+
+type IFile interface {
+	InsertFile(file *model.File) error
+	DeleteFile(fileId string) error
+	GetFile(fileId string) (*model.File, error)
+	ListFiles(filter map[string]interface{}, order []string, limit, offset int64) ([]*model.File, int64, error)
+}
+
+type IFileThumb interface {
+	InsertFileThumb(thumb *model.FileThumb) error
+	DeleteFileThumb(thumbId string) error
+	GetFileThumb(fileId, thumbSpec string) (*model.FileThumb, error)
 }
 
 func NewDatabase(driver Driver, connections []string, name string) (IDatabase, error) {

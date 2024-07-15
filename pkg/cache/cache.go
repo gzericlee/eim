@@ -6,7 +6,7 @@ import (
 
 	"github.com/Yiling-J/theine-go"
 
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type Cache[K comparable, V any] struct {
@@ -45,6 +45,10 @@ func (its *Cache[K, V]) SetWithTTL(key K, value V, ttl time.Duration) {
 
 func (its *Cache[K, V]) Get(key K) (V, bool) {
 	return its.cache.Get(key)
+}
+
+func (its *Cache[K, V]) Range(f func(key K, value V) bool) {
+	its.cache.Range(f)
 }
 
 func (its *Cache[K, V]) Delete(key K) {

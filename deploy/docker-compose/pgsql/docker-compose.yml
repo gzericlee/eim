@@ -18,6 +18,7 @@ services:
       - REPMGR_NODE_NAME=pg-0
       - REPMGR_NODE_NETWORK_NAME=pg-0
       - REPMGR_PORT_NUMBER=5432
+      - POSTGRESQL_MAX_CONNECTIONS=1000
   pg-1:
     image: docker.io/bitnami/postgresql-repmgr:16
     restart: always
@@ -37,6 +38,7 @@ services:
       - REPMGR_NODE_NAME=pg-1
       - REPMGR_NODE_NETWORK_NAME=pg-1
       - REPMGR_PORT_NUMBER=5432
+      - POSTGRESQL_MAX_CONNECTIONS=1000
   pg-2:
     image: docker.io/bitnami/postgresql-repmgr:16
     restart: always
@@ -56,6 +58,7 @@ services:
       - REPMGR_NODE_NAME=pg-2
       - REPMGR_NODE_NETWORK_NAME=pg-2
       - REPMGR_PORT_NUMBER=5432
+      - POSTGRESQL_MAX_CONNECTIONS=1000
 volumes:
   pg_0_data:
     driver: local

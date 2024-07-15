@@ -1,4 +1,4 @@
-module eim
+module github.com/gzericlee/eim
 
 go 1.22
 
@@ -24,7 +24,6 @@ require (
 	github.com/rpcxio/rpcx-etcd v0.3.2
 	github.com/smallnest/rpcx v1.8.30
 	github.com/urfave/cli/v2 v2.27.1
-	go.etcd.io/etcd/client/v3 v3.5.13
 	go.mongodb.org/mongo-driver v1.15.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
@@ -150,6 +149,7 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.13 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.13 // indirect
 	go.etcd.io/etcd/client/v2 v2.305.13 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.13 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect

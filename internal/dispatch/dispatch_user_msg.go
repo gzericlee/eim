@@ -8,22 +8,26 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
-	"eim/internal/model"
-	"eim/internal/model/consts"
-	"eim/internal/mq"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
+	"github.com/gzericlee/eim/internal/mq"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type UserMessageHandler struct {
-	storageRpc *storagerpc.Client
-	producer   mq.IProducer
+	bizMemberRpc *storagerpc.BizMemberClient
+	messageRpc   *storagerpc.MessageClient
+	deviceRpc    *storagerpc.DeviceClient
+	producer     mq.IProducer
 }
 
-func NewUserMessageHandler(storageRpc *storagerpc.Client, producer mq.IProducer) *UserMessageHandler {
+func NewUserMessageHandler(bizMemberRpc *storagerpc.BizMemberClient, messageRpc *storagerpc.MessageClient, deviceRpc *storagerpc.DeviceClient, producer mq.IProducer) *UserMessageHandler {
 	return &UserMessageHandler{
-		storageRpc: storageRpc,
-		producer:   producer,
+		bizMemberRpc: bizMemberRpc,
+		messageRpc:   messageRpc,
+		deviceRpc:    deviceRpc,
+		producer:     producer,
 	}
 }
 
@@ -58,7 +62,7 @@ func (its *UserMessageHandler) Process(m *nats.Msg) error {
 }
 
 func (its *UserMessageHandler) publish(msg model.Message) error {
-	devices, err := its.storageRpc.GetDevices(msg.UserId, msg.TenantId)
+	devices, err := its.deviceRpc.GetDevices(msg.UserId, msg.TenantId)
 	if err != nil {
 		return fmt.Errorf("get user devices -> %w", err)
 	}
@@ -77,7 +81,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 			continue
 		}
 
-		err = its.storageRpc.SaveOfflineMessages([]*model.Message{&msg}, msg.UserId, device.DeviceId)
+		err = its.messageRpc.SaveOfflineMessages([]*model.Message{&msg}, msg.UserId, device.DeviceId)
 		if err != nil {
 			log.Error("Error saving offline messages", zap.Error(err))
 			continue
@@ -98,7 +102,7 @@ func (its *UserMessageHandler) publish(msg model.Message) error {
 			}
 		case consts.StatusOffline:
 			{
-				offlineMsgCount, err := its.storageRpc.GetOfflineMessagesCount(msg.UserId, device.DeviceId)
+				offlineMsgCount, err := its.messageRpc.GetOfflineMessagesCount(msg.UserId, device.DeviceId)
 				if err != nil {
 					log.Error("Error getting offline messages count", zap.Error(err))
 					continue

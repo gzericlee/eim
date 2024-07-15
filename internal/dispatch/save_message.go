@@ -6,17 +6,17 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 
-	"eim/internal/model"
-	storagerpc "eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/internal/model"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
 type SaveMessageHandler struct {
-	storageRpc *storagerpc.Client
+	messageRpc *storagerpc.MessageClient
 }
 
-func NewSaveMessageHandler(storageRpc *storagerpc.Client) *SaveMessageHandler {
+func NewSaveMessageHandler(messageRpc *storagerpc.MessageClient) *SaveMessageHandler {
 	return &SaveMessageHandler{
-		storageRpc: storageRpc,
+		messageRpc: messageRpc,
 	}
 }
 
@@ -31,7 +31,7 @@ func (its *SaveMessageHandler) Process(m *nats.Msg) error {
 		return m.Ack()
 	}
 
-	err = its.storageRpc.InsertMessage(msg)
+	err = its.messageRpc.InsertMessage(msg)
 	if err != nil {
 		return fmt.Errorf("insert message -> %w", err)
 	}

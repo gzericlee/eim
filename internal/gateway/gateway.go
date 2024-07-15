@@ -7,13 +7,13 @@ import (
 	"github.com/lesismal/nbio/logging"
 	"go.uber.org/zap"
 
-	authrpc "eim/internal/auth/rpc"
-	"eim/internal/gateway/server"
-	"eim/internal/gateway/server/websocket"
-	"eim/internal/mq"
-	seqrpc "eim/internal/seq/rpc"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
+	authrpc "github.com/gzericlee/eim/internal/auth/rpc"
+	"github.com/gzericlee/eim/internal/gateway/server"
+	"github.com/gzericlee/eim/internal/gateway/server/websocket"
+	"github.com/gzericlee/eim/internal/mq"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type Config struct {
@@ -26,19 +26,29 @@ type Config struct {
 func StartWebsocketServer(cfg *Config) (server.IServer, error) {
 	logging.SetLevel(logging.LevelNone)
 
-	seqRpc, err := seqrpc.NewClient(cfg.EtcdEndpoints)
+	seqRpc, err := seqrpc.NewSeqClient(cfg.EtcdEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("new seq rpc client -> %w", err)
 	}
 
-	authRpc, err := authrpc.NewClient(cfg.EtcdEndpoints)
+	authRpc, err := authrpc.NewAuthClient(cfg.EtcdEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("new auth rpc client -> %w", err)
 	}
 
-	storageRpc, err := storagerpc.NewClient(cfg.EtcdEndpoints)
+	deviceRpc, err := storagerpc.NewDeviceClient(cfg.EtcdEndpoints)
 	if err != nil {
-		return nil, fmt.Errorf("new storage rpc client -> %w", err)
+		return nil, fmt.Errorf("new device rpc client -> %w", err)
+	}
+
+	messageRpc, err := storagerpc.NewMessageClient(cfg.EtcdEndpoints)
+	if err != nil {
+		return nil, fmt.Errorf("new message rpc client -> %w", err)
+	}
+
+	gatewayRpc, err := storagerpc.NewGatewayClient(cfg.EtcdEndpoints)
+	if err != nil {
+		return nil, fmt.Errorf("new gateway rpc client -> %w", err)
 	}
 
 	producer, err := mq.NewProducer(cfg.MqEndpoints)
@@ -46,7 +56,16 @@ func StartWebsocketServer(cfg *Config) (server.IServer, error) {
 		return nil, fmt.Errorf("new mq producer -> %w", err)
 	}
 
-	server, err := websocket.NewServer(cfg.Ip, cfg.Port, seqRpc, authRpc, storageRpc, producer)
+	server, err := websocket.NewServer(&websocket.Config{
+		Ip:         cfg.Ip,
+		Port:       cfg.Port,
+		SeqRpc:     seqRpc,
+		AuthRpc:    authRpc,
+		DeviceRpc:  deviceRpc,
+		MessageRpc: messageRpc,
+		GatewayRpc: gatewayRpc,
+		Producer:   producer,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("new websocket server -> %w", err)
 	}

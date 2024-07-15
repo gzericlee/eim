@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type natsProducer struct {

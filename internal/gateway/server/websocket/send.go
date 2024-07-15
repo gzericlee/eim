@@ -6,9 +6,9 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/internal/gateway/protocol"
-	"eim/internal/gateway/session"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/gateway/protocol"
+	"github.com/gzericlee/eim/internal/gateway/session"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 func (its *Server) Send(sess *session.Session, cmd int, body []byte) {
@@ -22,7 +22,7 @@ func (its *Server) sendOfflineMessage(sess *session.Session) {
 
 	device := sess.GetDevice()
 
-	messages, err := its.storageRpc.GetOfflineMessages(device.UserId, device.DeviceId)
+	messages, err := its.messageRpc.GetOfflineMessages(device.UserId, device.DeviceId)
 	if err != nil {
 		log.Error("Error get offline messages", zap.String("userId", device.UserId), zap.String("deviceId", device.DeviceId), zap.Error(err))
 		return

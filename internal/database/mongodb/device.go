@@ -8,8 +8,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
+
+func (its *Repository) SaveDevice(device *model.Device) (bool, error) {
+	result, err := its.db.Collection("device").ReplaceOne(context.Background(), bson.M{"user_id": device.UserId, "tenant_id": device.TenantId, "device_id": device.DeviceId}, device, options.Replace().SetUpsert(true))
+	if err != nil {
+		return false, fmt.Errorf("save device -> %w", err)
+	}
+	if result.UpsertedCount > 0 {
+		return true, nil
+	}
+	return false, nil
+}
 
 func (its *Repository) InsertDevice(device *model.Device) error {
 	_, err := its.db.Collection("device").InsertOne(context.Background(), device)

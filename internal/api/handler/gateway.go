@@ -6,20 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type GatewayHandler struct {
-	storageRpc *storagerpc.Client
+	gatewayRpc *storagerpc.GatewayClient
 }
 
-func NewGatewayHandler(storageRpc *storagerpc.Client) *GatewayHandler {
-	return &GatewayHandler{storageRpc: storageRpc}
+func NewGatewayHandler(gatewayRpc *storagerpc.GatewayClient) *GatewayHandler {
+	return &GatewayHandler{gatewayRpc: gatewayRpc}
 }
 
 func (its *GatewayHandler) List(c *gin.Context) {
-	gateways, err := its.storageRpc.GetGateways()
+	gateways, err := its.gatewayRpc.GetGateways()
 	if err != nil {
 		log.Error("Error get gateways", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

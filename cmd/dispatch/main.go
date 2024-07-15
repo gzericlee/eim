@@ -8,21 +8,21 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim"
-	"eim/internal/config"
-	"eim/internal/dispatch"
-	"eim/internal/mq"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/exitutil"
-	"eim/pkg/log"
-	eimmetrics "eim/pkg/metrics"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/internal/dispatch"
+	"github.com/gzericlee/eim/internal/mq"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/pkg/exitutil"
+	"github.com/gzericlee/eim/pkg/log"
+	eimmetrics "github.com/gzericlee/eim/pkg/metrics"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-dispatch"
-	app.Usage = "EIM-分发服务"
+	app.Usage = "EIM-DISPATCH分发服务"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",
@@ -38,10 +38,19 @@ func newCliApp() *cli.App {
 		//开启PProf服务
 		pprof.EnablePProf()
 
-		//初始化Nsq消费者
-		storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+		bizMemberRpc, err := storagerpc.NewBizMemberClient(config.SystemConfig.Etcd.Endpoints.Value())
 		if err != nil {
-			panic(fmt.Errorf("new storage rpc client -> %w", err))
+			panic(fmt.Errorf("new biz member rpc client -> %w", err))
+		}
+
+		messageRpc, err := storagerpc.NewMessageClient(config.SystemConfig.Etcd.Endpoints.Value())
+		if err != nil {
+			panic(fmt.Errorf("new message rpc client -> %w", err))
+		}
+
+		deviceRpc, err := storagerpc.NewDeviceClient(config.SystemConfig.Etcd.Endpoints.Value())
+		if err != nil {
+			panic(fmt.Errorf("new device rpc client -> %w", err))
 		}
 
 		producer, err := mq.NewProducer(config.SystemConfig.Mq.Endpoints.Value())
@@ -56,22 +65,24 @@ func newCliApp() *cli.App {
 			panic(fmt.Errorf("new mq consumer -> %w", err))
 		}
 
-		err = consumer.Subscribe(mq.UserMessageSubject, "dispatch-user-message", dispatch.NewUserMessageHandler(storageRpc, producer))
+		userMessageHandler := dispatch.NewUserMessageHandler(bizMemberRpc, messageRpc, deviceRpc, producer)
+
+		err = consumer.Subscribe(mq.UserMessageSubject, "dispatch-user-message", userMessageHandler)
 		if err != nil {
 			panic(fmt.Errorf("subscribe dispatch user message subject -> %w", err))
 		}
 
-		err = consumer.Subscribe(mq.UserMessageSubject, "save-user-message", dispatch.NewSaveMessageHandler(storageRpc))
+		err = consumer.Subscribe(mq.UserMessageSubject, "save-user-message", dispatch.NewSaveMessageHandler(messageRpc))
 		if err != nil {
 			panic(fmt.Errorf("subscribe save user message subject -> %w", err))
 		}
 
-		err = consumer.Subscribe(mq.GroupMessageSubject, "dispatch-group-message", dispatch.NewGroupMessageHandler(storageRpc, producer))
+		err = consumer.Subscribe(mq.GroupMessageSubject, "dispatch-group-message", dispatch.NewGroupMessageHandler(bizMemberRpc, userMessageHandler, producer))
 		if err != nil {
 			panic(fmt.Errorf("subscribe dispatch group message subject -> %w", err))
 		}
 
-		err = consumer.Subscribe(mq.GroupMessageSubject, "save-group-message", dispatch.NewSaveMessageHandler(storageRpc))
+		err = consumer.Subscribe(mq.GroupMessageSubject, "save-group-message", dispatch.NewSaveMessageHandler(messageRpc))
 		if err != nil {
 			panic(fmt.Errorf("subscribe save group message subject -> %w", err))
 		}

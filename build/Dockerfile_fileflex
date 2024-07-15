@@ -1,0 +1,7 @@
+FROM alpine
+
+WORKDIR /opt/
+
+COPY ./dist/eim_file_flex .
+
+CMD ["./eim_file_flex"]

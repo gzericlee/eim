@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 func EnablePProf() {

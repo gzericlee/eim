@@ -8,8 +8,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 
-	"eim/internal/model"
-	"eim/pkg/snowflake"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/pkg/snowflake"
 )
 
 var producer IProducer

@@ -3,12 +3,12 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	"eim/internal/fileflex/handler"
-	storagerpc "eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/internal/fileflex/handler"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
-func regUploadAPIs(engine *gin.Engine, storageRpc *storagerpc.Client, minioEndpoint string) {
-	uploadHandler := handler.NewUploadHandler(storageRpc, minioEndpoint)
+func regUploadAPIs(engine *gin.Engine, tenantRpc *storagerpc.TenantClient, minioEndpoint string) {
+	uploadHandler := handler.NewUploadHandler(tenantRpc, minioEndpoint)
 
 	upload := engine.Group("/upload")
 	{

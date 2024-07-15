@@ -9,14 +9,14 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim"
-	authrpc "eim/internal/auth/rpc"
-	"eim/internal/config"
-	"eim/internal/fileflex"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/exitutil"
-	"eim/pkg/log"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	authrpc "github.com/gzericlee/eim/internal/auth/rpc"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/internal/fileflex"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/pkg/exitutil"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
@@ -41,12 +41,12 @@ func newCliApp() *cli.App {
 		httpServer := fileflex.HttpServer{}
 
 		go func() {
-			storageRpc, err := storagerpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+			tenantRpc, err := storagerpc.NewTenantClient(config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
 				panic(fmt.Errorf("new storage rpc client -> %w", err))
 			}
 
-			authRpc, err := authrpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+			authRpc, err := authrpc.NewAuthClient(config.SystemConfig.Etcd.Endpoints.Value())
 			if err != nil {
 				panic(fmt.Errorf("new auth rpc client -> %w", err))
 			}
@@ -57,7 +57,7 @@ func newCliApp() *cli.App {
 				Port:          config.SystemConfig.ApiSvr.HttpPort,
 				MinioEndpoint: config.SystemConfig.Minio.Endpoint,
 				AuthRpc:       authRpc,
-				StorageRpc:    storageRpc,
+				TenantRpc:     tenantRpc,
 			})
 		}()
 

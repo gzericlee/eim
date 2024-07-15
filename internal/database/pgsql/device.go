@@ -3,8 +3,20 @@ package pgsql
 import (
 	"fmt"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
+
+// SaveDevice Return true if the device is new
+func (its *Repository) SaveDevice(device *model.Device) (bool, error) {
+	exist, err := its.db.Where("user_id = ? AND tenant_id = ? AND device_id = ?", device.UserId, device.TenantId, device.DeviceId).Exist(&model.Device{})
+	if err != nil {
+		return false, fmt.Errorf("exist device -> %w", err)
+	}
+	if exist {
+		return false, its.UpdateDevice(device)
+	}
+	return true, its.InsertDevice(device)
+}
 
 func (its *Repository) InsertDevice(device *model.Device) error {
 	_, err := its.db.Insert(device)

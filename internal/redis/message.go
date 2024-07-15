@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 const (

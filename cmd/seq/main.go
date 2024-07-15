@@ -10,19 +10,19 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim"
-	"eim/internal/config"
-	seqrpc "eim/internal/seq/rpc"
-	"eim/pkg/exitutil"
-	"eim/pkg/log"
-	"eim/pkg/netutil"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	"github.com/gzericlee/eim/internal/config"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc"
+	"github.com/gzericlee/eim/pkg/exitutil"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/netutil"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-seq"
-	app.Usage = "EIM-ID分发服务"
+	app.Usage = "EIM-SEQ ID服务"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",

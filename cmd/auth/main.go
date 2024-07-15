@@ -8,19 +8,21 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim"
-	authrpc "eim/internal/auth/rpc"
-	"eim/internal/config"
-	"eim/pkg/exitutil"
-	"eim/pkg/log"
-	"eim/pkg/netutil"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	"github.com/gzericlee/eim/internal/auth"
+	authrpc "github.com/gzericlee/eim/internal/auth/rpc"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/pkg/exitutil"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/netutil"
+	oauth2lib "github.com/gzericlee/eim/pkg/oauth2"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-auth"
-	app.Usage = "EIM-鉴权服务"
+	app.Usage = "EIM-AUTH鉴权服务"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",
@@ -45,10 +47,25 @@ func newCliApp() *cli.App {
 
 		//开启Rpc服务
 		go func() {
-			err := authrpc.StartServer(authrpc.Config{
+			var oauth2Client oauth2lib.Client
+			if auth.Mode(config.SystemConfig.AuthSvr.Mode) == auth.OAuth2Mode {
+				oauth2Client, err = oauth2lib.NewClient(&oauth2lib.Config{
+					Version:      oauth2lib.V5,
+					Endpoint:     config.SystemConfig.AuthSvr.OAuth2.Endpoint,
+					ClientId:     config.SystemConfig.AuthSvr.OAuth2.ClientId,
+					ClientSecret: config.SystemConfig.AuthSvr.OAuth2.ClientSecret,
+				})
+				if err != nil {
+					panic(fmt.Errorf("new oauth2 client -> %w", err))
+				}
+			}
+
+			err = authrpc.StartServer(authrpc.Config{
 				Ip:            config.SystemConfig.LocalIp,
 				Port:          config.SystemConfig.AuthSvr.RpcPort,
 				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),
+				AuthMode:      auth.Mode(config.SystemConfig.AuthSvr.Mode),
+				Oauth2Client:  oauth2Client,
 			})
 			if err != nil {
 				panic(fmt.Errorf("start auth rpc server -> %w", err))

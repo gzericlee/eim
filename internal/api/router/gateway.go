@@ -3,15 +3,15 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	"eim/internal/api/handler"
-	storagerpc "eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/internal/api/handler"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
-func regGatewayAPIs(engine *gin.Engine, storageRpc *storagerpc.Client) {
-	gatewayHandler := handler.NewGatewayHandler(storageRpc)
+func regGatewayAPIs(engine *gin.Engine, gatewayRpc *storagerpc.GatewayClient) {
+	gatewayHandler := handler.NewGatewayHandler(gatewayRpc)
 
 	gateways := engine.Group("/gateways")
 	{
-		gateways.GET("/", gatewayHandler.List)
+		gateways.GET("", gatewayHandler.List)
 	}
 }

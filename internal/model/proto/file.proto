@@ -1,0 +1,24 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message File {
+  // @gotags: bson:"file_id" json:"file_id" xorm:"pk"
+  string file_id = 1;
+  // @gotags: bson:"file_name" json:"file_name"
+  string file_name = 2;
+  // @gotags: bson:"file_type" json:"file_type"
+  string file_type = 3;
+  // @gotags: bson:"file_path" json:"file_path"
+  string file_path = 4;
+  // @gotags: bson:"file_size" json:"file_size"
+  int64 file_size = 5;
+  // @gotags: bson:"created_at" json:"created_at" xorm:"created"
+  int64 created_at = 6;
+  // @gotags: bson:"biz_id" json:"biz_id"
+  string biz_id = 7;
+  // @gotags: bson:"tenant_id" json:"tenant_id"
+  string tenant_id = 8;
+  // @gotags: bson:"attributes" json:"attributes"
+  map<string, string> attributes = 9;
+}

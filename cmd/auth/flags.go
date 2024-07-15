@@ -3,13 +3,17 @@ package main
 import (
 	"github.com/urfave/cli/v2"
 
-	"eim/internal/config"
+	"github.com/gzericlee/eim/internal/config"
 )
 
 const (
 	EtcdEndpoints = "ETCD_ENDPOINTS"
 
 	AuthMode = "AUTH_MODE"
+
+	OAuth2ClientId     = "OAUTH2_CLIENT_ID"
+	OAuth2ClientSecret = "OAUTH2_CLIENT_SECRET"
+	OAuth2Endpoint     = "OAUTH2_ENDPOINT"
 
 	LogLevel = "LOG_LEVEL"
 )
@@ -29,6 +33,27 @@ func ParseFlags(app *cli.App) {
 			Usage:       "Auth mode",
 			EnvVars:     []string{AuthMode},
 			Destination: &config.SystemConfig.AuthSvr.Mode,
+		},
+		&cli.StringFlag{
+			Name:        "oauth2-endpoint",
+			Value:       "",
+			Usage:       "OAuth2 endpoint",
+			EnvVars:     []string{OAuth2Endpoint},
+			Destination: &config.SystemConfig.AuthSvr.OAuth2.Endpoint,
+		},
+		&cli.StringFlag{
+			Name:        "oauth2-client-id",
+			Value:       "client_id",
+			Usage:       "OAuth2 client id",
+			EnvVars:     []string{OAuth2ClientId},
+			Destination: &config.SystemConfig.AuthSvr.OAuth2.ClientId,
+		},
+		&cli.StringFlag{
+			Name:        "oauth2-client-secret",
+			Value:       "client_secret",
+			Usage:       "OAuth2 client secret",
+			EnvVars:     []string{OAuth2ClientSecret},
+			Destination: &config.SystemConfig.AuthSvr.OAuth2.ClientSecret,
 		},
 		&cli.StringFlag{
 			Name:        "log-level",

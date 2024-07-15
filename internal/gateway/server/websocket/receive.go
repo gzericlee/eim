@@ -8,12 +8,12 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/internal/gateway/protocol"
-	"eim/internal/gateway/session"
-	"eim/internal/model"
-	"eim/internal/model/consts"
-	"eim/internal/mq"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/gateway/protocol"
+	"github.com/gzericlee/eim/internal/gateway/session"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
+	"github.com/gzericlee/eim/internal/mq"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 func (its *Server) receive(conn *websocket.Conn, _ websocket.MessageType, data []byte) {
@@ -33,7 +33,7 @@ func (its *Server) receive(conn *websocket.Conn, _ websocket.MessageType, data [
 	case protocol.Ack:
 		{
 			msgId := string(frame)
-			err := its.storageRpc.RemoveOfflineMessages([]string{msgId}, user.BizId, device.DeviceId)
+			err := its.messageRpc.RemoveOfflineMessages([]string{msgId}, user.BizId, device.DeviceId)
 			if err != nil {
 				its.IncrErrorTotal(1)
 				log.Error("Error remove offline message id", zap.Error(err))

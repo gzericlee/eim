@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 var client *resty.Client

@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"eim/internal/model"
-	"eim/internal/model/consts"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
 )
 
 func (its *Repository) InsertBiz(biz *model.Biz) error {

@@ -5,7 +5,7 @@ import (
 
 	"xorm.io/xorm"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 type Repository struct {

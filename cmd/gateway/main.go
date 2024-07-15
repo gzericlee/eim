@@ -9,22 +9,22 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"eim"
-	"eim/internal/config"
-	"eim/internal/gateway"
-	"eim/internal/gateway/handler"
-	"eim/internal/gateway/server"
-	"eim/internal/mq"
-	"eim/pkg/exitutil"
-	"eim/pkg/log"
-	eimmetrics "eim/pkg/metrics"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/internal/gateway"
+	"github.com/gzericlee/eim/internal/gateway/handler"
+	"github.com/gzericlee/eim/internal/gateway/server"
+	"github.com/gzericlee/eim/internal/mq"
+	"github.com/gzericlee/eim/pkg/exitutil"
+	"github.com/gzericlee/eim/pkg/log"
+	eimmetrics "github.com/gzericlee/eim/pkg/metrics"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-gateway"
-	app.Usage = "EIM-网关服务"
+	app.Usage = "EIM-GATEWAY网关服务"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",

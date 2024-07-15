@@ -7,16 +7,16 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"eim/internal/model"
-	"eim/internal/model/consts"
-	"eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
+	"github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
-var rpcClient *rpc.Client
+var rpcClient *client.Client
 
 func init() {
 	var err error
-	rpcClient, err = rpc.NewClient([]string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"})
+	rpcClient, err = client.NewClient([]string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"})
 	if err != nil {
 		panic(err)
 	}

@@ -3,7 +3,7 @@ package pgsql
 import (
 	"fmt"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 func (its *Repository) InsertMessage(message *model.Message) error {

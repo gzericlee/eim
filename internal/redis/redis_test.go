@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 var manager *Manager

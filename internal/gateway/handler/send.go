@@ -6,10 +6,10 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 
-	"eim/internal/gateway/protocol"
-	"eim/internal/gateway/server"
-	"eim/internal/gateway/session"
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/gateway/protocol"
+	"github.com/gzericlee/eim/internal/gateway/server"
+	"github.com/gzericlee/eim/internal/gateway/session"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 type SendHandler struct {

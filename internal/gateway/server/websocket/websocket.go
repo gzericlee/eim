@@ -9,12 +9,12 @@ import (
 	"github.com/lesismal/nbio/nbhttp"
 	"github.com/panjf2000/ants"
 
-	authrpc "eim/internal/auth/rpc"
-	"eim/internal/gateway/session"
-	"eim/internal/model"
-	"eim/internal/mq"
-	seqrpc "eim/internal/seq/rpc"
-	storagerpc "eim/internal/storage/rpc"
+	authrpc "github.com/gzericlee/eim/internal/auth/rpc/client"
+	"github.com/gzericlee/eim/internal/gateway/session"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/mq"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc/client"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
 type Server struct {
@@ -24,9 +24,11 @@ type Server struct {
 	sessionManager *session.Manager
 	workerPool     *ants.Pool
 	http           *nbhttp.Server
-	seqRpc         *seqrpc.Client
-	authRpc        *authrpc.Client
-	storageRpc     *storagerpc.Client
+	seqRpc         *seqrpc.SeqClient
+	authRpc        *authrpc.AuthClient
+	deviceRpc      *storagerpc.DeviceClient
+	messageRpc     *storagerpc.MessageClient
+	gatewayRpc     *storagerpc.GatewayClient
 	producer       mq.IProducer
 
 	receivedMsgTotal int64
@@ -38,7 +40,18 @@ type Server struct {
 	errorTotal       int64
 }
 
-func NewServer(ip string, port int, seqRpc *seqrpc.Client, authRpc *authrpc.Client, storageRpc *storagerpc.Client, producer mq.IProducer) (*Server, error) {
+type Config struct {
+	Ip         string
+	Port       int
+	SeqRpc     *seqrpc.SeqClient
+	AuthRpc    *authrpc.AuthClient
+	DeviceRpc  *storagerpc.DeviceClient
+	MessageRpc *storagerpc.MessageClient
+	GatewayRpc *storagerpc.GatewayClient
+	Producer   mq.IProducer
+}
+
+func NewServer(cfg *Config) (*Server, error) {
 	taskPool, err := ants.NewPoolPreMalloc(1024)
 	if err != nil {
 		return nil, fmt.Errorf("new worker pool -> %w", err)
@@ -47,15 +60,17 @@ func NewServer(ip string, port int, seqRpc *seqrpc.Client, authRpc *authrpc.Clie
 	keepaliveTime := time.Minute * 5
 
 	server := &Server{
-		ip:             ip,
-		port:           port,
+		ip:             cfg.Ip,
+		port:           cfg.Port,
 		keepaliveTime:  keepaliveTime,
 		sessionManager: session.NewManager(),
 		workerPool:     taskPool,
-		seqRpc:         seqRpc,
-		authRpc:        authRpc,
-		storageRpc:     storageRpc,
-		producer:       producer,
+		seqRpc:         cfg.SeqRpc,
+		authRpc:        cfg.AuthRpc,
+		deviceRpc:      cfg.DeviceRpc,
+		messageRpc:     cfg.MessageRpc,
+		gatewayRpc:     cfg.GatewayRpc,
+		producer:       cfg.Producer,
 	}
 
 	mux := &http.ServeMux{}
@@ -63,7 +78,7 @@ func NewServer(ip string, port int, seqRpc *seqrpc.Client, authRpc *authrpc.Clie
 
 	server.http = nbhttp.NewServer(nbhttp.Config{
 		Network:                 "tcp",
-		Addrs:                   []string{fmt.Sprintf("%v:%v", ip, port)},
+		Addrs:                   []string{fmt.Sprintf("%v:%v", cfg.Ip, cfg.Port)},
 		MaxLoad:                 1000000,
 		ReleaseWebsocketPayload: true,
 		Handler:                 mux,
@@ -81,15 +96,23 @@ func (its *Server) Stop() {
 	its.http.Stop()
 }
 
-func (its *Server) GetStorageRpc() *storagerpc.Client {
-	return its.storageRpc
+func (its *Server) GetGatewayRpc() *storagerpc.GatewayClient {
+	return its.gatewayRpc
 }
 
-func (its *Server) GetSeqRpc() *seqrpc.Client {
+func (its *Server) GetMessageRpc() *storagerpc.MessageClient {
+	return its.messageRpc
+}
+
+func (its *Server) GetDeviceRpc() *storagerpc.DeviceClient {
+	return its.deviceRpc
+}
+
+func (its *Server) GetSeqRpc() *seqrpc.SeqClient {
 	return its.seqRpc
 }
 
-func (its *Server) GetAuthRpc() *authrpc.Client {
+func (its *Server) GetAuthRpc() *authrpc.AuthClient {
 	return its.authRpc
 }
 
@@ -130,7 +153,7 @@ func (its *Server) IncrErrorTotal(count int64) {
 }
 
 func (its *Server) RegistryGateway() {
-	err := its.storageRpc.RegisterGateway(&model.Gateway{
+	err := its.gatewayRpc.RegisterGateway(&model.Gateway{
 		Ip:            its.ip,
 		Port:          int32(its.port),
 		ClientTotal:   its.clientTotal,

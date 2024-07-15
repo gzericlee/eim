@@ -7,9 +7,9 @@ import (
 	"github.com/dimiro1/banner"
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable"
 
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/log"
 
-	"eim/internal/config"
+	"github.com/gzericlee/eim/internal/config"
 )
 
 var (
@@ -25,7 +25,7 @@ func Printf() {
 		Version = "unknown"
 	}
 	if ServiceName == "" {
-		ServiceName = "EIM-?"
+		ServiceName = "eim-?"
 	}
 	if Branch == "" {
 		Branch = "unknown"

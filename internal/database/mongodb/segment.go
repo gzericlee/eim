@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 var (

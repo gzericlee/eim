@@ -9,19 +9,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	authrpc "eim/internal/auth/rpc"
-	"eim/internal/fileflex/router"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/log"
-	eimmetrics "eim/pkg/metrics"
-	"eim/pkg/middleware"
+	authrpc "github.com/gzericlee/eim/internal/auth/rpc/client"
+	"github.com/gzericlee/eim/internal/fileflex/router"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
+	"github.com/gzericlee/eim/pkg/log"
+	eimmetrics "github.com/gzericlee/eim/pkg/metrics"
+	"github.com/gzericlee/eim/pkg/middleware"
 )
 
 type Config struct {
 	Ip            string
 	Port          int
-	AuthRpc       *authrpc.Client
-	StorageRpc    *storagerpc.Client
+	AuthRpc       *authrpc.AuthClient
+	TenantRpc     *storagerpc.TenantClient
 	MinioEndpoint string
 }
 
@@ -38,7 +38,7 @@ func (its *HttpServer) Run(cfg Config) error {
 
 	engine.Use(gin.Recovery(), ginMiddleware.LogFormatter(), ginMiddleware.Auth)
 
-	router.RegisterAPIRoutes(engine, cfg.StorageRpc, cfg.MinioEndpoint)
+	router.RegisterAPIRoutes(engine, cfg.TenantRpc, cfg.MinioEndpoint)
 
 	routeInfo := engine.Routes()
 	for _, ri := range routeInfo {

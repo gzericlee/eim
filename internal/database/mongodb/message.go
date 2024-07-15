@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 func (its *Repository) InsertMessage(message *model.Message) error {

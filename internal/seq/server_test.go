@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"eim/internal/seq/rpc"
+	"github.com/gzericlee/eim/internal/seq/rpc"
+	"github.com/gzericlee/eim/internal/seq/rpc/client"
 )
 
-var rpcClient *rpc.Client
+var rpcClient *client.Client
 var etcdEndpoints = []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}
 
 func init() {
@@ -27,7 +28,7 @@ func init() {
 	time.Sleep(time.Second * 5)
 
 	var err error
-	rpcClient, err = rpc.NewClient(etcdEndpoints)
+	rpcClient, err = client.NewClient(etcdEndpoints)
 	if err != nil {
 		panic(err)
 	}

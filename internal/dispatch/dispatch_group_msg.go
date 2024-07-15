@@ -7,22 +7,22 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 
-	"eim/internal/model"
-	"eim/internal/mq"
-	storagerpc "eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/mq"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
 type GroupMessageHandler struct {
-	storageRpc         *storagerpc.Client
+	bizMemberRpc       *storagerpc.BizMemberClient
 	producer           mq.IProducer
 	userMessageHandler *UserMessageHandler
 }
 
-func NewGroupMessageHandler(storageRpc *storagerpc.Client, producer mq.IProducer) *GroupMessageHandler {
+func NewGroupMessageHandler(bizMemberRpc *storagerpc.BizMemberClient, userMessageHandler *UserMessageHandler, producer mq.IProducer) *GroupMessageHandler {
 	return &GroupMessageHandler{
-		storageRpc:         storageRpc,
+		bizMemberRpc:       bizMemberRpc,
 		producer:           producer,
-		userMessageHandler: NewUserMessageHandler(storageRpc, producer),
+		userMessageHandler: userMessageHandler,
 	}
 }
 
@@ -49,7 +49,7 @@ func (its *GroupMessageHandler) Process(m *nats.Msg) error {
 
 func (its *GroupMessageHandler) publish(msg *model.Message) error {
 	// 获取群组成员,ToId，ToTenantId，是指群组ID和群组的租户ID
-	members, err := its.storageRpc.GetBizMembers(msg.ToId, msg.ToTenant)
+	members, err := its.bizMemberRpc.GetBizMembers(msg.ToId, msg.ToTenant)
 	if err != nil {
 		return fmt.Errorf("get group members -> %w", err)
 	}

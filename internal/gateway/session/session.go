@@ -3,7 +3,7 @@ package session
 import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 
-	"eim/internal/model"
+	"github.com/gzericlee/eim/internal/model"
 )
 
 type Session struct {

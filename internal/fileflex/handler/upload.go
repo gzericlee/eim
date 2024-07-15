@@ -8,24 +8,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"eim/internal/minio"
-	"eim/internal/model"
-	"eim/internal/model/consts"
-	storagerpc "eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/internal/minio"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
 type UploadHandler struct {
 	minioEndpoint string
-	storageRpc    *storagerpc.Client
+	tenantRpc     *storagerpc.TenantClient
 }
 
-func NewUploadHandler(storageRpc *storagerpc.Client, minioEndpoint string) *UploadHandler {
-	return &UploadHandler{storageRpc: storageRpc, minioEndpoint: minioEndpoint}
+func NewUploadHandler(tenantRpc *storagerpc.TenantClient, minioEndpoint string) *UploadHandler {
+	return &UploadHandler{tenantRpc: tenantRpc, minioEndpoint: minioEndpoint}
 }
 
 func (its *UploadHandler) Upload(c *gin.Context) {
 	biz := c.MustGet("user").(*model.Biz)
-	tenant, err := its.storageRpc.GetTenant(biz.TenantId)
+	tenant, err := its.tenantRpc.GetTenant(biz.TenantId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("get tenant -> %w", err).Error()})
 		return

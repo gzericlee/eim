@@ -24,10 +24,6 @@ message Device {
   int64 created_at = 10;
   // @gotags: bson:"updated_at" json:"updated_at" xorm:"updated"
   int64 updated_at = 11;
-  // @gotags: bson:"created_by" json:"created_by"
-  string created_by = 12;
-  // @gotags: bson:"updated_by" json:"updated_by"
-  string updated_by = 13;
   // @gotags: bson:"attributes" json:"attributes"
-  map<string, string> attributes = 14;
+  map<string, string> attributes = 12;
 }

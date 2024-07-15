@@ -4,8 +4,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
-	"eim/pkg/netutil"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/netutil"
 )
 
 var SystemConfig *systemConfig
@@ -61,6 +61,11 @@ type systemConfig struct {
 	AuthSvr struct {
 		RpcPort int
 		Mode    string
+		OAuth2  struct {
+			Endpoint     string
+			ClientId     string
+			ClientSecret string
+		}
 	}
 	ApiSvr struct {
 		HttpPort int

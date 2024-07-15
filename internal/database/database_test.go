@@ -7,20 +7,20 @@ import (
 
 	"github.com/panjf2000/ants"
 
-	"eim/internal/model"
-	"eim/internal/model/consts"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
 )
 
 var db IDatabase
 
 func init() {
 	var err error
-	//db, err = NewDatabase(MongoDBDriver, []string{"mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct"}, "eim")
+	//db, err = NewDatabase(MongoDBDriver, []string{"mongodb://admin:pass%40word1@127.0.0.1:27017/?authSource=admin&connect=direct"}, "github.com/gzericlee/eim")
 	db, err = NewDatabase(PostgresDriver, []string{
 		"postgres://eim:pass@word1@127.0.0.1:15430/eim?sslmode=disable",
 		"postgres://eim:pass@word1@127.0.0.1:15431/eim?sslmode=disable",
 		"postgres://eim:pass@word1@127.0.0.1:15432/eim?sslmode=disable",
-	}, "eim")
+	}, "github.com/gzericlee/eim")
 	if err != nil {
 		panic(err)
 	}

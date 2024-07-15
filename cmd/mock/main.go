@@ -9,18 +9,18 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim"
-	"eim/internal/config"
-	"eim/internal/mock"
-	seqrpc "eim/internal/seq/rpc"
-	"eim/pkg/log"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/internal/mock"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-mock"
-	app.Usage = "EIM-模拟服务"
+	app.Usage = "EIM-MOCK模拟客户端"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",
@@ -45,7 +45,7 @@ func newCliApp() *cli.App {
 
 		log.Info(fmt.Sprintf("%v service started successfully", eim.ServiceName))
 
-		seqRpc, err := seqrpc.NewClient(config.SystemConfig.Etcd.Endpoints.Value())
+		seqRpc, err := seqrpc.NewSeqClient(config.SystemConfig.Etcd.Endpoints.Value())
 		if err != nil {
 			panic(err)
 		}

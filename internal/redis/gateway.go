@@ -8,8 +8,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
-	"eim/internal/model"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 const (

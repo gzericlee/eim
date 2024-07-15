@@ -22,13 +22,13 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
-	"eim/internal/config"
-	"eim/internal/gateway/protocol"
-	"eim/internal/model"
-	"eim/internal/model/consts"
-	seqrpc "eim/internal/seq/rpc"
-	"eim/pkg/httputil"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/internal/gateway/protocol"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/internal/model/consts"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc/client"
+	"github.com/gzericlee/eim/pkg/httputil"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type Server struct {
@@ -45,13 +45,13 @@ type Server struct {
 	invalidCount      *atomic.Int64
 	hbCount           *atomic.Int64
 	clients           sync.Map
-	seqRpc            *seqrpc.Client
+	seqRpc            *seqrpc.SeqClient
 	connectedConsume  time.Duration
 	connectionStart   time.Time
 	sendStart         time.Time
 }
 
-func NewMockServer(seqRpc *seqrpc.Client, userMsgCount, groupMsgCount, clientCount, startUserId, startGroupId, sendCount int) *Server {
+func NewMockServer(seqRpc *seqrpc.SeqClient, userMsgCount, groupMsgCount, clientCount, startUserId, startGroupId, sendCount int) *Server {
 	return &Server{
 		mockUserMsgCount:  userMsgCount,
 		mockGroupMsgCount: groupMsgCount,

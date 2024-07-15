@@ -8,9 +8,9 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/internal/gateway/protocol"
-	"eim/internal/model"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/gateway/protocol"
+	"github.com/gzericlee/eim/internal/model"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type Client struct {

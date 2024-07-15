@@ -12,7 +12,7 @@ import (
 	"github.com/panjf2000/ants"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 type natsConsumer struct {
@@ -24,7 +24,7 @@ type natsConsumer struct {
 func newNatsConsumer(endpoints []string) (IConsumer, error) {
 	conn, err := nats.Connect(
 		strings.Join(endpoints, ","),
-		nats.Name("eim"),
+		nats.Name("github.com/gzericlee/eim"),
 		nats.ReconnectWait(2*time.Second),
 		nats.MaxReconnects(5),
 		nats.PingInterval(10*time.Second),

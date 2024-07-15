@@ -8,8 +8,8 @@ import (
 	"github.com/rcrowley/go-metrics"
 	"go.uber.org/zap"
 
-	"eim/pkg/log"
-	"eim/pkg/netutil"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/netutil"
 )
 
 func EnableMetrics(port int) {

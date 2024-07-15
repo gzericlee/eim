@@ -8,20 +8,20 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 
-	"eim"
-	"eim/internal/config"
-	"eim/internal/database"
-	storagerpc "eim/internal/storage/rpc"
-	"eim/pkg/exitutil"
-	"eim/pkg/log"
-	"eim/pkg/netutil"
-	"eim/pkg/pprof"
+	"github.com/gzericlee/eim"
+	"github.com/gzericlee/eim/internal/config"
+	"github.com/gzericlee/eim/internal/database"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc"
+	"github.com/gzericlee/eim/pkg/exitutil"
+	"github.com/gzericlee/eim/pkg/log"
+	"github.com/gzericlee/eim/pkg/netutil"
+	"github.com/gzericlee/eim/pkg/pprof"
 )
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eim-storage"
-	app.Usage = "EIM-存储服务"
+	app.Usage = "eim-存储服务"
 	app.Authors = []*cli.Author{
 		{
 			Name:  "EricLee",

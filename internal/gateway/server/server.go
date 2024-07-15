@@ -1,11 +1,11 @@
 package server
 
 import (
-	authrpc "eim/internal/auth/rpc"
-	"eim/internal/gateway/session"
-	"eim/internal/mq"
-	seqrpc "eim/internal/seq/rpc"
-	storagerpc "eim/internal/storage/rpc"
+	authrpc "github.com/gzericlee/eim/internal/auth/rpc/client"
+	"github.com/gzericlee/eim/internal/gateway/session"
+	"github.com/gzericlee/eim/internal/mq"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc/client"
+	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
 type IServer interface {
@@ -14,9 +14,11 @@ type IServer interface {
 
 	Send(sess *session.Session, cmd int, body []byte)
 
-	GetStorageRpc() *storagerpc.Client
-	GetSeqRpc() *seqrpc.Client
-	GetAuthRpc() *authrpc.Client
+	GetMessageRpc() *storagerpc.MessageClient
+	GetGatewayRpc() *storagerpc.GatewayClient
+	GetDeviceRpc() *storagerpc.DeviceClient
+	GetSeqRpc() *seqrpc.SeqClient
+	GetAuthRpc() *authrpc.AuthClient
 	GetMQProducer() mq.IProducer
 	GetSessionManager() *session.Manager
 

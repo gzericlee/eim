@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"eim/pkg/cache"
+	"github.com/gzericlee/eim/pkg/cache"
 )
 
 type Notifier struct {

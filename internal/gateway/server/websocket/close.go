@@ -6,9 +6,9 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"go.uber.org/zap"
 
-	"eim/internal/gateway/session"
-	"eim/internal/model/consts"
-	"eim/pkg/log"
+	"github.com/gzericlee/eim/internal/gateway/session"
+	"github.com/gzericlee/eim/internal/model/consts"
+	"github.com/gzericlee/eim/pkg/log"
 )
 
 func (its *Server) close(conn *websocket.Conn, err error) {
@@ -28,7 +28,7 @@ func (its *Server) close(conn *websocket.Conn, err error) {
 	device.OfflineAt = time.Now().Unix()
 	device.State = consts.StatusOffline
 
-	err = its.storageRpc.UpdateDevice(device)
+	err = its.deviceRpc.UpdateDevice(device)
 	if err != nil {
 		log.Error("Error update device", zap.Error(err))
 		return

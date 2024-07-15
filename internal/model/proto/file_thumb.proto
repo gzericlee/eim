@@ -1,0 +1,24 @@
+syntax = "proto3";
+package model;
+option go_package = "../model";
+
+message FileThumb {
+  // @gotags: bson:"thumb_id" json:"thumb_id" xorm:"pk"
+  string thumb_id = 1;
+  // @gotags: bson:"file_id" json:"file_id" xorm:"unique(file_id_thumb_spec)"
+  string file_id = 2;
+  // @gotags: bson:"thumb_name" json:"thumb_name"
+  string thumb_name = 3;
+  // @gotags: bson:"thumb_type" json:"thumb_type"
+  string thumb_type = 4;
+  // @gotags: bson:"thumb_path" json:"thumb_path"
+  string thumb_path = 5;
+  // @gotags: bson:"thumb_size" json:"thumb_size"
+  int64 thumb_size = 6;
+  // @gotags: bson:"thumb_spec" json:"thumb_spec" xorm:"unique(file_id_thumb_spec)"
+  string thumb_spec = 7;
+  // @gotags: bson:"created_at" json:"created_at" xorm:"created"
+  int64 created_at = 8;
+  // @gotags: bson:"attributes" json:"attributes"
+  map<string, string> attributes = 9;
+}
