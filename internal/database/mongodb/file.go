@@ -7,12 +7,12 @@ func (its *Repository) InsertFile(file *model.File) error {
 	panic("implement me")
 }
 
-func (its *Repository) DeleteFile(fileId string) error {
+func (its *Repository) DeleteFile(fileId int64) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (its *Repository) GetFile(fileId string) (*model.File, error) {
+func (its *Repository) GetFile(fileId int64) (*model.File, error) {
 	//TODO implement me
 	panic("implement me")
 }

@@ -10,12 +10,12 @@ import (
 	"github.com/gzericlee/eim/internal/seq/rpc/client"
 )
 
-var rpcClient *client.Client
+var rpcClient *client.SeqClient
 var etcdEndpoints = []string{"127.0.0.1:2379", "127.0.0.1:2479", "127.0.0.1:2579"}
 
 func init() {
 	go func() {
-		err := rpc.StartServer(rpc.Config{
+		err := rpc.StartServer(&rpc.Config{
 			Ip:             "127.0.0.1",
 			Port:           18080,
 			EtcdEndpoints:  etcdEndpoints,
@@ -28,7 +28,7 @@ func init() {
 	time.Sleep(time.Second * 5)
 
 	var err error
-	rpcClient, err = client.NewClient(etcdEndpoints)
+	rpcClient, err = rpc.NewSeqClient(etcdEndpoints)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +45,7 @@ func TestID_Get(t *testing.T) {
 				t.Log(err)
 			}
 			t.Log(seq)
-			seq, err = rpcClient.IncrementId("user_2")
+			seq, err = rpcClient.IncrId("user_2", "bingo")
 			if err != nil {
 				t.Log(err)
 			}
@@ -58,7 +58,7 @@ func TestID_Get(t *testing.T) {
 func BenchmarkID_Get(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, err := rpcClient.IncrementId("user_2")
+			_, err := rpcClient.IncrId("user_2", "bingo")
 			if err != nil {
 				b.Error(err)
 				return

@@ -53,7 +53,7 @@ func newCliApp() *cli.App {
 		//开启Rpc服务
 		go func() {
 			for {
-				err := seqrpc.StartServer(seqrpc.Config{
+				err := seqrpc.StartServer(&seqrpc.Config{
 					Ip:             config.SystemConfig.LocalIp,
 					Port:           config.SystemConfig.SeqSvr.RpcPort,
 					EtcdEndpoints:  config.SystemConfig.Etcd.Endpoints.Value(),

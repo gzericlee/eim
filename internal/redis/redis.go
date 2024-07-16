@@ -24,7 +24,7 @@ type Manager struct {
 	offlineDeviceExpire  time.Duration
 }
 
-func NewManager(cfg Config) (*Manager, error) {
+func NewManager(cfg *Config) (*Manager, error) {
 	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:        cfg.RedisEndpoints,
 		Password:     cfg.RedisPassword,

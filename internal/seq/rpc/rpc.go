@@ -31,7 +31,7 @@ type Config struct {
 	RedisPassword  string
 }
 
-func StartServer(cfg Config) error {
+func StartServer(cfg *Config) error {
 	svr := server.NewServer()
 	svr.AsyncWrite = true
 

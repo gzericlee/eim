@@ -14,7 +14,7 @@ func (its *Repository) InsertFile(file *model.File) error {
 	return nil
 }
 
-func (its *Repository) DeleteFile(fileId string) error {
+func (its *Repository) DeleteFile(fileId int64) error {
 	_, err := its.db.Where("file_id = ?", fileId).Delete(&model.File{})
 	if err != nil {
 		return fmt.Errorf("delete file -> %w", err)
@@ -22,7 +22,7 @@ func (its *Repository) DeleteFile(fileId string) error {
 	return nil
 }
 
-func (its *Repository) GetFile(fileId string) (*model.File, error) {
+func (its *Repository) GetFile(fileId int64) (*model.File, error) {
 	file := &model.File{}
 	_, err := its.db.Where("file_id = ?", fileId).Get(file)
 	if err != nil {

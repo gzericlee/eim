@@ -32,7 +32,7 @@ type Config struct {
 	Oauth2Client  oauth2lib.Client
 }
 
-func StartServer(cfg Config) error {
+func StartServer(cfg *Config) error {
 	svr := server.NewServer()
 	svr.AsyncWrite = true
 

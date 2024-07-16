@@ -14,7 +14,7 @@ func (its *Repository) InsertFileThumb(thumb *model.FileThumb) error {
 	return nil
 }
 
-func (its *Repository) DeleteFileThumb(thumbId string) error {
+func (its *Repository) DeleteFileThumb(thumbId int64) error {
 	_, err := its.db.Where("thumb_id = ?", thumbId).Delete(&model.FileThumb{})
 	if err != nil {
 		return fmt.Errorf("delete file thumb -> %w", err)
@@ -22,7 +22,7 @@ func (its *Repository) DeleteFileThumb(thumbId string) error {
 	return nil
 }
 
-func (its *Repository) GetFileThumb(fileId, thumbSpec string) (*model.FileThumb, error) {
+func (its *Repository) GetFileThumb(fileId int64, thumbSpec string) (*model.FileThumb, error) {
 	thumb := &model.FileThumb{}
 	_, err := its.db.Where("file_id = ? AND thumb_spec = ?", fileId, thumbSpec).Get(thumb)
 	if err != nil {

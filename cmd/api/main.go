@@ -69,7 +69,7 @@ func newCliApp() *cli.App {
 
 			log.Info("New redis manager successfully")
 
-			_ = httpServer.Run(api.Config{
+			_ = httpServer.Run(&api.Config{
 				Port:         config.SystemConfig.ApiSvr.HttpPort,
 				TenantRpc:    tenantRpc,
 				GatewayRpc:   gatewayRpc,

@@ -48,5 +48,6 @@ func (its *BizClient) GetBiz(bizId, tenantId string) (*model.Biz, error) {
 	if err != nil {
 		return nil, fmt.Errorf("call GetBiz -> %w", err)
 	}
+
 	return reply.Biz, nil
 }

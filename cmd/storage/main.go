@@ -46,7 +46,7 @@ func newCliApp() *cli.App {
 
 		//开启Storage服务
 		go func() {
-			err := storagerpc.StartServer(storagerpc.Config{
+			err := storagerpc.StartServer(&storagerpc.Config{
 				Ip:                   config.SystemConfig.LocalIp,
 				Port:                 config.SystemConfig.StorageSvr.RpcPort,
 				DatabaseName:         config.SystemConfig.Database.Name,

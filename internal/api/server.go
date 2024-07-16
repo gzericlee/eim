@@ -31,12 +31,12 @@ type HttpServer struct {
 	server *http.Server
 }
 
-func (its *HttpServer) Run(cfg Config) error {
+func (its *HttpServer) Run(cfg *Config) error {
 	gin.SetMode("release")
 
 	engine := gin.New()
 
-	ginMiddleware := middleware.NewGinMiddleware(cfg.AuthRpc)
+	ginMiddleware := middleware.NewGinMiddleware(cfg.AuthRpc, cfg.TenantRpc)
 
 	engine.Use(gin.Recovery(), ginMiddleware.LogFormatter(), ginMiddleware.Auth)
 

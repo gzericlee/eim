@@ -54,7 +54,7 @@ type Config struct {
 	RegistryServices     []string
 }
 
-func StartServer(cfg Config) error {
+func StartServer(cfg *Config) error {
 	svr := server.NewServer()
 	svr.AsyncWrite = true
 
@@ -63,7 +63,7 @@ func StartServer(cfg Config) error {
 		return fmt.Errorf("new database -> %w", err)
 	}
 
-	redisManager, err := redis.NewManager(redis.Config{
+	redisManager, err := redis.NewManager(&redis.Config{
 		RedisEndpoints:       cfg.RedisEndpoints,
 		RedisPassword:        cfg.RedisPassword,
 		OfflineMessageExpire: time.Hour * 24 * time.Duration(cfg.OfflineMessageExpire),

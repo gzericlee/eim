@@ -18,6 +18,8 @@ const (
 	MinioAdminUserName = "MINIO_ADMIN_USER_NAME"
 	MinioAdminPassword = "MINIO_ADMIN_PASSWORD"
 
+	ExternalServiceEndpoint = "EXTERNAL_SERVICE_ENDPOINT"
+
 	LogLevel = "LOG_LEVEL"
 )
 
@@ -29,6 +31,13 @@ func ParseFlags(app *cli.App) {
 			Usage:       "Http port",
 			EnvVars:     []string{HttpPort},
 			Destination: &config.SystemConfig.FileFlexSvr.HttpPort,
+		},
+		&cli.StringFlag{
+			Name:        "external-service-endpoint",
+			Value:       "http://127.0.0.1:10050",
+			Usage:       "External service endpoint",
+			EnvVars:     []string{ExternalServiceEndpoint},
+			Destination: &config.SystemConfig.FileFlexSvr.ExternalServiceEndpoint,
 		},
 		&cli.StringSliceFlag{
 			Name:        "redis-endpoint",

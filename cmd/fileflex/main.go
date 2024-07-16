@@ -13,6 +13,7 @@ import (
 	authrpc "github.com/gzericlee/eim/internal/auth/rpc"
 	"github.com/gzericlee/eim/internal/config"
 	"github.com/gzericlee/eim/internal/fileflex"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc"
 	storagerpc "github.com/gzericlee/eim/internal/storage/rpc"
 	"github.com/gzericlee/eim/pkg/exitutil"
 	"github.com/gzericlee/eim/pkg/log"
@@ -51,13 +52,26 @@ func newCliApp() *cli.App {
 				panic(fmt.Errorf("new auth rpc client -> %w", err))
 			}
 
+			seqRpc, err := seqrpc.NewSeqClient(config.SystemConfig.Etcd.Endpoints.Value())
+			if err != nil {
+				panic(fmt.Errorf("new seq rpc client -> %w", err))
+			}
+
+			fileRpc, err := storagerpc.NewFileClient(config.SystemConfig.Etcd.Endpoints.Value())
+			if err != nil {
+				panic(fmt.Errorf("new file rpc client -> %w", err))
+			}
+
 			log.Info("New redis manager successfully")
 
-			_ = httpServer.Run(fileflex.Config{
-				Port:          config.SystemConfig.ApiSvr.HttpPort,
-				MinioEndpoint: config.SystemConfig.Minio.Endpoint,
-				AuthRpc:       authRpc,
-				TenantRpc:     tenantRpc,
+			_ = httpServer.Run(&fileflex.Config{
+				Port:                    config.SystemConfig.FileFlexSvr.HttpPort,
+				MinioEndpoint:           config.SystemConfig.Minio.Endpoint,
+				AuthRpc:                 authRpc,
+				TenantRpc:               tenantRpc,
+				SeqRpc:                  seqRpc,
+				FileRpc:                 fileRpc,
+				ExternalServiceEndpoint: config.SystemConfig.FileFlexSvr.ExternalServiceEndpoint,
 			})
 		}()
 

@@ -60,7 +60,7 @@ func newCliApp() *cli.App {
 				}
 			}
 
-			err = authrpc.StartServer(authrpc.Config{
+			err = authrpc.StartServer(&authrpc.Config{
 				Ip:            config.SystemConfig.LocalIp,
 				Port:          config.SystemConfig.AuthSvr.RpcPort,
 				EtcdEndpoints: config.SystemConfig.Etcd.Endpoints.Value(),

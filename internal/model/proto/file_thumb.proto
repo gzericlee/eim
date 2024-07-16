@@ -4,9 +4,9 @@ option go_package = "../model";
 
 message FileThumb {
   // @gotags: bson:"thumb_id" json:"thumb_id" xorm:"pk"
-  string thumb_id = 1;
+  int64 thumb_id = 1;
   // @gotags: bson:"file_id" json:"file_id" xorm:"unique(file_id_thumb_spec)"
-  string file_id = 2;
+  int64 file_id = 2;
   // @gotags: bson:"thumb_name" json:"thumb_name"
   string thumb_name = 3;
   // @gotags: bson:"thumb_type" json:"thumb_type"

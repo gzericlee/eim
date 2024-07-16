@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,7 +23,14 @@ func (its *ginMiddleware) Auth(c *gin.Context) {
 		return
 	}
 
+	tenant, err := its.tenantRpc.GetTenant(user.TenantId)
+	if err != nil {
+		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("get tenant -> %w", err))
+		return
+	}
+
 	c.Set("user", user)
+	c.Set("tenant", tenant)
 
 	c.Next()
 }

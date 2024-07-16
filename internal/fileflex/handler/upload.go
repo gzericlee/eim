@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -11,24 +12,28 @@ import (
 	"github.com/gzericlee/eim/internal/minio"
 	"github.com/gzericlee/eim/internal/model"
 	"github.com/gzericlee/eim/internal/model/consts"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc/client"
 	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
 type UploadHandler struct {
-	minioEndpoint string
-	tenantRpc     *storagerpc.TenantClient
+	minioEndpoint           string
+	seqRpc                  *seqrpc.SeqClient
+	tenantRpc               *storagerpc.TenantClient
+	fileRpc                 *storagerpc.FileClient
+	externalServiceEndpoint string
 }
 
-func NewUploadHandler(tenantRpc *storagerpc.TenantClient, minioEndpoint string) *UploadHandler {
-	return &UploadHandler{tenantRpc: tenantRpc, minioEndpoint: minioEndpoint}
+func NewUploadHandler(tenantRpc *storagerpc.TenantClient, seqTpc *seqrpc.SeqClient, fileRpc *storagerpc.FileClient, minioEndpoint, externalServiceEndpoint string) *UploadHandler {
+	return &UploadHandler{tenantRpc: tenantRpc, seqRpc: seqTpc, fileRpc: fileRpc, minioEndpoint: minioEndpoint, externalServiceEndpoint: externalServiceEndpoint}
 }
 
 func (its *UploadHandler) Upload(c *gin.Context) {
 	biz := c.MustGet("user").(*model.Biz)
-	tenant, err := its.tenantRpc.GetTenant(biz.TenantId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("get tenant -> %w", err).Error()})
-		return
+	tenant := c.MustGet("tenant").(*model.Tenant)
+	scope := c.GetString("scope")
+	if scope == "" {
+		scope = "*"
 	}
 
 	enabled, _ := strconv.ParseBool(tenant.Attributes[consts.FileflexEnabled])
@@ -52,25 +57,51 @@ func (its *UploadHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	file, _ := c.FormFile("file")
-	reader, err := file.Open()
+	today := time.Now().Format("2006-01-02")
+
+	upFile, _ := c.FormFile("file")
+	reader, err := upFile.Open()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Errorf("open file -> %w", err).Error()})
 		return
 	}
 
-	key := fmt.Sprintf("%s/%s/%s", biz.BizId, time.Now().Format("2006-01-02"), file.Filename)
-	err = minioManager.UploadObject(bucketName, key, reader)
+	filePath := fmt.Sprintf("%s/%s/%s", biz.BizId, today, upFile.Filename)
+	err = minioManager.UploadObject(bucketName, filePath, reader)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("upload object -> %w", err).Error()})
 		return
 	}
 
-	downloadUrl, err := minioManager.ShareObject(bucketName, key)
+	fileId, err := its.seqRpc.SnowflakeId()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("share object -> %w", err).Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("get snowflake id -> %w", err).Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "upload success", "url": downloadUrl})
+	file := &model.File{
+		FileId:   fileId,
+		FileName: upFile.Filename,
+		FileType: filepath.Ext(upFile.Filename),
+		FilePath: filePath,
+		FileSize: upFile.Size,
+		BizId:    biz.BizId,
+		TenantId: tenant.TenantId,
+		Attributes: map[string]string{
+			"scope": scope,
+		},
+	}
+
+	err = its.fileRpc.InsertFile(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Errorf("insert file -> %w", err).Error()})
+		return
+	}
+
+	thumbPath := fmt.Sprintf("%s/%s/24x24/%s", biz.BizId, today, upFile.Filename)
+
+	downloadUrl := fmt.Sprintf("%s/%s/%s", its.externalServiceEndpoint, bucketName, filePath)
+	thumbUrl := fmt.Sprintf("%s/%s/%s", its.externalServiceEndpoint, bucketName, thumbPath)
+
+	c.JSON(http.StatusOK, gin.H{"message": "upload success", "download": downloadUrl, "thumb": thumbUrl, "explain": "24x24 can be changed to other sizes"})
 }

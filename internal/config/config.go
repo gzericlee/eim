@@ -71,7 +71,8 @@ type systemConfig struct {
 		HttpPort int
 	}
 	FileFlexSvr struct {
-		HttpPort int
+		ExternalServiceEndpoint string
+		HttpPort                int
 	}
 	Minio struct {
 		Endpoint      string

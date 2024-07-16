@@ -11,6 +11,7 @@ import (
 
 	authrpc "github.com/gzericlee/eim/internal/auth/rpc/client"
 	"github.com/gzericlee/eim/internal/fileflex/router"
+	seqrpc "github.com/gzericlee/eim/internal/seq/rpc/client"
 	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 	"github.com/gzericlee/eim/pkg/log"
 	eimmetrics "github.com/gzericlee/eim/pkg/metrics"
@@ -18,27 +19,30 @@ import (
 )
 
 type Config struct {
-	Ip            string
-	Port          int
-	AuthRpc       *authrpc.AuthClient
-	TenantRpc     *storagerpc.TenantClient
-	MinioEndpoint string
+	Ip                      string
+	Port                    int
+	AuthRpc                 *authrpc.AuthClient
+	TenantRpc               *storagerpc.TenantClient
+	FileRpc                 *storagerpc.FileClient
+	SeqRpc                  *seqrpc.SeqClient
+	MinioEndpoint           string
+	ExternalServiceEndpoint string
 }
 
 type HttpServer struct {
 	server *http.Server
 }
 
-func (its *HttpServer) Run(cfg Config) error {
+func (its *HttpServer) Run(cfg *Config) error {
 	gin.SetMode("release")
 
 	engine := gin.New()
 
-	ginMiddleware := middleware.NewGinMiddleware(cfg.AuthRpc)
+	ginMiddleware := middleware.NewGinMiddleware(cfg.AuthRpc, cfg.TenantRpc)
 
 	engine.Use(gin.Recovery(), ginMiddleware.LogFormatter(), ginMiddleware.Auth)
 
-	router.RegisterAPIRoutes(engine, cfg.TenantRpc, cfg.MinioEndpoint)
+	router.RegisterAPIRoutes(engine, cfg.TenantRpc, cfg.SeqRpc, cfg.FileRpc, cfg.MinioEndpoint, cfg.ExternalServiceEndpoint)
 
 	routeInfo := engine.Routes()
 	for _, ri := range routeInfo {

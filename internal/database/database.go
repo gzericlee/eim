@@ -83,15 +83,15 @@ type IMessage interface {
 
 type IFile interface {
 	InsertFile(file *model.File) error
-	DeleteFile(fileId string) error
-	GetFile(fileId string) (*model.File, error)
+	DeleteFile(fileId int64) error
+	GetFile(fileId int64) (*model.File, error)
 	ListFiles(filter map[string]interface{}, order []string, limit, offset int64) ([]*model.File, int64, error)
 }
 
 type IFileThumb interface {
 	InsertFileThumb(thumb *model.FileThumb) error
-	DeleteFileThumb(thumbId string) error
-	GetFileThumb(fileId, thumbSpec string) (*model.FileThumb, error)
+	DeleteFileThumb(thumbId int64) error
+	GetFileThumb(fileId int64, thumbSpec string) (*model.FileThumb, error)
 }
 
 func NewDatabase(driver Driver, connections []string, name string) (IDatabase, error) {
