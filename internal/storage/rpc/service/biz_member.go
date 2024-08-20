@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gzericlee/eim/internal/database"
+	"github.com/gzericlee/eim/internal/model"
 	rpcclient "github.com/gzericlee/eim/internal/storage/rpc/client"
 	rpcmodel "github.com/gzericlee/eim/internal/storage/rpc/model"
 	"github.com/gzericlee/eim/pkg/cache"
@@ -14,12 +15,12 @@ import (
 )
 
 type BizMemberService struct {
-	storageCache *cache.Cache[string, []string]
+	storageCache *cache.Cache[string, []*model.BizMember]
 	database     database.IDatabase
 	refreshRpc   *rpcclient.RefresherClient
 }
 
-func NewBizMemberService(storageCache *cache.Cache[string, []string], database database.IDatabase, refreshRpc *rpcclient.RefresherClient) *BizMemberService {
+func NewBizMemberService(storageCache *cache.Cache[string, []*model.BizMember], database database.IDatabase, refreshRpc *rpcclient.RefresherClient) *BizMemberService {
 	return &BizMemberService{
 		storageCache: storageCache,
 		database:     database,
@@ -78,7 +79,7 @@ func (its *BizMemberService) GetBizMembers(ctx context.Context, args *rpcmodel.B
 		return fmt.Errorf("single group do -> %w", err)
 	}
 
-	members := result.([]string)
+	members := result.([]*model.BizMember)
 	reply.Members = members
 
 	its.storageCache.Set(key, members)

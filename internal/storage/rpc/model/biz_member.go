@@ -7,5 +7,5 @@ type BizMemberArgs struct {
 }
 
 type BizMembersReply struct {
-	Members []string
+	Members []*model.BizMember
 }

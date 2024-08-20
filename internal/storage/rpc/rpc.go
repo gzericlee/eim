@@ -99,7 +99,7 @@ func StartServer(cfg *Config) error {
 		panic(err)
 	}
 
-	bizMembersCache, err := cache.NewCache[string, []string]("biz_members", 1000000)
+	bizMembersCache, err := cache.NewCache[string, []*model.BizMember]("biz_members", 1000000)
 	if err != nil {
 		panic(err)
 	}

@@ -2,7 +2,6 @@ package dispatch
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
@@ -56,8 +55,8 @@ func (its *GroupMessageHandler) publish(msg *model.Message) error {
 
 	for _, member := range members {
 		// member格式为userId@tenantId，群组成员可能是其他租户的用户
-		userId := strings.Split(member, "@")[0]
-		tenantId := strings.Split(member, "@")[1]
+		userId := member.MemberId
+		tenantId := member.MemberTenantId
 		msg.UserId = userId
 		msg.TenantId = tenantId
 		err = its.userMessageHandler.publish(*msg)

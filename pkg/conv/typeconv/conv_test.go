@@ -1,4 +1,4 @@
-package conv
+package typeconv
 
 import (
 	"reflect"

@@ -8,11 +8,17 @@ import (
 	storagerpc "github.com/gzericlee/eim/internal/storage/rpc/client"
 )
 
-func regUploadAPIs(engine *gin.Engine, tenantRpc *storagerpc.TenantClient, seqRpc *seqrpc.SeqClient, fileRpc *storagerpc.FileClient, minioEndpoint, externalServiceEndpoint string) {
+func regFileAPIs(engine *gin.Engine, tenantRpc *storagerpc.TenantClient, seqRpc *seqrpc.SeqClient, fileRpc *storagerpc.FileClient, minioEndpoint, externalServiceEndpoint string) {
 	uploadHandler := handler.NewUploadHandler(tenantRpc, seqRpc, fileRpc, minioEndpoint, externalServiceEndpoint)
+	downloadHandler := handler.NewDownloadHandler(fileRpc, minioEndpoint)
 
 	upload := engine.Group("/upload")
 	{
 		upload.POST("", uploadHandler.Upload)
+	}
+
+	download := engine.Group("/download")
+	{
+		download.GET("/:bucket_name/*file_path", downloadHandler.Download)
 	}
 }

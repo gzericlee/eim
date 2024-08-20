@@ -8,5 +8,5 @@ import (
 )
 
 func RegisterAPIRoutes(engine *gin.Engine, tenantRpc *storagerpc.TenantClient, seqRpc *seqrpc.SeqClient, fileRpc *storagerpc.FileClient, minioEndpoint, externalServiceEndpoint string) {
-	regUploadAPIs(engine, tenantRpc, seqRpc, fileRpc, minioEndpoint, externalServiceEndpoint)
+	regFileAPIs(engine, tenantRpc, seqRpc, fileRpc, minioEndpoint, externalServiceEndpoint)
 }

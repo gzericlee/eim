@@ -13,11 +13,11 @@ type RefresherService struct {
 	lock            *lock.KeyLock
 	devicesCache    *cache.Cache[string, []*model.Device]
 	bizCache        *cache.Cache[string, *model.Biz]
-	bizMembersCache *cache.Cache[string, []string]
+	bizMembersCache *cache.Cache[string, []*model.BizMember]
 	tenantCache     *cache.Cache[string, *model.Tenant]
 }
 
-func NewRefresherService(lock *lock.KeyLock, devicesCache *cache.Cache[string, []*model.Device], bizCache *cache.Cache[string, *model.Biz], bizMembersCache *cache.Cache[string, []string], tenantCache *cache.Cache[string, *model.Tenant]) *RefresherService {
+func NewRefresherService(lock *lock.KeyLock, devicesCache *cache.Cache[string, []*model.Device], bizCache *cache.Cache[string, *model.Biz], bizMembersCache *cache.Cache[string, []*model.BizMember], tenantCache *cache.Cache[string, *model.Tenant]) *RefresherService {
 	return &RefresherService{
 		lock:            lock,
 		devicesCache:    devicesCache,
@@ -103,7 +103,7 @@ func (its *RefresherService) RefreshBizMembersCache(ctx context.Context, args *r
 	case rpcmodel.ActionInsert:
 		{
 			if members, exist := its.bizMembersCache.Get(args.Key); exist {
-				members = append(members, args.BizMember.MemberId)
+				members = append(members, args.BizMember)
 				its.bizMembersCache.Set(args.Key, members)
 			}
 		}
@@ -111,7 +111,7 @@ func (its *RefresherService) RefreshBizMembersCache(ctx context.Context, args *r
 		{
 			if members, exist := its.bizMembersCache.Get(args.Key); exist {
 				for i := range members {
-					if members[i] == args.BizMember.MemberId {
+					if members[i].MemberId == args.BizMember.MemberId {
 						members = append(members[:i], members[i+1:]...)
 						break
 					}

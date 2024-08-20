@@ -98,9 +98,9 @@ func (its *UploadHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	thumbPath := fmt.Sprintf("%s/%s/24x24/%s", biz.BizId, today, upFile.Filename)
+	thumbPath := fmt.Sprintf("%d/24x24/%s", file.FileId, file.FileName)
 
-	downloadUrl := fmt.Sprintf("%s/%s/%s", its.externalServiceEndpoint, bucketName, filePath)
+	downloadUrl := fmt.Sprintf("%s/%d/%s", its.externalServiceEndpoint, fileId, upFile.Filename)
 	thumbUrl := fmt.Sprintf("%s/%s/%s", its.externalServiceEndpoint, bucketName, thumbPath)
 
 	c.JSON(http.StatusOK, gin.H{"message": "upload success", "download": downloadUrl, "thumb": thumbUrl, "explain": "24x24 can be changed to other sizes"})

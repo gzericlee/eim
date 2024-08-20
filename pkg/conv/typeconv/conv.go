@@ -2,7 +2,7 @@
 // such as to int using ToAny[int](any), to int set using ToSet[int](any),
 // to  a slice or array to set type (map[bool]struct{}),
 // map keys and values to slice in random order etc.
-package conv
+package typeconv
 
 import (
 	"time"

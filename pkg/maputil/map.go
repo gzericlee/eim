@@ -3,7 +3,7 @@ package maputil
 import (
 	"errors"
 
-	"github.com/gzericlee/eim/pkg/conv"
+	"github.com/gzericlee/eim/pkg/conv/typeconv"
 )
 
 func GetString(vars map[string]interface{}, key, defaultVal string) string {
@@ -32,7 +32,7 @@ func GetAny[T any](data map[string]interface{}, keys ...string) (T, error) {
 		}
 		tmpMap, _ = tmp.(map[string]interface{})
 	}
-	return conv.ToAnyE[T](tmp)
+	return typeconv.ToAnyE[T](tmp)
 }
 
 func GetInterface(data map[string]interface{}, keys ...string) (interface{}, error) {

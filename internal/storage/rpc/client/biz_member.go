@@ -39,7 +39,7 @@ func (its *BizMemberClient) RemoveBizMember(member *model.BizMember) error {
 	return nil
 }
 
-func (its *BizMemberClient) GetBizMembers(bizId, tenantId string) ([]string, error) {
+func (its *BizMemberClient) GetBizMembers(bizId, tenantId string) ([]*model.BizMember, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
